@@ -1,0 +1,204 @@
+                Contributing to the FlowEnv repository
+                ======================================
+
+= Mailing List
+
+  The preferred method of discussing and reviewing FlowEnv
+  contribution is the flowenv-dev mailing list.  You can
+  subscribe/view archives etc at:
+  http://lists.netronome.com/mailman/listinfo/flowenv-dev
+
+
+= Submitting Patches
+
+  Although initially an internal repository, the intention for the
+  flowenv repository is to be run very much like an open source
+  project.  That means, that *all* contributions and checkins *must*
+  be reviewed prior to being checked in.  The intention is for this
+  process to be light-weight and quick.
+
+  All changes should be sent as patches to
+  flowenv-dev@lists.netronome.com, in the form of *one patch per
+  email*. Here are a few guidelines for submitting patches:
+
+  Note: Initially the process may be a bit contrived for a smallish
+  internal project, but it is important to use an approach which has
+  been proven with several large open source project from the start.
+
+
+== Before You Start
+
+  Before you send patches at all, make sure that each patch makes
+  sense.  In particular:
+
+  * A given patch should not break anything, even if later patches fix
+    the problems that it causes.  The source tree should still build
+    and work after each patch is applied (This enables "bisecting" to
+    work best).
+
+  * A patch should make one logical change.  Don't make multiple,
+    logically unconnected changes to disparate subsystems in a single
+    patch.
+
+  * A patch that adds or removes user-visible features should also
+    update the appropriate user documentation.
+
+  * A patch adding new functionality should be made against the "tip"
+    of the default branch.
+
+  * If your changes form a set of related but logically separate
+    changes, submit your patches as a series of patches.  There are no
+    hard rules for what are related patches or a single logical
+    change.  Send your best proposal to the mailing list and a
+    reviewer may suggest breaking it up differently.
+
+
+== Email Subject
+
+  There should only be one patch per email. The subject line of your
+  email should be in the following format:
+
+    [PATCH <n>/<m>] <area>: <summary>
+
+  * "[PATCH <n>/<m>]" indicates that this is the "n"th of a series of
+    "m" patches. It helps reviewers to read patches in the correct
+    order.  You may omit "<n>/<m>" part of the prefix if you are
+    sending only one patch.
+
+  * "<area>" indicates the area of the flowenv to which the change
+    applies (often the name of a source file or a directory). You may
+    omit it if the change crosses multiple distinct pieces of code.
+
+  * "<summary>" briefly describes the change.
+
+  The subject, minus the "[PATCH <n>/<m>]" prefix, should become the
+  summary/first line of the commit's change log message.
+
+  If you create temporary commits in you copy of the mercurial
+  repository you can also use "hg export" or use the PatchBomb
+  extension.
+
+
+== Description
+
+  The body of the email should start with a more thorough description
+  of the change. This becomes the body of the commit message,
+  following the subject.  There is no need to duplicate the summary
+  given in the subject.
+
+  Please limit lines in the description to 79 characters in width.
+
+  The description should include:
+
+  * The rationale for the change.
+
+  * Design description and rationale (but this might be better added as code
+    comments).
+
+  * Testing that you performed (or testing that should be done but you could
+    not for whatever reason).
+
+  There is no need to describe what the patch actually changed, if the
+  reader can see it for themselves.
+
+  If the patch refers to a commit already in the flowenv repository,
+  please include both the commit number and the subject of the patch,
+  e.g.:
+
+    commit 632d136c (vswitch: Remove restriction on datapath names.).
+
+  Please sign off on the patch as a submitter, and be sure to have the
+  author(s) sign off for patches that you did not author. Simply
+  include your name and email address as the last line of the commit
+  message before any comments (and author too, if that is not you):
+
+    Signed-off-by: Author Name <author.name@email.address...>
+    Signed-off-by: Submitter Name <submitter.name@email.address...>
+
+  By doing this, you are agreeing to the Developer's Certificate of
+  Origin (see below for more details).  You do not need to include the
+  certificate, the Signed-off-by lines are sufficient.
+
+
+== Developer's Certificate of Origin
+
+  To help track the author of a patch as well as the submission chain,
+  and be clear that the developer has authority to submit a patch for
+  inclusion in flowenv please sign off your work.  The sign off
+  certifies the following:
+
+    Developer's Certificate of Origin 1.1
+
+    By making a contribution to this project, I certify that:
+
+    (a) The contribution was created in whole or in part by me and I
+        have the right to submit it under the open source license
+        indicated in the file; or
+
+    (b) The contribution is based upon previous work that, to the best
+        of my knowledge, is covered under an appropriate open source
+        license and I have the right under that license to submit that
+        work with modifications, whether created in whole or in part
+        by me, under the same open source license (unless I am
+        permitted to submit under a different license), as indicated
+        in the file; or
+
+    (c) The contribution was provided directly to me by some other
+        person who certified (a), (b) or (c) and I have not modified
+        it.
+
+    (d) I understand and agree that this project and the contribution
+        are public and that a record of the contribution (including all
+        personal information I submit with it, including my sign-off) is
+        maintained indefinitely and may be redistributed consistent with
+        this project or the open source license(s) involved.
+
+
+== Patch
+
+  The patch should be in the body of the email following the
+  description, separated by a blank line.
+
+  Patches should be in "diff -up" format.  We recommend that you use
+  HG to produce your patches: "hg diff -p".
+
+  Patches should be inline in the email message. Some email clients
+  corrupt white space or wrap lines in patches.  If you cannot
+  convince your email client not to mangle patches, then sending the
+  patch as an attachment is a second choice.
+
+  Please follow the style used in the code that you are modifying.
+
+
+
+= After you submitted
+
+  Each patch must be reviewed before committing to the repository.
+  Emailing it in the way outlined above makes the review much easier.
+  At least one other developer on the flowenv-dev mailing list must
+  ack the patch, which indicates that the patch "looks ok", or if
+  there are issues one can comment on the mailing list.
+
+  A patch is acked by replying to the mailing list with:
+
+    Acked-by: name <email address>
+
+  If the reviewer actually has done a detailed code review and the
+  patch passed, this can be indicated by a reply in the form of:
+
+    Reviewed-by: name <email address>
+
+  "Reviewed-by" makes a stronger statement than "Acked-by" and should
+  ideally be done for code which is a bit more complex.
+
+
+= Committing the patch
+
+  Only after all comments have been incorporated and at least one
+  "Acked-by" or "Reviewed-by" has been received, is the author of the
+  patch allowed to commit it to the shared repository.
+
+  When committing, use the original summary and details for the commit
+  message as well as including the "Signed-off-by" and
+  "Acked-by"/"Reviewed-by" lines so that a full record of these is
+  under revision control.
