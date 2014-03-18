@@ -1,0 +1,31 @@
+######################################################################
+# FlowEnvironment top Makefile
+######################################################################
+flowenv_reldir := $(SRCDIR_REL)
+flowenv_absdir := $(SRCDIR_ABS)
+
+flowenv-me_reldir := $(flowenv_reldir)/me
+flowenv-me_absdir := $(flowenv_absdir)/me
+
+flowenv-me-include_reldir := $(flowenv-me_reldir)/include
+flowenv-me-include_absdir := $(flowenv-me_absdir)/include
+
+
+######################################################################
+# Additional Makefiles
+######################################################################
+include $(flowenv-me_absdir)/Makefile.netro
+
+
+######################################################################
+# Help
+######################################################################
+$(eval $(call help_topic,help-flowenv,"FlowEnv targets:"))
+help-flowenv:
+ @echo "Repository management:"
+ @$(call print_tgt, fetch-flowenv, "Fetch the FlowEnv repository")
+ @$(call print_tgt, update-flowenv, "Update the FlowEnv repository")
+ @echo
+ @echo "Convenience targets:"
+ @$(call print_tgt, flowenv-autogen-headers,\
+ "Build the auto-generated header files")
