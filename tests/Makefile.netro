@@ -7,8 +7,9 @@ flowenv-tests-me_absdir := $(flowenv-tests_absdir)/me
 ######################################################################
 # nfcc compile test
 ######################################################################
+flowenv_tests_me_nfcc_compile_CHIP = nfp-6xxx
 flowenv_tests_me_nfcc_compile_LIST_common = \
- cl0.me0:nfcc_compile.c@$(flowenv-tests-me_absdir)/nfcc_compile.c
+	mei0.me0:nfcc_compile.c@$(flowenv-tests-me_absdir)/nfcc_compile.c
 flowenv_tests_me_nfcc_compile_DEPS_common += $(flowenv-nfp6000-includes)
 flowenv_tests_me_nfcc_compile_NFCCFLAGS_common += \
 	-I$(flowenv-me-include_absdir) \
@@ -20,8 +21,9 @@ $(eval $(call mefw_template,flowenv_tests_me_nfcc_compile,$(flowenv-tests-me_rel
 ######################################################################
 # nfas compile test
 ######################################################################
+flowenv_tests_me_nfas_compile_CHIP = nfp-6xxx
 flowenv_tests_me_nfas_compile_LIST_common = \
- cl0.me0:nfas_compile.uc@$(flowenv-tests-me_absdir)/nfas_compile.uc
+	mei0.me0:nfas_compile.uc@$(flowenv-tests-me_absdir)/nfas_compile.uc
 flowenv_tests_me_nfas_compile_DEPS_common += $(flowenv-nfp6000-includes)
 flowenv_tests_me_nfas_compile_NFASFLAGS_common += \
 	-I$(flowenv-me-include_absdir) \
