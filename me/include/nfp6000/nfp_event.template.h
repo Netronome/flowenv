@@ -25,12 +25,8 @@ pyexec<set_output_mode("nfp")>
 #define   NFP_EVENT_PROVIDER_INDEX_ARM_PER      3
 #define   NFP_EVENT_PROVIDER_INDEX_NBI          0
 #define   NFP_EVENT_PROVIDER_INDEX_MAC          1
-#define   NFP_EVENT_PROVIDER_INDEX_EMU_PVDR1    0
-#define   NFP_EVENT_PROVIDER_INDEX_EMU_PVDR2    1
-#define   NFP_EVENT_PROVIDER_INDEX_IMU_LB       0
-#define   NFP_EVENT_PROVIDER_INDEX_IMU_STATS    1
-#define   NFP_EVENT_PROVIDER_INDEX_IMU_DCACHE   2
-#define   NFP_EVENT_PROVIDER_INDEX_IMU          3
+#define   NFP_EVENT_PROVIDER_INDEX_EMU          0
+#define   NFP_EVENT_PROVIDER_INDEX_IMU          0
 #define NFP_EVENT_PROVIDER_ISL(_isl)            (((_isl) & 0x3f) << 2)
 #define NFP_EVENT_PROVIDER_ISL_of(_pvdr)        (((_pvdr) >> 2) & 0x3f)
 #define NFP_EVENT_PROVIDER_ISL_bf               0, 7, 2
