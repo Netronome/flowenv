@@ -10,6 +10,9 @@ flowenv-me_absdir := $(flowenv_absdir)/me
 flowenv-me-include_reldir := $(flowenv-me_reldir)/include
 flowenv-me-include_absdir := $(flowenv-me_absdir)/include
 
+flowenv-me-lib_reldir := $(flowenv-me_reldir)/lib
+flowenv-me-lib_absdir := $(flowenv-me_absdir)/lib
+
 flowenv-tests_reldir := $(flowenv_reldir)/tests
 flowenv-tests_absdir := $(flowenv_absdir)/tests
 

@@ -13,6 +13,7 @@
 #include <nfp6000/nfp_pcie.h>
 #include <nfp6000/nfp_qc.h>
 
+#include <nfp/nfp.h>
 
 /* Dummy main entry point */
 .begin

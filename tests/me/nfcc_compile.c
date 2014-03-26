@@ -15,6 +15,9 @@
 #include <nfp6000/nfp_pcie.h>
 #include <nfp6000/nfp_qc.h>
 
+/* libnfp related header files */
+#include <nfp/nfp.h>
+#include <nfp/types.h>
 
 /* Dummy main entry point */
 int
