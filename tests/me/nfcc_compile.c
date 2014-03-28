@@ -19,6 +19,10 @@
 #include <nfp/nfp.h>
 #include <nfp/types.h>
 
+#include <nfp/mem.h>
+#include <nfp/mem_bulk.h>
+#include <nfp/mem_ring.h>
+
 /* Dummy main entry point */
 int
 main(void)
