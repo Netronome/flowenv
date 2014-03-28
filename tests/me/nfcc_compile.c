@@ -19,6 +19,7 @@
 #include <nfp/nfp.h>
 #include <nfp/types.h>
 
+#include <nfp/cls.h>
 #include <nfp/mem.h>
 #include <nfp/mem_bulk.h>
 #include <nfp/mem_ring.h>

@@ -40,6 +40,7 @@
  * files in <nfp/*.h>.  They are not protected by header guards and
  * should not be included elsewhere.
  */
+#include "_c/cls.c"
 #include "_c/mem_bulk.c"
 #include "_c/mem_ring.c"
 
