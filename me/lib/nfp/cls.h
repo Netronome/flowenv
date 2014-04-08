@@ -7,9 +7,8 @@
 #ifndef _NFP__CLS_H_
 #define _NFP__CLS_H_
 
-#include <nfp/nfp.h>
-#include <nfp/types.h>
-
+#include <nfp.h>
+#include <types.h>
 
 /**
  * Read a multiple of 4B from CLS

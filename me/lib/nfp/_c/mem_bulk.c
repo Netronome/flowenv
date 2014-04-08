@@ -5,9 +5,12 @@
  * @brief         NFP memory bulk interface
  */
 
-#include <nfp/nfp.h>
-#include <nfp/mem_bulk.h>
+#include <nfp.h>
+#include <types.h>
+
 #include <nfp6000/nfp_me.h>
+
+#include <nfp/mem_bulk.h>
 
 
 #define _MEM_CMD(cmdname, data, addr, size, max_size, sync, sig)        \
@@ -26,7 +29,7 @@ do {                                                                    \
     /* This code is inefficient if addr is >256B aligned, */            \
     /* but will work for 40bit or 32bit pointers. */                    \
                                                                         \
-    addr_hi = ((unsigned long long int)addr>>8) & 0xff000000;           \
+    addr_hi = ((unsigned long long int)addr >> 8) & 0xff000000;         \
     addr_lo = (unsigned long long int)addr & 0xffffffff;                \
                                                                         \
     if (__is_ct_const(size)) {                                          \

@@ -1,12 +1,11 @@
 /*
  * Copyright (C) 2014,  Netronome Systems, Inc.  All rights reserved.
  *
- * @file          lib/nfp/nfp.h
- * @brief         Standard definitions
+ * @file          include/nfp.h
+ * @brief         Standard NFP definitions
  */
-#ifndef _NFP__NFP_H_
-#define _NFP__NFP_H_
-
+#ifndef _NFP_H_
+#define _NFP_H_
 
 /* Size specifications */
 #define SZ_512          (1 <<  9)
@@ -35,22 +34,6 @@
 
 
 #if defined(__NFP_LANG_MICROC)
-
-/* Chip stepping defines */
-/* 32xx */
-#define __nfp3216  131072
-#define __nfp3240  262144
-#define __nfp3200 (__nfp3216 | __nfp3240)
-#define __nfp32xx __nfp3200
-
-/* 6xxx */
-#define __nfp6000  524288
-
-#define __nfp_stepping(major,minor) (((major - 'A') << 4) | minor & 0xf)
-#define __REVISION_A0    __nfp_stepping('A', 0)
-#define __REVISION_A1    __nfp_stepping('A', 1)
-#define __REVISION_B0    __nfp_stepping('B', 0)
-#define __REVISION_C0    __nfp_stepping('C', 0)
 
 /*
  * Convenience macros
@@ -238,36 +221,94 @@ typedef enum {
 
 
 /*
- * Built-in functions
- * See the NFCC user's guide for further details.
+ * nfcc built-in function
  */
 
-int __is_ct_const(int v);
-int __nfp_meid(int island, int menum); /* island ID, ME number in island */
-int __nfp_idstr2meid(const char *idstr); /* MEID string, "iX.meY" */
-int __is_in_reg(void *p);
 
+/**
+ * Is a value a compile time constant
+ * @param v             Value/variable to check
+ */
+int __is_ct_const(int v);
+
+/**
+ * Return a canonical MEID number
+ * @param island    Island ID
+ * @param menum     ME number in the island
+ */
+int __nfp_meid(int island, int menum);
+
+/**
+ * Parse a string and return a canonical MEID number
+ * @param idstr      MEID string, line "iX.meY"
+ */
+int __nfp_idstr2meid(const char *idstr);
+
+/**
+ * Register type check
+ * @param p          Reference to a variable
+ * Checks if the content pointed to by @p is in a specific register type.
+ */
+int __is_in_reg(void *p);
 int __is_xfer_reg(void *p);
 int __is_read_reg(void *p);
 int __is_write_reg(void *p);
 #define __is_read_write_reg(_p) (__is_read_reg(_p) && __is_write_reg(_p))
-
 int __is_in_reg_or_lmem(void *p);
+
+/**
+ * Memory type check
+ * @param p          Reference to a variable
+ * Checks if the content pointed to by @p is in a specific memory.
+ */
 int __is_in_dram(void *p);
 #define __is_in_mem __is_in_dram
 int __is_in_cls(void *p);
 int __is_in_ctm(void *p);
 int __is_in_lmem(void *p);
 int __is_in_ustore(void *p);
-int __elem_size(void *p);
+
+/**
+ * Compile time assert
+ * @param v           Expression
+ * @param reason      String to print out if assert fails.
+ */
+void __ct_assert(int v, char *reason);
+
+/**
+ * Function to enable additional checks inside the enclosed block.
+ */
+void __intrinsic_begin(void);
+void __intrinsic_end(void);
+
+/**
+ * Checks for NFP architecture version
+ */
+/* Chip stepping defines */
+/* 32xx */
+#define __nfp3216  131072
+#define __nfp3240  262144
+#define __nfp3200 (__nfp3216 | __nfp3240)
+#define __nfp32xx __nfp3200
+
+/* 6xxx */
+#define __nfp6000  524288
+
+#define __nfp_stepping(major,minor) (((major - 'A') << 4) | minor & 0xf)
+#define __REVISION_A0    __nfp_stepping('A', 0)
+#define __REVISION_A1    __nfp_stepping('A', 1)
+#define __REVISION_B0    __nfp_stepping('B', 0)
+#define __REVISION_C0    __nfp_stepping('C', 0)
 
 int __is_nfp_arch(int chip_mask, int stepping);
 int __is_nfp_arch_or_above(int chip_mask, int stepping_at_least);
 
-void __ct_assert(int v, char *reason);
+/*
+ * Unknown/Undocumented
+ */
+int __elem_size(void *p);
 void __ct_Qperfinfo(int mask, char *info);
-void __intrinsic_begin(void);
-void __intrinsic_end(void);
+
 
 /**
  * Associate a read write register pair
@@ -530,32 +571,30 @@ int signal_test(volatile SIGNAL *sig);
  * The value of the currently executing context in the range of 0
  * through 7.
  */
-#define ctx() __ctx()
 unsigned int __ctx(void);
+#define ctx() __ctx()
 
 /**
  * Get the current number of contexts.
  *
  * The number of contexts compiled to run.  The range is 0 to 7.
  */
-#define n_ctx() __n_ctx()
 unsigned int __n_ctx(void);
+#define n_ctx() __n_ctx()
 
 /**
  * Get the context mode.
  *
  * Mode for number of contexts, either 4 or 8.
  */
-#define nctx_mode() __nctx_mode()
 unsigned int __nctx_mode(void);
-
+#define nctx_mode() __nctx_mode()
 
 /**
  * Lookup value of a load time constant (import variable)
  * @param name          name of import variable
  */
 long long __LoadTimeConstant(char *name);
-
 
 /**
  * Marks a section of code as being on the critical path of the application.
@@ -570,112 +609,6 @@ long long __LoadTimeConstant(char *name);
 void __critical_path(...);
 
 
-/*
- * Non built-in functions
- */
-
-/**
- * Wait for signal.
- * @param sig           signal
- *
- * Swap out the current context and wait for the specified signal
- * (bpt, voluntary, kill).  Please use the __wait_for_all(),
- * __wait_for_any(), or signal_test() functions to wait for user
- * signal variables.
- */
-__intrinsic void ctx_wait(signal_t sig);
-
-/**
- * Yield execution to another thread.
- */
-#define ctx_swap() ctx_wait(voluntary)
-
-/**
- * Halt all contexts on the microengine.
- */
-__intrinsic void halt(void);
-
-/**
- * Sleep for a number of cycles.
- * @param cycles        approx number of cycles to sleep
- */
-__intrinsic void sleep(unsigned int cycles);
-
-/**
- * Test the bit_pos in data word and return a 1 if set or 0 if clear.
- * @param data      Data word to test
- * @param bit_pos   Bit position in data to test
- *
- * This method explicitly uses the br_bset instruction.  The compiler will
- * try to use br_bset and br_bclr for regular C tests where possible.
- */
-__intrinsic int bit_test(unsigned int data, unsigned int bit_pos);
-
-/*
- * Input state names.
- */
-enum inp_state_e {
-    inp_state_nn_empty          = 0x0,
-    inp_state_nn_full           = 0x1,
-    inp_state_scr_ring0_status  = 0x2,
-    inp_state_scr_ring1_status  = 0x3,
-    inp_state_scr_ring2_status  = 0x4,
-    inp_state_scr_ring3_status  = 0x5,
-    inp_state_scr_ring4_status  = 0x6,
-    inp_state_scr_ring5_status  = 0x7,
-    inp_state_scr_ring6_status  = 0x8,
-    inp_state_scr_ring7_status  = 0x9,
-    inp_state_scr_ring8_status  = 0xA,
-    inp_state_scr_ring9_status  = 0xB,
-    inp_state_scr_ring10_status = 0xC,
-    inp_state_scr_ring11_status = 0xD,
-    inp_state_scr_ring0_full    = inp_state_scr_ring0_status,
-    inp_state_scr_ring1_full    = inp_state_scr_ring1_status,
-    inp_state_scr_ring2_full    = inp_state_scr_ring2_status,
-    inp_state_scr_ring3_full    = inp_state_scr_ring3_status,
-    inp_state_scr_ring4_full    = inp_state_scr_ring4_status,
-    inp_state_scr_ring5_full    = inp_state_scr_ring5_status,
-    inp_state_scr_ring6_full    = inp_state_scr_ring6_status,
-    inp_state_scr_ring7_full    = inp_state_scr_ring7_status,
-    inp_state_scr_ring8_full    = inp_state_scr_ring8_status,
-    inp_state_scr_ring9_full    = inp_state_scr_ring9_status,
-    inp_state_scr_ring10_full   = inp_state_scr_ring10_status,
-    inp_state_scr_ring11_full   = inp_state_scr_ring11_status,
-    inp_state_fci_not_empty     = 0xE,
-    inp_state_fci_full          = 0xF,
-    inp_state_fcififo_empty     = 0xE,
-    inp_state_fcififo_full      = 0xF
-};
-
-/**
- * Tests the value of the specified input state name.
- * @param statename     state to test
- *
- * Test the value of the specified state name and return 1 if the
- * state is set or 0 if clear.  The argument state must be a constant
- * literal as required by the microcode assembler.
- */
-__intrinsic int inp_state_test(int statename);
-
-/**
- * Get the current microengine number.
- */
-__intrinsic unsigned int __ME(void);
-
-/**
- * Read local ME CSR
- * @param mecsr         CSR number
- */
-__intrinsic unsigned int local_csr_read(int mecsr);
-
-/**
- * Write local ME CSR
- * @param mecsr         CSR number
- * @param data          data to write
- */
-__intrinsic void local_csr_write(int mecsr, unsigned int data);
-
-
 #endif /* __NFP_LANG_MICROC */
 
-#endif /* !_NFP__NFP_H_ */
+#endif /* !_NFP_H_ */

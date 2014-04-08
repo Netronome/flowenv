@@ -5,9 +5,12 @@
  * @brief         NFP CLS interface
  */
 
-#include <nfp/nfp.h>
-#include <nfp/cls.h>
+#include <nfp.h>
+#include <types.h>
+
 #include <nfp6000/nfp_me.h>
+
+#include <nfp/cls.h>
 
 #define _CLS_CMD(cmdname, data, addr, size, max_size, sync, sig, cmin, cmax) \
 do {                                                                    \

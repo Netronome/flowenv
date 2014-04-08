@@ -7,8 +7,8 @@
 #ifndef _NFP__MEM_BULK_H_
 #define _NFP__MEM_BULK_H_
 
-#include <nfp/nfp.h>
-#include <nfp/types.h>
+#include <nfp.h>
+#include <types.h>
 
 /**
  * Read a multiple of 8B from a memory unit (EMEM, IMEM, or CTM)

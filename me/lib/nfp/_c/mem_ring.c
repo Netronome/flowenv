@@ -5,7 +5,11 @@
  * @brief         NFP memory ring interface
  */
 
-#include <nfp/nfp.h>
+#include <nfp.h>
+#include <types.h>
+
+#include <nfp6000/nfp_me.h>
+
 #include <nfp/mem_bulk.h>
 #include <nfp/mem_ring.h>
 
@@ -30,7 +34,7 @@ mem_ring_get_addr(__dram void *base)
 {
     unsigned int addr_hi;
 
-    addr_hi = ((unsigned long long int)base>>8) & 0xff000000;
+    addr_hi = ((unsigned long long int)base >> 8) & 0xff000000;
     return addr_hi;
 }
 
@@ -77,7 +81,7 @@ mem_ring_setup(unsigned int rnum, __dram void *base, size_t size)
 
     /* Read the descriptor into queue array */
     /* "base" must be at least 2k aligned, so low bits are zero. */
-    addr_hi = ((unsigned long long int)base>>8) & 0xffffffff;
+    addr_hi = ((unsigned long long int)base >> 8) & 0xffffffff;
     ind.__raw = 0;
     ind.data16 = rnum;
     ind.ove_data = 1;
@@ -108,7 +112,7 @@ mem_journal_setup(unsigned int rnum, __dram void *base, size_t size)
         try_ctassert(rnum < 1024);                                      \
         try_ctassert(size != 0);                                        \
         try_ctassert(__is_aligned(size, 4));                            \
-        try_ctassert(size <= (16*4));                                   \
+        try_ctassert(size <= (16 * 4));                                 \
         ctassert(sync == sig_done);                                     \
                                                                         \
         if (__is_ct_const(size)) {                                      \

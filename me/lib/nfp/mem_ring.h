@@ -7,10 +7,10 @@
 #ifndef _NFP__MEM_RING_H_
 #define _NFP__MEM_RING_H_
 
-#if defined (__NFP_LANG_MICROC)
+#include <nfp.h>
+#include <types.h>
 
-#include <nfp/nfp.h>
-#include <nfp/types.h>
+#if defined (__NFP_LANG_MICROC)
 
 /**
  * High address bits use to specify target EMEM

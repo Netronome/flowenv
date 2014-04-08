@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2012-2014,  Netronome Systems, Inc.  All rights reserved.
  *
- * @file          lib/nfp/types.h
- * @brief         Standard NFP types
+ * @file          include/types.h
+ * @brief         Standard types
  */
 #ifndef _NFP__TYPES_H_
 #define _NFP__TYPES_H_
