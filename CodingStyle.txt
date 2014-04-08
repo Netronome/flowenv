@@ -306,12 +306,13 @@ quickly figure out where a given module fits into the larger system.
 
 
 #include directives should appear in the following order:
-
     1. Standard C header files
-
     2. The module's own headers, if any.
-
     3. Other modules headers.
+
+  A module may not rely on other module's headers to include header
+files it requires, i.e. each module must explicitly include all header
+files it depends on.
 
 
 HEADER FILES
@@ -329,8 +330,7 @@ file idempotent, like so:
 
   Header files should be self-contained; that is, they should #include
 whatever additional headers are required, without requiring the client
-to #include them for it.  However, one can assume that standard
-headers, such as stdint.h have been included before.
+to #include them for it.
 
   Don't define the members of a struct or union in a header file,
 unless client code is actually intended to access them directly or if
