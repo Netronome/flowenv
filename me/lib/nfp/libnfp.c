@@ -5,36 +5,11 @@
  * @brief         Standard library for NFP
  */
 
+
+#include <assert.h>
 #include <nfp.h>
 
 #include <nfp6000/nfp_me.h>
-
-/*
- * Define ctassert() and friends to avoid dependencies on <assert.h>.
- */
-#ifndef __CT_ASSERT(expr)
-#define __CT_ASSERT(expr) __ct_assert(expr, #expr)
-#endif
-
-#ifndef ctassert
-#define ctassert(expr)                         \
-   do {                                        \
-       __intrinsic_begin();                    \
-       __CT_ASSERT(expr);                      \
-       __intrinsic_end();                      \
-   } while (0)
-#endif
-
-#ifndef try_ctassert
-#define try_ctassert(expr)                      \
-    do {                                        \
-        __intrinsic_begin();                    \
-        if (__is_ct_const(expr))                \
-            ctassert(expr);                     \
-        __intrinsic_end();                      \
-    }  while (0)
-#endif
-
 
 /*
  * The following files implement all the functionality in <nfp/*.h>.

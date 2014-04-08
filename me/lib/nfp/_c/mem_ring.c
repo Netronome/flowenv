@@ -5,6 +5,7 @@
  * @brief         NFP memory ring interface
  */
 
+#include <assert.h>
 #include <nfp.h>
 #include <types.h>
 

@@ -5,7 +5,9 @@
  * @brief         ME related functions
  */
 
+#include <assert.h>
 #include <nfp.h>
+
 #include <nfp/me.h>
 
 __intrinsic unsigned int

@@ -7,6 +7,7 @@
 
 
 /* Standard header file */
+#include <assert.h>
 #include <nfp.h>
 #include <stdint.h>
 #include <types.h>
