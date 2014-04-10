@@ -25,6 +25,9 @@
 #include <nfp/mem_bulk.h>
 #include <nfp/mem_ring.h>
 
+/* libstd related header files */
+#include <std/event.h>
+
 /* Dummy main entry point */
 int
 main(void)

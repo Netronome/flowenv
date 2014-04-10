@@ -16,6 +16,11 @@ pyexec<set_output_mode("nfp")>
 pyexec<dump_map(ClusterScratchCppMap(altname="CLS"), docs=True)>
 
 /*
+ * Event manager CSRs are accessed at 8-byte offsets in CLS
+ */
+#define NFP_CLS_EM_CSR_SPACING                             8
+
+/*
  * CLS register structures
  */
 #if defined(__NFP_LANG_MICROC)

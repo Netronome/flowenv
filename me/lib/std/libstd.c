@@ -12,6 +12,7 @@
  * The following files implement all the funcitonality in <std/*.h>.
  */
 
+#include "_c/event.c"
 
 #endif /* !_STD__LIBSTD_C_ */
 
