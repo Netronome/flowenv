@@ -9,10 +9,11 @@
 #define _STD__LIBSTD_C_
 
 /*
- * The following files implement all the funcitonality in <std/*.h>.
+ * The following files implement all the functionality in <std/*.h>.
  */
 
 #include "_c/event.c"
+#include "_c/reg_utils.c"
 
 #endif /* !_STD__LIBSTD_C_ */
 

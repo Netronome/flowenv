@@ -27,6 +27,7 @@
 
 /* libstd related header files */
 #include <std/event.h>
+#include <std/reg_utils.h>
 
 /* Dummy main entry point */
 int
