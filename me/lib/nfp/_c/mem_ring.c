@@ -225,7 +225,7 @@ mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr, __xrw void *data,
     __mem_ring_put(rnum, raddr, data, size, size, sig_done, &sigpair);
     wait_for_all(&sigpair);
 
-    result = ((int *) data)[0];
+    result = ((__xread int *) data)[0];
     return (result == 0) ? -1 : (result << 2);
 }
 
