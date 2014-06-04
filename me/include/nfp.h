@@ -54,6 +54,7 @@
 #define __visible       __declspec(visible)
 #define __remote        __declspec(remote)
 #define __addr40        __declspec(addr40)
+#define __addr32        __declspec(addr32)
 #define __xread         __declspec(read_reg)
 #define __xwrite        __declspec(write_reg)
 #define __xrw           __declspec(read_write_reg)

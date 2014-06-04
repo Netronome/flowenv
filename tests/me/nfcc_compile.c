@@ -29,6 +29,9 @@
 #include <std/event.h>
 #include <std/reg_utils.h>
 
+/* libpkt related header files */
+#include <pkt/pkt.h>
+
 /* Dummy main entry point */
 int
 main(void)
