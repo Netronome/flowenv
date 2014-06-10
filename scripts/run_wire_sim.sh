@@ -3,7 +3,7 @@
 set -e
 
 FLOWENV=${FLOWENV:-.}
-TOOLS=${FLOWENV}/contrib/dbgtools
+TOOLS=${FLOWENV}/contrib/simtools
 FIRMWARE=${FLOWENV}/me/apps/wire/wire.nffw
 NCYCLES=${NCYCLES:-3000}
 
