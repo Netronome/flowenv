@@ -11,6 +11,150 @@
 #include <stdint.h>
 #include <types.h>
 
+
+/*
+ * Packet Reception and Transmission over Ethernet in the NFP6000
+ *
+ * The NFP 6000 series of chips has multiple subsystems for packet reception
+ * and transmission over Ethernet:
+ *  - the MAC block that manages the physical interconnection and perform
+ *    timestamping and checksum offload
+ *  - the NBI preclassifier that performs basic packet parsing and metadata
+ *    construction
+ *  - the NBI DMA unit which load balances incoming packets to CTM islands
+ *    and transfers the packet to CTM and MU buffers
+ *  - the CTM packet engine (PE) that manages the CTM packet buffers
+ *  - the NBI traffic manager (TM) which performs packet reordering, shaping
+ *    and modification
+ *  - the MEs that perform the forwarding function plus any intelligent
+ *    processing.
+ * There are also various interdependencies between these systems all of
+ * which make basic packet operations rather complex.  The functions in
+ * this library attempt to abstract away most of the details of these
+ * operations from the perspective of the ME programmer.  What follows is
+ * a high level description of the packet recieve and transmit processes.
+ *
+ *
+ * Packet reception proceeds roughly as follows.  First, the MAC block
+ * pulls a packet in from a physical interface and transfers it over
+ * a "minipacket bus" to internal memory in the NBI preclassifier block.
+ * During this process it may prepend timestamp and checksum validation
+ * information to the beginning of the packet.  Next, the NBI preclassifier
+ * performs (very) basic packet classification and forwarding and constructs
+ * 16 bytes of packet metadata for the incoming packet.  It also selects
+ * a group of CTM islands and a pair of buffer lists for the packet.
+ *
+ * The NBI DMA unit then selects a CTM island to send the packet to and an
+ * MU buffer for the packet based on the NBI preclassifier output.  It then
+ * requests a CTM buffer for the packet from the selected island's CTM PE.
+ * The CTM island provides the NBI with the CTM buffer to hold the front of
+ * the packet.  The NBI DMA block then transfers the front of the packet to
+ * the CTM buffer and the remainder of the packet to the MU buffer.  It also
+ * transfers 8 bytes of fixed buffer metadata along with the 16 bytes of
+ * preclassifier metadata to the beginning of the CTM buffer.  Finally, it
+ * notifies the CTM packet engine that the packet is ready.
+ *
+ * During this time, MEs can signal the CTM packet engine that they are
+ * ready to receive a packet.  If there are no packets available for
+ * reception, the CTM enqueues the ME thread information in its internal
+ * work queue.  When the NBI TM delivers a packet to the CTM PE, if there
+ * are threads on the work queue, the CTM PE dequeues the first and delivers
+ * the packet to it.  If the work queue contains no ME thread requests then
+ * the CTM PE instead enqueues the packet onto the work queue so that when
+ * an ME requests a packet, it will be able to deliver it to the ME
+ * immediately.
+ *
+ *
+ * It is worth understanding the relationship between CTM and MU buffers for
+ * holding packets.  Each CTM buffer must be 256, 512, 1K or 2K bytes in
+ * length.  The NBI DMA configuration determines the maximum size from among
+ * those possible sizes.  The CTM buffer contains packet metadata followed
+ * by a padding gap followed by beginning of the packet data itself as
+ * delivered by the MAC.  The MU buffer (which must be 2K aligned) contains
+ * the remainder of the packet data.  However, this remaining packet data
+ * will not start until 'S' bytes into the MU buffer where 'S' is the size
+ * of the CTM buffer.  If the packet can fit entirely in the CTM buffer
+ * (when factoring in the metadata and starting packet headeroom) then the
+ * packet will still have an associated MU buffer, but none of the packet
+ * data will reside within it.  The figure below shows the general layout of
+ * the NFP 6000 packet buffers.
+ *
+ * CTM buffer
+ *      8 or 40 bytes                  CTM_SIZE =
+ *             |   0-12 bytes of MAC   256/512/1024/2048 bytes
+ *    24 bytes |   prepend data        /
+ *       |     |     /                /
+ *    +----+-------+---+-------------+
+ *    |meta|padding|MPP|packet ...   |
+ *    +----+-------+---+-------------+
+ *                 |
+ *               32/64
+ * MU buffer
+ *    +------------------------------+----------------------------------+
+ *    | CTM_SIZE uninitialized bytes | ... packet data ....             |
+ *    +------------------------------+----------------------------------+
+ *    |                              |                                  |
+ * Must be 2K aligned        256/512/1024/2048                       16K max
+ *                          depending on CTM_SIZE
+ *
+ *
+ * Packet transmission is also a multistep process.  The ME must first
+ * determine where the packet to transmit begins in the CTM buffer and how
+ * long it is.  (This, of course may be different from the starting offset
+ * and length delivered to the ME on packet reception.)  Next, the ME must
+ * determine if it wants the egress MAC block to perform any TCP or UDP
+ * checksum updates.  If so, it must prepend the packet with a special
+ * command for the MAC block.  The ME must next prepend a "modification
+ * script" to the front of the packet to inform the TM of how to modify the
+ * packet before transmission.  The ME must do this even if no modifications
+ * are required.  The ME must then select a sequence number and TM sequencer
+ * for transmission.  Packets will leave the TM block roughly in order of
+ * sequence number among the other packets assigned to the same sequencer.
+ * However, the TMs reorder block operates heuristically and may send the
+ * packets out of order.  The ME must also select the NBI and the transmit
+ * queue on that NBI to send the packet out.  Each transmit queue
+ * corresponds (ultimately) to a single physical port, but multiple transmit
+ * queues may map to the same port.  The transmit queue determines the
+ * traffic shaping applied to the packet during transmisison.  Finally, the
+ * ME issues a "packet processing complete" command to the CTM PE to send
+ * the packet.
+ *
+ * The CTM PE receives the PPC comand and issues its own "packet ready"
+ * command to the NBI TM to send the packet.  The CTM PE builds much of the
+ * information in this command from the information that the ME supplied.
+ * The NBI TM then enqueues the packet to its reorder subsystem while
+ * simultaneously reserving space for the packet in the requested transmit
+ * queue.  If the transmit queue is full, the TM may drop the packet or
+ * request the CTM PE to retry sending the packet later.  Either way, the ME
+ * is no longer involved with this packet.
+ *
+ * The TM's next step is to await release from the reorder subsystem.  The
+ * TM does this according to the sequence number and sequencer that the ME
+ * supplied with the original "packet processing complete command".  After
+ * release from reorder, the TM may, hold onto the packet further according
+ * to scheduling parameters configured for the given TX queue.  Finally,
+ * when the packet is ready for transmission, the TM copies the packet into
+ * internal TM memory from the CTM and MU buffers and notifies the CTM PE
+ * that the CTM buffer is free.  It also enqueues the MU buffer onto an
+ * internal queue of free MU buffer handles.
+ *
+ * Once the packet resides completely in NBI TM internal memory, the TM
+ * passes the packet to the packet modifier subsystem which then sends it
+ * onto the egress MAC block.  The packet modifier reads and strips the
+ * modification script prepended to the packet and performs the requested
+ * modifications.  The packet then goes to the egress MAC block which may
+ * perform TCP checksum updates if the ME prepended the packet with a
+ * command to do so.  Finally, the egress MAC block will transmit the packet
+ * onto the physicial media.
+ * 
+ * In order to recycle MU buffers back into use by ingress processing, 
+ * software must include a special purpose ME that drains the egress MU
+ * buffer handle queues and re-enqueues the buffer handles to the NBI DMA
+ * engines.  This "buffer list manager" software might alternately make 
+ * the MU buffers available for other types of packet operations such as
+ * PCIe reception, packet copying, etc...
+ */
+
 #if defined(__NFP_LANG_MICROC)
 
 /**
@@ -42,8 +186,8 @@
  * the NBI/CTM Packet Engine delivers to the ME.  The NBI traffic manager
  * also requires this data at the beginning of the CTM buffer in the
  * same format for packet transmission.  However, the TM ignores the
- * Packet Lenght field and uses an encoded address (see below) to get the
- * the transmission length.
+ * Packet Length field and uses an encoded address (see below) to determine
+ * the the transmission length.
  */
 struct nbi_meta_pkt_info {
     union {
@@ -98,7 +242,7 @@ struct nbi_meta_null {
             unsigned int seq:10;        /**< Packet sequence number */
             unsigned int resv1:6;       /**< Reserved */
 #endif /* BIGENDIAN */
-            unsigned int preclass[3];   /**< Unkonwn preclassifier metadata */
+            unsigned int preclass[3];   /**< Unknown preclassifier metadata */
         };
         uint32_t __raw[6];
     };
@@ -121,6 +265,11 @@ struct nbi_meta_null {
  *    Reference Formats"
  *  - NFP 6xxx DB Section 9.2.2.7.9 "Packet Processing Complete Target
  *    Command and Packet Ready Master Command"
+ *
+ * Users of this API need not worry about these details.  The functions
+ * provided handle all of these steps.  The pkt_iref_* functions and
+ * the TM_MS_* constants and macros below are thus provided for the
+ * user who wants to write their own packet transmit operations.
  */
 
 
@@ -305,7 +454,7 @@ __intrinsic void pkt_nbi_recv(__xread void *meta, size_t msize);
  * @param off   The offset within the CTM buffer
  */
 __intrinsic __addr40 void *
-    pkt_ctm_ptr40_build(unsigned char isl, unsigned int pnum, unsigned int off);
+    pkt_ctm_ptr40(unsigned char isl, unsigned int pnum, unsigned int off);
 
 
 /**
@@ -317,7 +466,7 @@ __intrinsic __addr40 void *
  * @param off   The offset within the CTM buffer
  */
 __intrinsic __addr32 void *
-    pkt_ctm_ptr32_build(unsigned int pnum, unsigned int off);
+    pkt_ctm_ptr32(unsigned int pnum, unsigned int off);
 
 
 /**
@@ -327,18 +476,18 @@ __intrinsic __addr32 void *
  * MAC prepend data that precedes it).  There must be at least 16 bytes
  * between this pointer and the beginning of the CTM buffer.
  *
- * @param pp    A pointer to the start of the packet buffer
+ * @param pbuf  A pointer to the start of the packet buffer
  * @param off   The starting offset of the packet data
  * @param xms   Transfer registers to hold the script
  * @param sync  The type of synchronization (sig_done or ctx_swap)
  * @param sig   The signal to use.
  */
 __intrinsic struct pkt_ms_info
-    __pkt_nop_ms_write(__addr40 void *pp, unsigned char off, 
+    __pkt_nop_ms_write(__addr40 void *pbuf, unsigned char off, 
                        __xwrite uint32_t xms[2], sync_t sync, SIGNAL *sig);
 
 __intrinsic struct pkt_ms_info
-    pkt_nop_ms_write(__addr40 void *pp, unsigned char off);
+    pkt_nop_ms_write(__addr40 void *pbuf, unsigned char off);
 
 
 

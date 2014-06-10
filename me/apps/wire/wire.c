@@ -31,7 +31,7 @@ __shared int nsent = 0;
 void main(void)
 {
     __gpr struct pkt_ms_info msi;
-    __addr40 char *pkt;
+    __addr40 char *pbuf;
     __xread struct nbi_meta_null nbi_meta;
     __xread struct nbi_meta_pkt_info *pi = &nbi_meta.pkt_info;
 
@@ -47,8 +47,8 @@ void main(void)
         nrecv++;
         local_csr_write(NFP_MECSR_MAILBOX_0, nrecv);
 
-        pkt = pkt_ctm_ptr40_build(pi->isl, pi->pnum, 0);
-        msi = pkt_nop_ms_write(pkt, PKT_NBI_OFFSET);
+        pbuf = pkt_ctm_ptr40(pi->isl, pi->pnum, 0);
+        msi = pkt_nop_ms_write(pbuf, PKT_NBI_OFFSET);
         pkt_nbi_send(0, pi->pnum, &msi, pi->len, MY_NBI ^ 1, OUT_TXQ,
                      nbi_meta.seqr, nbi_meta.seq);
 
