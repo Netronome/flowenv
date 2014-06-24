@@ -262,10 +262,7 @@ int __is_in_reg_or_lmem(void *p);
  * @param p          Reference to a variable
  * Checks if the content pointed to by @p is in a specific memory.
  */
-int __is_in_dram(void *p);
 #define __is_in_mem __is_in_dram
-int __is_in_cls(void *p);
-int __is_in_ctm(void *p);
 int __is_in_lmem(void *p);
 int __is_in_ustore(void *p);
 
