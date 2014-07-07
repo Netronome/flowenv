@@ -47,6 +47,7 @@
 #define __dram          __declspec(dram)
 #define __cls           __declspec(cls)
 #define __ctm           __declspec(ctm)
+#define __ctm_n(x)      __declspec(ctm##x)
 #define __lmem          __declspec(local_mem)
 #define __export        __declspec(export)
 #define __import        __declspec(import)
