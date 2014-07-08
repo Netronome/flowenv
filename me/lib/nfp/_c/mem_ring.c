@@ -104,6 +104,12 @@ mem_journal_setup(unsigned int rnum, __dram void *base, size_t size)
 }
 
 
+__intrinsic mem_ring_addr_t
+mem_workq_setup(unsigned int rnum, __dram void *base, size_t size)
+{
+    return mem_ring_setup(rnum, base, size);
+}
+
 
 #define _MEM_RING_CMD(cmdname, data, rnum, raddr, size, max_sz, sync, sigpair) \
     do {                                                                \
@@ -229,6 +235,7 @@ mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr, __xrw void *data,
     return (result == 0) ? -1 : (result << 2);
 }
 
+
 __intrinsic void
 __mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr,
                    __xwrite void *data, size_t size, const size_t max_size,
@@ -271,6 +278,87 @@ mem_ring_journal_fast(unsigned int rnum, mem_ring_addr_t raddr,
         mem[fast_journal,--, raddr, <<8, value, 0], indirect_ref
     }
 }
+
+
+#define _MEM_WORKQ_CMD(cmdname, data, rnum, raddr, size, max_sz, sync, sig) \
+    do {                                                                \
+        struct nfp_mecsr_prev_alu ind;                                  \
+        unsigned int count = (size >> 2);                               \
+                                                                        \
+        try_ctassert(rnum < 1024);                                      \
+        try_ctassert(size != 0);                                        \
+        try_ctassert(__is_aligned(size, 4));                            \
+        try_ctassert(size <= (16 * 4));                                 \
+        ctassert(max_sz <= (16 * 4));                                   \
+        ctassert(sync == sig_done);                                     \
+                                                                        \
+        if (__is_ct_const(size)) {                                      \
+            if (size <= (8*4)) {                                        \
+                __asm { mem[cmdname, *data, raddr, <<8, rnum,           \
+                            __ct_const_val(count)],                     \
+                            sig_done[*sig] }                            \
+            } else {                                                    \
+                /* Setup length in PrevAlu for the indirect */          \
+                ind.__raw = 0;                                          \
+                ind.ov_len = 1;                                         \
+                ind.length = count - 1;                                 \
+                                                                        \
+                __asm { alu[--, --, B, ind] }                           \
+                __asm { mem[cmdname, *data, raddr, <<8, rnum,           \
+                            __ct_const_val(count)], indirect_ref,       \
+                            sig_done[*sig] }                            \
+            }                                                           \
+        } else {                                                        \
+            unsigned int max_count = (max_sz >> 2);                     \
+                                                                        \
+            /* Setup length in PrevAlu for the indirect */              \
+            ind.__raw = 0;                                              \
+            ind.ov_len = 1;                                             \
+            ind.length = count - 1;                                     \
+                                                                        \
+            __asm { alu[--, --, B, ind] }                               \
+            __asm { mem[cmdname, *data, raddr, <<8, rnum,               \
+                        __ct_const_val(max_count)], indirect_ref,       \
+                        sig_done[*sig] }                                \
+        }                                                               \
+    } while (0)
+
+
+__intrinsic void
+__mem_workq_add_work(unsigned int rnum, mem_ring_addr_t raddr,
+                     __xwrite void *data, size_t size, const size_t max_size,
+                     sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_write_reg(data));
+    _MEM_WORKQ_CMD(qadd_work, data, rnum, raddr, size, max_size, sync, sig);
+}
+
+__intrinsic void
+mem_workq_add_work(unsigned int rnum, mem_ring_addr_t raddr,
+                   __xwrite void *data, const size_t size)
+{
+    SIGNAL sig;
+    __mem_workq_add_work(rnum, raddr, data, size, size, ctx_swap, &sig);
+}
+
+
+__intrinsic void
+__mem_workq_add_thread(unsigned int rnum, mem_ring_addr_t raddr,
+                       __xread void *data, size_t size, const size_t max_size,
+                       sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_read_reg(data));
+    _MEM_WORKQ_CMD(qadd_thread, data, rnum, raddr, size, max_size, sync, sig);
+}
+
+__intrinsic void
+mem_workq_add_thread(unsigned int rnum, mem_ring_addr_t raddr,
+                     __xread void *data, const size_t size)
+{
+    SIGNAL sig;
+    __mem_workq_add_thread(rnum, raddr, data, size, size, ctx_swap, &sig);
+}
+
 
 __intrinsic size_t
 mem_ring_current_size(unsigned int rnum, mem_ring_addr_t raddr)

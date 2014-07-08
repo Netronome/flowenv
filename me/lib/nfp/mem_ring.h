@@ -33,6 +33,8 @@ typedef unsigned int mem_ring_addr_t;
     __export __emem __align(_entries * 4) unsigned int _name[_entries]
 #define MEM_JOURNAL_DECLARE(_name, _entries) \
     __export __emem __align(_entries * 4) unsigned int _name[_entries]
+#define MEM_WORKQ_DECLARE(_name, _entries) \
+    __export __emem __align(_entries * 4) unsigned int _name[_entries]
 
 /**
  * Configure a memory ring/journal
@@ -44,7 +46,8 @@ typedef unsigned int mem_ring_addr_t;
     mem_ring_setup(_rnum, _name, sizeof(_name))
 #define MEM_JOURNAL_CONFIGURE(_name, _rnum) \
     mem_journal_setup(_rnum, _name, sizeof(_name))
-
+#define MEM_WORKQ_CONFIGURE(_name, _rnum) \
+    mem_journal_setup(_rnum, _name, sizeof(_name))
 
 /**
  * Construct a mem_ring_addr_t
@@ -84,6 +87,21 @@ __intrinsic mem_ring_addr_t mem_ring_setup(unsigned int rnum, __dram void *base,
 __intrinsic mem_ring_addr_t mem_journal_setup(unsigned int rnum,
                                               __dram void *base,
                                               size_t log2size);
+
+
+/**
+ * Setup/Configure a memory work queue
+ *
+ * @param rnum          ring number
+ * @param base          base address
+ * @param size          size of ring (must be a compile time constant)
+ *
+ * Initializes a DRAM work queue with a given size using the memory
+ * pointed to by base.
+ */
+__intrinsic mem_ring_addr_t mem_workq_setup(unsigned int rnum,
+                                            __dram void *base,
+                                            size_t log2size);
 
 
 /**
@@ -193,6 +211,7 @@ __intrinsic void __mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr,
 __intrinsic int mem_ring_put(unsigned int rnum,mem_ring_addr_t raddr,
                              __xrw void *data, const size_t size);
 
+
 /**
  * Journal entries onto memory ring
  * @param rnum          ring number
@@ -233,6 +252,68 @@ __intrinsic int mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr,
  */
 __intrinsic void mem_ring_journal_fast(unsigned int rnum, mem_ring_addr_t raddr,
                                        unsigned int value);
+
+
+/**
+ * Put entries onto a work queue
+ * @param rnum          work queue "ring" number
+ * @param raddr         address bits for the queue engine island
+ * @param data          input data
+ * @param size          size of input
+ * @param max_size      used to determine largest op, if size is not a constant
+ * @param sync          type of synchronization
+ * @param sig           signal to use for the operation
+ *
+ * Note that no work queue overflow checking is performed.
+ */
+__intrinsic void __mem_workq_add_work(unsigned int rnum, mem_ring_addr_t raddr,
+                                      __xwrite void *data,
+                                      size_t size, const size_t max_size,
+                                      sync_t sync, SIGNAL *sig);
+
+/**
+ * Put entries onto a work queue
+ * @param rnum          work queue "ring" number
+ * @param raddr         address bits for the queue engine island
+ * @param data          input data
+ * @param size          size of input
+ *
+ * Note that no work queue overflow checking is performed.
+ */
+__intrinsic void mem_workq_add_work(unsigned int rnum, mem_ring_addr_t raddr,
+                                    __xwrite void *data, const size_t size);
+
+
+/**
+ * Put threads onto a work queue
+ * @param rnum          work queue "ring" number
+ * @param raddr         address bits for the queue engine island
+ * @param data          output data
+ * @param size          size of output
+ * @param max_size      used to determine largest op, if size is not a constant
+ * @param sync          type of synchronization
+ * @param sig           signal to use for the operation
+ *
+ * Note that no work queue overflow checking is performed.
+ */
+__intrinsic void __mem_workq_add_thread(unsigned int rnum,
+                                        mem_ring_addr_t raddr,
+                                        __xread void *data,
+                                        size_t size, const size_t max_size,
+                                        sync_t sync, SIGNAL *sig);
+
+/**
+ * Put threads onto a work queue
+ * @param rnum          work queue "ring" number
+ * @param raddr         address bits for the queue engine island
+ * @param data          output data
+ * @param size          size of output
+ *
+ * Note that no work queue overflow checking is performed.
+ */
+__intrinsic void mem_workq_add_thread(unsigned int rnum, mem_ring_addr_t raddr,
+                                      __xread void *data, const size_t size);
+
 
 /**
  * Get current amount of data in memory ring
