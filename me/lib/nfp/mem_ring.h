@@ -179,16 +179,17 @@ __intrinsic int mem_ring_pop(unsigned int rnum, mem_ring_addr_t raddr,
  * @param sync          type of synchronization (must be sig_done)
  * @param sigpair       signal pair to report completion/failure
  *
- * Add entries to the tail of the ring and return number of bytes
- * already on ring.  Leave ring as-is and return -1 if the ring was
- * too full to complete the request.
+ * Add entries to the tail of the ring. mem[put] returns a status word
+ * in data[0] after both signals have been asserted.  It is the
+ * caller's responsibility to check the status when using this
+ * function.  If data[0] is zero, a error occurred.  If the top bit of
+ * data[0] is *not* set, the data was not added and the lower data[0]
+ * bits contain the number of 32bit words already on the ring.  If the
+ * top bit of data[0] is set, the operation succeeded and the lower
+ * bits contain the number of 32bit words already on the ring.
  *
  * Note that the input data must be declared as both read and write
  * register.
- *
- * mem[put] returns a status word in data[0]. It is the caller's
- * responsibility to check the status when using this method. See
- * the source code for mem_ring_put for an example of suitable test code.
  */
 __intrinsic void __mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr,
                                 __xrw void *data,
@@ -203,7 +204,7 @@ __intrinsic void __mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr,
  *
  * Add entries to the tail of the ring and return number of bytes
  * already on ring.  Leave ring as-is and return -1 if the ring was
- * too full to complete the request.
+ * too full to complete the request or another error occurred.
  *
  * Note that the input data must be declared as both read and write
  * register.
