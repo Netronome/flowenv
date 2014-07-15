@@ -232,7 +232,7 @@ mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr, __xrw void *data,
     wait_for_all(&sigpair);
 
     result = ((__xread int *) data)[0];
-    return (result == 0) ? -1 : (result << 2);
+    return (result & (1 << 31)) ? (result << 2) : -1;
 }
 
 
