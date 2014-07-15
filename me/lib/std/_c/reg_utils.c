@@ -26,112 +26,208 @@
 /* TODO: Investigate if a register type is indexable, convert to a loop. */
 /* TODO: Expand to handle larger 128 if in 4 context mode. */
 
+
+/* MACRO for reg_zero and reg_cp switch case implementation */
+#define _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, EXEC_MACRO)                     \
+{                                                                           \
+    switch (n) {                                                            \
+        case 4:                                                             \
+            EXEC_MACRO( 0);                                                 \
+            break;                                                          \
+        case 8:                                                             \
+            EXEC_MACRO( 0); EXEC_MACRO( 1);                                 \
+            break;                                                          \
+        case 12:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2);                 \
+            break;                                                          \
+        case 16:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            break;                                                          \
+        case 20:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4);                                                 \
+            break;                                                          \
+        case 24:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4); EXEC_MACRO( 5);                                 \
+            break;                                                          \
+        case 28:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4); EXEC_MACRO( 5); EXEC_MACRO( 6);                 \
+            break;                                                          \
+        case 32:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4); EXEC_MACRO( 5); EXEC_MACRO( 6); EXEC_MACRO( 7); \
+            break;                                                          \
+        case 36:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4); EXEC_MACRO( 5); EXEC_MACRO( 6); EXEC_MACRO( 7); \
+            EXEC_MACRO( 8);                                                 \
+            break;                                                          \
+        case 40:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4); EXEC_MACRO( 5); EXEC_MACRO( 6); EXEC_MACRO( 7); \
+            EXEC_MACRO( 8); EXEC_MACRO( 9);                                 \
+            break;                                                          \
+        case 44:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4); EXEC_MACRO( 5); EXEC_MACRO( 6); EXEC_MACRO( 7); \
+            EXEC_MACRO( 8); EXEC_MACRO( 9); EXEC_MACRO(10);                 \
+            break;                                                          \
+        case 48:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4); EXEC_MACRO( 5); EXEC_MACRO( 6); EXEC_MACRO( 7); \
+            EXEC_MACRO( 8); EXEC_MACRO( 9); EXEC_MACRO(10); EXEC_MACRO( 11);\
+            break;                                                          \
+        case 52:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4); EXEC_MACRO( 5); EXEC_MACRO( 6); EXEC_MACRO( 7); \
+            EXEC_MACRO( 8); EXEC_MACRO( 9); EXEC_MACRO(10); EXEC_MACRO(11); \
+            EXEC_MACRO(12);                                                 \
+            break;                                                          \
+        case 56:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4); EXEC_MACRO( 5); EXEC_MACRO( 6); EXEC_MACRO( 7); \
+            EXEC_MACRO( 8); EXEC_MACRO( 9); EXEC_MACRO(10); EXEC_MACRO(11); \
+            EXEC_MACRO(12); EXEC_MACRO(13);                                 \
+            break;                                                          \
+        case 60:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4); EXEC_MACRO( 5); EXEC_MACRO( 6); EXEC_MACRO( 7); \
+            EXEC_MACRO( 8); EXEC_MACRO( 9); EXEC_MACRO(10); EXEC_MACRO(11); \
+            EXEC_MACRO(12); EXEC_MACRO(13); EXEC_MACRO(14);                 \
+            break;                                                          \
+        case 64:                                                            \
+            EXEC_MACRO( 0); EXEC_MACRO( 1); EXEC_MACRO( 2); EXEC_MACRO( 3); \
+            EXEC_MACRO( 4); EXEC_MACRO( 5); EXEC_MACRO( 6); EXEC_MACRO( 7); \
+            EXEC_MACRO( 8); EXEC_MACRO( 9); EXEC_MACRO(10); EXEC_MACRO(11); \
+            EXEC_MACRO(12); EXEC_MACRO(13); EXEC_MACRO(14); EXEC_MACRO(15); \
+            break;                                                          \
+        }                                                                   \
+}
+
+
+
+/* MACRO for reg_eq switch case implementation */
+#define _REG_UTILS_EQ_SWITCH_CASE_IMPLEMENT(n)                              \
+{                                                                           \
+        switch (n) {                                                        \
+        case 4:                                                             \
+            ret = __REG_EQ( 0);                                             \
+            break;                                                          \
+        case 8:                                                             \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1));                           \
+            break;                                                          \
+        case 12:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2));           \
+            break;                                                          \
+        case 16:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3));                                           \
+            break;                                                          \
+        case 20:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4));                           \
+            break;                                                          \
+        case 24:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4) && __REG_EQ( 5));           \
+            break;                                                          \
+        case 28:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4) && __REG_EQ( 5) &&          \
+                   __REG_EQ( 6));                                           \
+            break;                                                          \
+        case 32:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4) && __REG_EQ( 5) &&          \
+                   __REG_EQ( 6) && __REG_EQ( 7));                           \
+            break;                                                          \
+        case 36:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4) && __REG_EQ( 5) &&          \
+                   __REG_EQ( 6) && __REG_EQ( 7) && __REG_EQ( 8));           \
+            break;                                                          \
+        case 40:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4) && __REG_EQ( 5) &&          \
+                   __REG_EQ( 6) && __REG_EQ( 7) && __REG_EQ( 8) &&          \
+                   __REG_EQ( 9));                                           \
+            break;                                                          \
+        case 44:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4) && __REG_EQ( 5) &&          \
+                   __REG_EQ( 6) && __REG_EQ( 7) && __REG_EQ( 8) &&          \
+                   __REG_EQ( 9) && __REG_EQ(10));                           \
+            break;                                                          \
+        case 48:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4) && __REG_EQ( 5) &&          \
+                   __REG_EQ( 6) && __REG_EQ( 7) && __REG_EQ( 8) &&          \
+                   __REG_EQ( 9) && __REG_EQ(10) && __REG_EQ(11));           \
+            break;                                                          \
+        case 52:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4) && __REG_EQ( 5) &&          \
+                   __REG_EQ( 6) && __REG_EQ( 7) && __REG_EQ( 8) &&          \
+                   __REG_EQ( 9) && __REG_EQ(10) && __REG_EQ(11) &&          \
+                   __REG_EQ(12));                                           \
+            break;                                                          \
+        case 56:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4) && __REG_EQ( 5) &&          \
+                   __REG_EQ( 6) && __REG_EQ( 7) && __REG_EQ( 8) &&          \
+                   __REG_EQ( 9) && __REG_EQ(10) && __REG_EQ(11) &&          \
+                   __REG_EQ(12) && __REG_EQ(13));                           \
+            break;                                                          \
+        case 60:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4) && __REG_EQ( 5) &&          \
+                   __REG_EQ( 6) && __REG_EQ( 7) && __REG_EQ( 8) &&          \
+                   __REG_EQ( 9) && __REG_EQ(10) && __REG_EQ(11) &&          \
+                   __REG_EQ(12) && __REG_EQ(13) && __REG_EQ(14));           \
+            break;                                                          \
+        case 64:                                                            \
+            ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) &&          \
+                   __REG_EQ( 3) && __REG_EQ( 4) && __REG_EQ( 5) &&          \
+                   __REG_EQ( 6) && __REG_EQ( 7) && __REG_EQ( 8) &&          \
+                   __REG_EQ( 9) && __REG_EQ(10) && __REG_EQ(11) &&          \
+                   __REG_EQ(12) && __REG_EQ(13) && __REG_EQ(14) &&          \
+                   __REG_EQ(15));                                           \
+            break;                                                          \
+        }                                                                   \
+}
+
+
 __intrinsic void
 reg_zero(void *s, size_t n)
 {
+    unsigned int lmem_found;
     /* Make sure the parameters are as we expect */
     ctassert(__is_in_reg_or_lmem(s));
     ctassert(__is_ct_const(n));
     ctassert(n <= 64);
     ctassert((n % 4) == 0);
-
 #ifdef __REG_ZERO
     #error "Attempting to redefine __REG_ZERO"
 #endif
 
+    /* if type lmem must be defined as such */
+    if (__is_in_lmem(s)) {
+#define __REG_ZERO(_x) ((__lmem unsigned int *)s)[_x] = 0
+
+        _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_ZERO);
+
+#undef __REG_ZERO
+    }
+    /* else is a register type */
+    else {
 #define __REG_ZERO(_x) ((unsigned int *)s)[_x] = 0
 
-    /* switch on number of bytes */
-    switch (n) {
-    case 4:
-        __REG_ZERO( 0);
-        break;
+        _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_ZERO);
 
-    case 8:
-        __REG_ZERO( 0); __REG_ZERO( 1);
-        break;
-
-    case 12:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2);
-        break;
-
-    case 16:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        break;
-
-    case 20:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4);
-        break;
-
-    case 24:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4); __REG_ZERO( 5);
-        break;
-
-    case 28:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4); __REG_ZERO( 5); __REG_ZERO( 6);
-        break;
-
-    case 32:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4); __REG_ZERO( 5); __REG_ZERO( 6); __REG_ZERO( 7);
-        break;
-
-    case 36:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4); __REG_ZERO( 5); __REG_ZERO( 6); __REG_ZERO( 7);
-        __REG_ZERO( 8);
-        break;
-
-    case 40:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4); __REG_ZERO( 5); __REG_ZERO( 6); __REG_ZERO( 7);
-        __REG_ZERO( 8); __REG_ZERO( 9);
-        break;
-
-    case 44:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4); __REG_ZERO( 5); __REG_ZERO( 6); __REG_ZERO( 7);
-        __REG_ZERO( 8); __REG_ZERO( 9); __REG_ZERO(10);
-        break;
-
-    case 48:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4); __REG_ZERO( 5); __REG_ZERO( 6); __REG_ZERO( 7);
-        __REG_ZERO( 8); __REG_ZERO( 9); __REG_ZERO(10); __REG_ZERO( 11);
-        break;
-
-    case 52:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4); __REG_ZERO( 5); __REG_ZERO( 6); __REG_ZERO( 7);
-        __REG_ZERO( 8); __REG_ZERO( 9); __REG_ZERO(10); __REG_ZERO(11);
-        __REG_ZERO(12);
-        break;
-
-    case 56:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4); __REG_ZERO( 5); __REG_ZERO( 6); __REG_ZERO( 7);
-        __REG_ZERO( 8); __REG_ZERO( 9); __REG_ZERO(10); __REG_ZERO(11);
-        __REG_ZERO(12); __REG_ZERO(13);
-        break;
-
-    case 60:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4); __REG_ZERO( 5); __REG_ZERO( 6); __REG_ZERO( 7);
-        __REG_ZERO( 8); __REG_ZERO( 9); __REG_ZERO(10); __REG_ZERO(11);
-        __REG_ZERO(12); __REG_ZERO(13); __REG_ZERO(14);
-        break;
-
-    case 64:
-        __REG_ZERO( 0); __REG_ZERO( 1); __REG_ZERO( 2); __REG_ZERO( 3);
-        __REG_ZERO( 4); __REG_ZERO( 5); __REG_ZERO( 6); __REG_ZERO( 7);
-        __REG_ZERO( 8); __REG_ZERO( 9); __REG_ZERO(10); __REG_ZERO(11);
-        __REG_ZERO(12); __REG_ZERO(13); __REG_ZERO(14); __REG_ZERO(15);
-        break;
-    }
 #undef __REG_ZERO
+    }
 }
 
 __intrinsic void
@@ -147,100 +243,42 @@ reg_cp(void *d, void *s, size_t n)
 #ifdef __REG_CP
     #error "Attempting to redefine __REG_CP"
 #endif
+    /* if both dst and src are lmem */
+    if (__is_in_lmem(d) && __is_in_lmem(s)) {
+#define __REG_CP(_x) (((__lmem unsigned int *)d)[_x] = \
+                      ((__lmem unsigned int *)s)[_x])
 
-#define __REG_CP(_x) (((unsigned int *)d)[_x] = ((unsigned int *)s)[_x])
+        _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_CP);
 
-    /* switch on number of bytes */
-    switch (n) {
-    case 4:
-        __REG_CP( 0);
-        break;
-
-    case 8:
-        __REG_CP( 0); __REG_CP( 1);
-        break;
-
-    case 12:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2);
-        break;
-
-    case 16:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        break;
-
-    case 20:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4);
-        break;
-
-    case 24:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4); __REG_CP( 5);
-        break;
-
-    case 28:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4); __REG_CP( 5); __REG_CP( 6);
-        break;
-
-    case 32:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4); __REG_CP( 5); __REG_CP( 6); __REG_CP( 7);
-        break;
-
-    case 36:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4); __REG_CP( 5); __REG_CP( 6); __REG_CP( 7);
-        __REG_CP( 8);
-        break;
-
-    case 40:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4); __REG_CP( 5); __REG_CP( 6); __REG_CP( 7);
-        __REG_CP( 8); __REG_CP( 9);
-        break;
-
-    case 44:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4); __REG_CP( 5); __REG_CP( 6); __REG_CP( 7);
-        __REG_CP( 8); __REG_CP( 9); __REG_CP(10);
-        break;
-
-    case 48:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4); __REG_CP( 5); __REG_CP( 6); __REG_CP( 7);
-        __REG_CP( 8); __REG_CP( 9); __REG_CP(10); __REG_CP(11);
-        break;
-
-    case 52:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4); __REG_CP( 5); __REG_CP( 6); __REG_CP( 7);
-        __REG_CP( 8); __REG_CP( 9); __REG_CP(10); __REG_CP(11);
-        __REG_CP(12);
-        break;
-
-    case 56:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4); __REG_CP( 5); __REG_CP( 6); __REG_CP( 7);
-        __REG_CP( 8); __REG_CP( 9); __REG_CP(10); __REG_CP(11);
-        __REG_CP(12); __REG_CP(13);
-        break;
-
-    case 60:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4); __REG_CP( 5); __REG_CP( 6); __REG_CP( 7);
-        __REG_CP( 8); __REG_CP( 9); __REG_CP(10); __REG_CP(11);
-        __REG_CP(12); __REG_CP(13); __REG_CP(14);
-        break;
-
-    case 64:
-        __REG_CP( 0); __REG_CP( 1); __REG_CP( 2); __REG_CP( 3);
-        __REG_CP( 4); __REG_CP( 5); __REG_CP( 6); __REG_CP( 7);
-        __REG_CP( 8); __REG_CP( 9); __REG_CP(10); __REG_CP(11);
-        __REG_CP(12); __REG_CP(13); __REG_CP(14); __REG_CP(15);
-        break;
-    }
 #undef __REG_CP
+    }
+    /* else if dst is lmem and src is reg */
+    else if (__is_in_lmem(d) && __is_in_reg(s)){
+#define __REG_CP(_x) (((__lmem unsigned int *)d)[_x] = \
+                      ((       unsigned int *)s)[_x])
+
+        _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_CP);
+
+#undef __REG_CP
+    }
+    /* else if dst is reg and src is lmem */
+    else if (__is_in_reg(d) && __is_in_lmem(s)){
+#define __REG_CP(_x) (((       unsigned int *)d)[_x] = \
+                      ((__lmem unsigned int *)s)[_x])
+
+        _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_CP);
+
+#undef __REG_CP
+    }
+    /* else both dst and src are reg */
+    else {
+#define __REG_CP(_x) (((unsigned int *)d)[_x] = \
+                      ((unsigned int *)s)[_x])
+
+        _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_CP);
+
+#undef __REG_CP
+    }
 }
 
 __intrinsic int
@@ -259,102 +297,45 @@ reg_eq(void *s1, void *s2, size_t n)
     #error "Attempting to redefine __REG_EQ"
 #endif
 
-#define __REG_EQ(_x) (((unsigned int *)s1)[_x] == ((unsigned int *)s2)[_x])
+    /* if both s1 and s2 are lmem */
+    if (__is_in_lmem(s1) && __is_in_lmem(s2)) {
+#define __REG_EQ(_x) (((__lmem unsigned int *)s1)[_x] == \
+                      ((__lmem unsigned int *)s2)[_x])
 
-    /* switch on number of bytes */
-    switch (n) {
-    case 4:
-        ret = __REG_EQ( 0);
-        break;
+        _REG_UTILS_EQ_SWITCH_CASE_IMPLEMENT(n);
 
-    case 8:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1));
-        break;
+#undef __REG_EQ
+    }
+    /* else s1 is lmem and s2 is reg */
+    else if (__is_in_lmem(s1) && __is_in_reg(s2)) {
+#define __REG_EQ(_x) (((__lmem unsigned int *)s1)[_x] == \
+                      ((       unsigned int *)s2)[_x])
 
-    case 12:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2));
-        break;
+        _REG_UTILS_EQ_SWITCH_CASE_IMPLEMENT(n);
 
-    case 16:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3));
-        break;
+#undef __REG_EQ
+    }
+    /* else s1 is reg and s2 is lmem */
+    else if (__is_in_reg(s1) && __is_in_lmem(s2)) {
+#define __REG_EQ(_x) (((       unsigned int *)s1)[_x] == \
+                      ((__lmem unsigned int *)s2)[_x])
 
-    case 20:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4));
-        break;
+        _REG_UTILS_EQ_SWITCH_CASE_IMPLEMENT(n);
 
-    case 24:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4) && __REG_EQ( 5));
-        break;
+        #undef __REG_EQ
+    }
+    /* else s1 and s2 are reg */
+    else {
+#define __REG_EQ(_x) (((unsigned int *)s1)[_x] == \
+                      ((unsigned int *)s2)[_x])
 
-    case 28:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4) && __REG_EQ( 5) && __REG_EQ( 6));
-        break;
+        _REG_UTILS_EQ_SWITCH_CASE_IMPLEMENT(n);
 
-    case 32:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4) && __REG_EQ( 5) && __REG_EQ( 6) && __REG_EQ( 7));
-        break;
-
-    case 36:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4) && __REG_EQ( 5) && __REG_EQ( 6) && __REG_EQ( 7) &&
-               __REG_EQ( 8));
-        break;
-
-    case 40:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4) && __REG_EQ( 5) && __REG_EQ( 6) && __REG_EQ( 7) &&
-               __REG_EQ( 8) && __REG_EQ( 9));
-        break;
-
-    case 44:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4) && __REG_EQ( 5) && __REG_EQ( 6) && __REG_EQ( 7) &&
-               __REG_EQ( 8) && __REG_EQ( 9) && __REG_EQ(10));
-        break;
-
-    case 48:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4) && __REG_EQ( 5) && __REG_EQ( 6) && __REG_EQ( 7) &&
-               __REG_EQ( 8) && __REG_EQ( 9) && __REG_EQ(10) && __REG_EQ(11));
-        break;
-
-    case 52:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4) && __REG_EQ( 5) && __REG_EQ( 6) && __REG_EQ( 7) &&
-               __REG_EQ( 8) && __REG_EQ( 9) && __REG_EQ(10) && __REG_EQ(11) &&
-               __REG_EQ(12));
-        break;
-
-    case 56:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4) && __REG_EQ( 5) && __REG_EQ( 6) && __REG_EQ( 7) &&
-               __REG_EQ( 8) && __REG_EQ( 9) && __REG_EQ(10) && __REG_EQ(11) &&
-               __REG_EQ(12) && __REG_EQ(13));
-        break;
-
-    case 60:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4) && __REG_EQ( 5) && __REG_EQ( 6) && __REG_EQ( 7) &&
-               __REG_EQ( 8) && __REG_EQ( 9) && __REG_EQ(10) && __REG_EQ(11) &&
-               __REG_EQ(12) && __REG_EQ(13) && __REG_EQ(14));
-        break;
-
-    case 64:
-        ret = (__REG_EQ( 0) && __REG_EQ( 1) && __REG_EQ( 2) && __REG_EQ( 3) &&
-               __REG_EQ( 4) && __REG_EQ( 5) && __REG_EQ( 6) && __REG_EQ( 7) &&
-               __REG_EQ( 8) && __REG_EQ( 9) && __REG_EQ(10) && __REG_EQ(11) &&
-               __REG_EQ(12) && __REG_EQ(13) && __REG_EQ(14) && __REG_EQ(15));
-        break;
+#undef __REG_EQ
     }
     return ret;
-#undef __REG_EQ
 }
 
-#endif /* !_STD__MEMREG_C_ */
+#endif /* !_STD__REG_UTILS_C_ */
 
 /* -*-  Mode:C; c-basic-offset:4; tab-width:4 -*- */
