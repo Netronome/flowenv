@@ -95,6 +95,7 @@
 #define __align1G       __declspec(aligned(SZ_1G))
 #define __align2G       __declspec(aligned(SZ_2G))
 #define __packed        __declspec(packed)
+#define __packed_bits   __declspec(packed_bits)
 
 /**
  * Import variable containing the current MEID.
