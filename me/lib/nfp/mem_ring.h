@@ -47,7 +47,7 @@ typedef unsigned int mem_ring_addr_t;
 #define MEM_JOURNAL_CONFIGURE(_name, _rnum) \
     mem_journal_setup(_rnum, _name, sizeof(_name))
 #define MEM_WORKQ_CONFIGURE(_name, _rnum) \
-    mem_journal_setup(_rnum, _name, sizeof(_name))
+    mem_workq_setup(_rnum, _name, sizeof(_name))
 
 /**
  * Construct a mem_ring_addr_t
