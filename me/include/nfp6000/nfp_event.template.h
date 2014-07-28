@@ -41,16 +41,21 @@ pyexec<set_output_mode("nfp")>
 #define NFP_EVENT_TYPE_bf                       0, 3, 0
 #define   NFP_EVENT_TYPE_FIFO_NOT_EMPTY         0
 #define   NFP_EVENT_TYPE_FIFO_NOT_FULL          1
-#define   NFP_EVENT_TYPE_DMA                    2
-#define   NFP_EVENT_TYPE_PROCESS                3
-#define   NFP_EVENT_TYPE_STATUS                 4
-#define   NFP_EVENT_TYPE_STATS_HALF_WAY         5
+#define   NFP_EVENT_TYPE_FIFO_ABOVE_WM          2
+#define   NFP_EVENT_TYPE_STATS_FULL_WRAP        2
+#define   NFP_EVENT_TYPE_FIFO_BELOW_WM          3
+#define   NFP_EVENT_TYPE_STATS_HALFWAY          3
+#define   NFP_EVENT_TYPE_STATUS_CHANGED         4
+#define   NFP_EVENT_TYPE_VALUE_UPDATED          5
+#define   NFP_EVENT_TYPE_STATUS_COMPL           6
 #define   NFP_EVENT_TYPE_FIFO_UNDERFLOW         8
 #define   NFP_EVENT_TYPE_FIFO_OVERFLOW          9
 #define   NFP_EVENT_TYPE_ECC_SINGLE_CORRECTION  10
 #define   NFP_EVENT_TYPE_ECC_MULTI_ERROR        11
 #define   NFP_EVENT_TYPE_ECC_SINGLE_ERROR       12
-#define   NFP_EVENT_TYPE_STATS_OVERFLOW         13
+#define   NFP_EVENT_TYPE_STATS_SYSOP_COMPL      13
+#define   NFP_EVENT_TYPE_RESERVED               14
+#define   NFP_EVENT_TYPE_GLOBAL_FILTERS_OVFLOW  15
 #define NFP_EVENT_SOURCE(_src)                  (((_src) & 0xfff) << 4)
 #define NFP_EVENT_SOURCE_of(_ev)                (((_ev) >> 4) & 0xfff)
 #define NFP_EVENT_SOURCE_bf                     0, 15, 4
