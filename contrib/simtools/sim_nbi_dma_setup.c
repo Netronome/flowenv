@@ -363,9 +363,9 @@ int nbidma_configure(struct nfp_cpp *nfp_cpp, uint32_t nbi, uint32_t nislands)
 
     printf("BL Config\n");
     retval = nbi_dma_bl_config(nfp_cpp, nbi_island, 0, /* Blq */
-                                    (pkt_count - 1), /* head */
-                                     0, /* tail */
-                                     3); /* size */
+                               0, /* head */
+                               (pkt_count - 1), /* tail */
+                               3); /* size */
 
     printf("DMA Config\n");
     retval = nbi_dma_config(nfp_cpp, nbi_island);
