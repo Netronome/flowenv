@@ -50,8 +50,8 @@
 #define NBI_DMARATE(nbi)                        (0x00100010 + ((nbi) << 24))
 #define NBI_DMACREDIT(nbi)                      (0x00100014 + ((nbi) << 24))
 #define NBI_DMABPECHAINEND(nbi)                 (0x00100018 + ((nbi) << 24))
-#define NBI_DMABPCFG(nbi,x)                    ((0x00100020 + ((nbi) << 24)) + (x)*4)
-#define NBI_DMABPECFG(nbi,x)                   ((0x00100040 + ((nbi) << 24)) + (x)*4)
+#define NBI_DMABPCFG(nbi,x)             (0x00100020 + ((nbi) << 24) + (x)*4)
+#define NBI_DMABPECFG(nbi,x)            (0x00100040 + ((nbi) << 24) + (x)*4)
 #define NBI_DMAPKTCNTLO(nbi)                    (0x001000c0 + ((nbi) << 24))
 #define NBI_DMAPKTCNTHI(nbi)                    (0x001000c4 + ((nbi) << 24))
 #define NBI_DMABYTECNTLO(nbi)                   (0x001000c8 + ((nbi) << 24))
@@ -72,7 +72,7 @@
 #define NBI_DMARDCTRLCREDITLIMIT1(nbi)          (0x00100104 + ((nbi) << 24))
 #define NBI_DMARDCTRLCREDITLIMIT2(nbi)          (0x00100108 + ((nbi) << 24))
 #define NBI_DMAMCRARBITERCREDITLIMIT(nbi)       (0x0010010c + ((nbi) << 24))
-#define NBI_DMACREDITTHROTTLECFG(nbi,x)        ((0x00100110 + ((nbi) << 24)) + (x)*4)
+#define NBI_DMACREDITTHROTTLECFG(nbi,x) ((0x00100110 + ((nbi) << 24) + (x)*4)
 #define NBI_DMAASSERTIONSCFG(nbi)               (0x00100130 + ((nbi) << 24))
 #define NBI_DMAPERFCTRL(nbi)                    (0x00100134 + ((nbi) << 24))
 
@@ -84,7 +84,7 @@ static int running = 0;
  */
 #define ARG_DEFAULT_DEVICE  0
 #define ARG_DEFAULT_NBI     0
-#define ARG_DEFAULT_NUM_ISLANDS	1
+#define ARG_DEFAULT_NUM_ISLANDS     1
 
 struct arg_data {
     uint32_t device;
@@ -112,7 +112,7 @@ struct nbi_dma_bpe_cfg
 };
 
 static void event_handler(struct nfp_device *nfp, uint32_t ev_type,
-			  void *ev_data, uint32_t ev_data_len)
+                          void *ev_data, uint32_t ev_data_len)
 {
     if (ev_type == SIMEVENT_RUN_STOP)
         running = 0;
@@ -135,7 +135,7 @@ void cpp_write64(struct nfp_cpp *h, uint32_t id, uint64_t a, uint64_t d)
     if (ret < 0) {
         fprintf(stderr, "error with cpp read to address %lx : %s\n", a,
                 strerror(errno));
-	exit(1);
+        exit(1);
     }
 }
 
@@ -146,7 +146,7 @@ void cpp_read64(struct nfp_cpp *h, uint32_t id, uint64_t a, uint64_t *d)
     if (ret < 0) {
         fprintf(stderr, "error with cpp read to address %lx : %s\n", a,
                 strerror(errno));
-	exit(1);
+        exit(1);
     }
 }
 
@@ -157,7 +157,7 @@ void xpb_readl(struct nfp_cpp *h, uint32_t a, uint32_t* d)
     if (ret < 0) {
         fprintf(stderr, "error with xpb read from address %x : %s\n", a,
                 strerror(errno));
-	exit(1);
+        exit(1);
     }
 }
 
@@ -168,44 +168,46 @@ void xpb_writel(struct nfp_cpp *h, uint32_t a, uint32_t d)
     if (ret < 0) {
         fprintf(stderr, "error with xpb write to address %x : %s\n", a,
                 strerror(errno));
-	exit(1);
+        exit(1);
     }
 }
 
 int nbi_dma_config(struct nfp_cpp *nfp_cpp, int nbi_island)
 {
-    xpb_writel(nfp_cpp, NBI_DMACFG(nbi_island), (0 << 10) | /*DisRxBlqWrInErr = 0*/
-    (((nbi_island - NBI0_ISLAND) + 1) << 7) | /* NbiNum + 1 */
-    (1 << 6) | /* CtmPollEna = 1 */
-    (3 << 4) | /*CtmPollIntvl = 512us */
-    (0 << 1) | /* RateLimitEnable = 0*/
-    (1 << 0) /*CTM Poll search is enabled**/
-    );
+    xpb_writel(nfp_cpp,
+               NBI_DMACFG(nbi_island), (0 << 10) | /*DisRxBlqWrInErr = 0*/
+               (((nbi_island - NBI0_ISLAND) + 1) << 7) | /* NbiNum + 1 */
+               (1 << 6) | /* CtmPollEna = 1 */
+               (3 << 4) | /*CtmPollIntvl = 512us */
+               (0 << 1) | /* RateLimitEnable = 0*/
+               (1 << 0) /*CTM Poll search is enabled**/);
+
     xpb_writel(nfp_cpp, NBI_DMABLQEVENT(nbi_island), 0x0000ff);
 
-    xpb_writel(nfp_cpp, NBI_DMARATE(nbi_island), (0 << 6) | /* CreditRate3 = 0 */
-    (0 << 4) | /* CreditRate2 = 0 */
-    (0 << 2) | /* CreditRate1 = 0*/
-    (0 << 0) /* CreditRate0 = 0*/
-    );
+    xpb_writel(nfp_cpp,
+               NBI_DMARATE(nbi_island), (0 << 6) | /* CreditRate3 = 0 */
+               (0 << 4) | /* CreditRate2 = 0 */
+               (0 << 2) | /* CreditRate1 = 0*/
+               (0 << 0) /* CreditRate0 = 0*/);
 
-    xpb_writel(nfp_cpp, NBI_DMACREDIT(nbi_island), (3 << 14) | /* Threshold3 = 3 */
-    (3 << 12) | /* Threshold2 = 3 */
-    (3 << 10) | /* Threshold1 = 3*/
-    (3 << 8) | /* Threshold0 = 3*/
-    (3 << 6) | /* CreditRate3 = 3 */
-    (3 << 4) | /* CreditRate2 = 3 */
-    (3 << 2) | /* CreditRate1 = 3*/
-    (3 << 0) /* CreditRate0 = 3*/
-    );
+    xpb_writel(nfp_cpp,
+               NBI_DMACREDIT(nbi_island), (3 << 14) | /* Threshold3 = 3 */
+               (3 << 12) | /* Threshold2 = 3 */
+               (3 << 10) | /* Threshold1 = 3*/
+               (3 << 8) | /* Threshold0 = 3*/
+               (3 << 6) | /* CreditRate3 = 3 */
+               (3 << 4) | /* CreditRate2 = 3 */
+               (3 << 2) | /* CreditRate1 = 3*/
+               (3 << 0) /* CreditRate0 = 3*/);
+
     return 0;
 }
 
 int nbi_dma_mu_config(struct nfp_cpp *nfp_cpp, int nbi_island, int buf_cnt,
-		      int buf_size, int mu_i)
+                      int buf_size, int mu_i)
 {
     uint32_t id = NFP_CPP_ISLD_ID(CPP_TGT_NBI, NFP_CPP_ACTION_RW, 0,
-            			  nbi_island);
+                                  nbi_island);
     int count;
     uint64_t mu_addr;
     uint64_t buf;
@@ -215,10 +217,11 @@ int nbi_dma_mu_config(struct nfp_cpp *nfp_cpp, int nbi_island, int buf_cnt,
     /* XXX Only handles IMU */
     /* MU Address base */
     if ((mu_i == 28) || (mu_i == 29)) {
-        mu_addr = (0x8000000000 | ((uint64_t) muiid << 32)); /* IMU IIDs:28,29 (IMU is always direct access) */
+        /* IMU IIDs:28,29 (IMU is always direct access) */
+        mu_addr = (0x8000000000 | ((uint64_t) muiid << 32));
     } else {
-	fprintf(stderr, "invalid MU Island: %d\n", mu_i);
-	exit(1);
+        fprintf(stderr, "invalid MU Island: %d\n", mu_i);
+        exit(1);
     }
 
     /* Fill BDSram with MU ptrs */
@@ -238,7 +241,7 @@ int nbi_dma_mu_config(struct nfp_cpp *nfp_cpp, int nbi_island, int buf_cnt,
 }
 
 int nbi_dma_bl_config(struct nfp_cpp *nfp_cpp, int island_id, int blq, int head,
-		      int tail, int size)
+                      int tail, int size)
 {
     int retval = 0;
     uint32_t id = NFP_CPP_ISLD_ID(CPP_TGT_NBI, NFP_CPP_ACTION_RW, 0, island_id);
@@ -253,7 +256,7 @@ int nbi_dma_bl_config(struct nfp_cpp *nfp_cpp, int island_id, int blq, int head,
 }
 
 int nbi_dma_bp_config(struct nfp_cpp *nfp_cpp, int island_id, int Bp,
-		      struct nbi_dma_bp_cfg* bp_cfg)
+                      struct nbi_dma_bp_cfg* bp_cfg)
 {
 
     int retval;
@@ -270,7 +273,7 @@ int nbi_dma_bp_config(struct nfp_cpp *nfp_cpp, int island_id, int Bp,
 }
 
 int nbi_dma_bpe_config(struct nfp_cpp *nfp_cpp, int island_id,
-		       struct nbi_dma_bpe_cfg * bpe_cfg)
+                       struct nbi_dma_bpe_cfg * bpe_cfg)
 {
     uint32_t val;
     int retval;
@@ -278,37 +281,39 @@ int nbi_dma_bpe_config(struct nfp_cpp *nfp_cpp, int island_id,
     val = (bpe_cfg->BpeNum << 27) | (bpe_cfg->Ctm << 21)
             | (bpe_cfg->PktCredit << 10) | (bpe_cfg->BufCredit);
 
-    retval = nfp_xpb_writel(nfp_cpp, NBI_DMABPECFG(island_id, bpe_cfg->BpeNum), val);
+    retval = nfp_xpb_writel(nfp_cpp, NBI_DMABPECFG(island_id, bpe_cfg->BpeNum),
+                            val);
+
     if (retval < 0)
-	return retval;
+        return retval;
 
 #if DEBUG
     xpb_readl(nfp_cpp, NBI_DMABPECFG(island_id, bpe_cfg->BpeNum), &rval);
     if (rval != val) {
-	fprintf(stderr, "Write of buffer pool entry %d did not work\n",
-		bpe_cfg->BpeNum);
-	fprintf(stderr, "Wrote %08x but read back %08x\n", val, rval);
-	return -1;
+        fprintf(stderr, "Write of buffer pool entry %d did not work\n",
+                bpe_cfg->BpeNum);
+        fprintf(stderr, "Wrote %08x but read back %08x\n", val, rval);
+        return -1;
     }
 #endif
 
 
     if (bpe_cfg->ChainEnd == 1) {
         retval = nfp_xpb_readl(nfp_cpp, NBI_DMABPECHAINEND(island_id), &val);
-	if (retval < 0)
-	    return retval; 
+        if (retval < 0)
+            return retval;
         val = val | (1 << bpe_cfg->BpeNum);
 
         retval = nfp_xpb_writel(nfp_cpp, NBI_DMABPECHAINEND(island_id), val);
 
 #if DEBUG
         xpb_readl(nfp_cpp, NBI_DMABPECHAINEND(island_id), &rval);
-	if (rval != val) {
-	    fprintf(stderr, "Write of BPE chain end %d did not work\n",
-		    bpe_cfg->BpeNum);
-	    fprintf(stderr, "Wrote %08x but read back %08x\n", val, rval);
-	    return -1;
-	}
+        if (rval != val) {
+            fprintf(stderr, "Write of BPE chain end %d did not work\n",
+                    bpe_cfg->BpeNum);
+            fprintf(stderr, "Wrote %08x but read back %08x\n", val, rval);
+            return -1;
+        }
 #endif
     }
 
@@ -332,13 +337,15 @@ int nbidma_configure(struct nfp_cpp *nfp_cpp, uint32_t nbi, uint32_t nislands)
 
     if (nbi == NBI0) {
         nbi_island = NBI0_ISLAND;
-	for (i = 0; i < nislands; ++i)
-		me_island[i] = ME_ISLAND0 + i;
+        for (i = 0; i < nislands; ++i)
+            me_island[i] = ME_ISLAND0 + i;
     } else if (nbi == NBI1) {
-	mu_i += 1;
+        mu_i += 1;
         nbi_island = NBI1_ISLAND;
-	for (i = 0; i < nislands; ++i)
-		me_island[i] = ME_ISLAND6 - i; /*ME island 6 (island id 38) is the closest to NBI 1*/
+        for (i = 0; i < nislands; ++i) {
+            /*ME island 6 (island id 38) is the closest to NBI 1*/
+            me_island[i] = ME_ISLAND6 - i;
+        }
     } else {
         return -1;
     }
@@ -347,10 +354,11 @@ int nbidma_configure(struct nfp_cpp *nfp_cpp, uint32_t nbi, uint32_t nislands)
     pkt_count = 0x180000 / pkt_buf_size;
 
     printf("MU Config\n");
-    retval = nbi_dma_mu_config(nfp_cpp, nbi_island, pkt_count, pkt_buf_size, mu_i);
+    retval = nbi_dma_mu_config(nfp_cpp, nbi_island, pkt_count, pkt_buf_size,
+                               mu_i);
     if (retval < 0) {
-	fprintf(stderr, "Error configuring MU for NBI%d\n", nbi);
-	return retval;
+        fprintf(stderr, "Error configuring MU for NBI%d\n", nbi);
+        return retval;
     }
 
     printf("BL Config\n");
@@ -362,8 +370,8 @@ int nbidma_configure(struct nfp_cpp *nfp_cpp, uint32_t nbi, uint32_t nislands)
     printf("DMA Config\n");
     retval = nbi_dma_config(nfp_cpp, nbi_island);
     if (retval < 0) {
-	fprintf(stderr, "Error configuring DMA for NBI%d\n", nbi);
-	return retval;
+        fprintf(stderr, "Error configuring DMA for NBI%d\n", nbi);
+        return retval;
     }
 
     printf("BP Config\n");
@@ -375,8 +383,8 @@ int nbidma_configure(struct nfp_cpp *nfp_cpp, uint32_t nbi, uint32_t nislands)
     bp_cfg.BpeHead = 0;
     retval = nbi_dma_bp_config(nfp_cpp, nbi_island, 0, &bp_cfg);
     if (retval < 0) {
-	fprintf(stderr, "Error configuring BP for NBI%d\n", nbi);
-	return retval;
+        fprintf(stderr, "Error configuring BP for NBI%d\n", nbi);
+        return retval;
     }
 
     printf("BPE Config\n");
@@ -388,12 +396,12 @@ int nbidma_configure(struct nfp_cpp *nfp_cpp, uint32_t nbi, uint32_t nislands)
         bpe_cfg.BpeNum = i;
         if (i == nislands-1)
             bpe_cfg.ChainEnd = 1;
-	printf("\tAdding buffer pool entry for island %d\n", bpe_cfg.Ctm);
+        printf("\tAdding buffer pool entry for island %d\n", bpe_cfg.Ctm);
         retval = nbi_dma_bpe_config(nfp_cpp, nbi_island, &bpe_cfg);
-	if (retval < 0) {
-	    fprintf(stderr, "error setting BPE%d for NBI%d\n", i, nbi);
-	    return retval;
-	}
+        if (retval < 0) {
+            fprintf(stderr, "error setting BPE%d for NBI%d\n", i, nbi);
+            return retval;
+        }
     }
 
     printf("Configure NBI%d DMA - done\n", nbi);
@@ -408,7 +416,7 @@ static void usage(char *progname)
             "\nWhere options are:\n"
             "        -d <device>            -- select NFP device, default 0\n"
             "        -n <nbi>               -- select NBI, default 0\n"
-	    "        -i <nislands>          -- select # of islands, default 1\n"
+            "        -i <nislands>          -- select # of islands, default 1\n"
             "        -h                     -- print help\n",
             progname);
 }
@@ -499,8 +507,8 @@ int main(int argc, char **argv)
     }
 
     printf("Configuring NBI%d with %d islands starting with MEI%d and %s\n",
-	   args.nbi, args.nislands, (args.nbi == NBI0 ? 0 : 6), 
-	   (args.nbi == NBI0 ? "incrementing" : "decrementing"));
+           args.nbi, args.nislands, (args.nbi == NBI0 ? 0 : 6),
+           (args.nbi == NBI0 ? "incrementing" : "decrementing"));
     retval = nbidma_configure(nfp_cpp, args.nbi, args.nislands);
 
     nfp_device_close(nfp);
