@@ -111,7 +111,8 @@ mem_workq_setup(unsigned int rnum, __dram void *base, size_t size)
 }
 
 
-#define _MEM_RING_CMD(cmdname, data, rnum, raddr, size, max_sz, sync, sigpair) \
+#define _MEM_RING_CMD_SIGPAIR(cmdname, data, rnum, raddr, size, max_sz, \
+                              sync, sigpair)                            \
     do {                                                                \
         struct nfp_mecsr_prev_alu ind;                                  \
         unsigned int count = (size >> 2);                               \
@@ -153,134 +154,8 @@ mem_workq_setup(unsigned int rnum, __dram void *base, size_t size)
         }                                                               \
     } while (0)
 
-__intrinsic void
-__mem_ring_get(unsigned int rnum, mem_ring_addr_t raddr, __xread void *data,
-               size_t size, const size_t max_size, sync_t sync,
-               SIGNAL_PAIR *sigpair)
-{
-    ctassert(__is_read_reg(data));
-    _MEM_RING_CMD(get, data, rnum, raddr, size, max_size, sync, sigpair);
-}
 
-__intrinsic int
-mem_ring_get(unsigned int rnum, mem_ring_addr_t raddr, __xread void *data,
-             const size_t size)
-{
-    SIGNAL_PAIR sigpair;
-
-    __mem_ring_get(rnum, raddr, data, size, size, sig_done, &sigpair);
-
-    /* Wait for the completion signal */
-    wait_for_all_single(&sigpair.even);
-
-    /* Check for an error signal error signal */
-    if (signal_test(&sigpair.odd))
-        return -1;
-
-    return 0;
-}
-
-__intrinsic void
-__mem_ring_pop(unsigned int rnum, mem_ring_addr_t raddr,  __xread void *data,
-               size_t size, const size_t max_size, sync_t sync,
-               SIGNAL_PAIR *sigpair)
-{
-    ctassert(__is_read_reg(data));
-    _MEM_RING_CMD(pop, data, rnum, raddr, size, max_size, sync, sigpair);
-}
-
-__intrinsic int
-mem_ring_pop(unsigned int rnum, mem_ring_addr_t raddr, __xread void *data,
-             const size_t size)
-{
-    SIGNAL_PAIR sigpair;
-
-    __mem_ring_pop(rnum, raddr, data, size, size, sig_done, &sigpair);
-
-    /* Wait for the completion signal */
-    wait_for_all_single(&sigpair.even);
-
-    /* Check for an error signal error signal */
-    if (signal_test(&sigpair.odd))
-        return -1;
-
-    return 0;
-}
-
-__intrinsic void
-__mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr,  __xrw void *data,
-               size_t size, const size_t max_size, sync_t sync,
-               SIGNAL_PAIR *sigpair)
-{
-    ctassert(__is_read_reg(data));
-    ctassert(__is_write_reg(data));
-    _MEM_RING_CMD(put, data, rnum, raddr, size, max_size, sync, sigpair);
-
-    /* mem[put] returns a status word in data[0]. It is the user's
-     * responsibility to check this status word when calling this method.
-     * mem_ring_put waits on sigpair, and performs the check for the user.*/
-}
-
-__intrinsic int
-mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr, __xrw void *data,
-             const size_t size)
-{
-    SIGNAL_PAIR sigpair;
-    int result;
-
-    __mem_ring_put(rnum, raddr, data, size, size, sig_done, &sigpair);
-    wait_for_all(&sigpair);
-
-    result = ((__xread int *) data)[0];
-    return (result & (1 << 31)) ? (result << 2) : -1;
-}
-
-
-__intrinsic void
-__mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr,
-                   __xwrite void *data, size_t size, const size_t max_size,
-                   sync_t sync, SIGNAL_PAIR *sigpair)
-{
-    ctassert(__is_write_reg(data));
-    _MEM_RING_CMD(journal, data, rnum, raddr, size, max_size, sync, sigpair);
-}
-
-__intrinsic int
-mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr, __xwrite void *data,
-                 const size_t size)
-{
-    SIGNAL_PAIR sigpair;
-    __mem_ring_journal(rnum, raddr, data, size, size, sig_done, &sigpair);
-
-    /* Wait for the completion signal */
-    wait_for_all_single(&sigpair.even);
-
-    /* Check for odd signal that indicates an overflow. */
-    if (signal_test(&sigpair.odd))
-        return -1;
-
-    return 0;
-}
-
-__intrinsic void
-mem_ring_journal_fast(unsigned int rnum, mem_ring_addr_t raddr,
-                      unsigned int value)
-{
-    struct nfp_mecsr_prev_alu ind;
-
-    try_ctassert(rnum < 1024);
-
-    ind.__raw = 0;
-    ind.data16 = rnum;
-    ind.ove_data = 1;
-    __asm {
-        alu[--, --, B, ind.__raw];
-        mem[fast_journal,--, raddr, <<8, value, 0], indirect_ref
-    }
-}
-
-
-#define _MEM_WORKQ_CMD(cmdname, data, rnum, raddr, size, max_sz, sync, sig) \
+#define _MEM_RING_CMD_SIG(cmdname, data, rnum, raddr, size, max_sz, sync, sig) \
     do {                                                                \
         struct nfp_mecsr_prev_alu ind;                                  \
         unsigned int count = (size >> 2);                               \
@@ -290,7 +165,6 @@ mem_ring_journal_fast(unsigned int rnum, mem_ring_addr_t raddr,
         try_ctassert(__is_aligned(size, 4));                            \
         try_ctassert(size <= (16 * 4));                                 \
         ctassert(max_sz <= (16 * 4));                                   \
-        ctassert(sync == sig_done);                                     \
                                                                         \
         if (__is_ct_const(size)) {                                      \
             if (size <= (8*4)) {                                        \
@@ -325,12 +199,153 @@ mem_ring_journal_fast(unsigned int rnum, mem_ring_addr_t raddr,
 
 
 __intrinsic void
+__mem_ring_get(unsigned int rnum, mem_ring_addr_t raddr, __xread void *data,
+               size_t size, const size_t max_size, sync_t sync,
+               SIGNAL_PAIR *sigpair)
+{
+    ctassert(__is_read_reg(data));
+    _MEM_RING_CMD_SIGPAIR(get, data, rnum, raddr, size, max_size,
+                          sync, sigpair);
+}
+
+__intrinsic int
+mem_ring_get(unsigned int rnum, mem_ring_addr_t raddr, __xread void *data,
+             const size_t size)
+{
+    SIGNAL_PAIR sigpair;
+
+    __mem_ring_get(rnum, raddr, data, size, size, sig_done, &sigpair);
+
+    /* Wait for the completion signal */
+    wait_for_all_single(&sigpair.even);
+
+    /* Check for an error signal error signal */
+    if (signal_test(&sigpair.odd))
+        return -1;
+
+    return 0;
+}
+
+
+__intrinsic void
+__mem_ring_get_freely(unsigned int rnum, mem_ring_addr_t raddr,
+                      __xread void *data, size_t size, const size_t max_size,
+                      sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_read_reg(data));
+    _MEM_RING_CMD_SIG(get_freely, data, rnum, raddr, size, max_size, sync, sig);
+}
+
+__intrinsic void
+mem_ring_get_freely(unsigned int rnum, mem_ring_addr_t raddr,
+                    __xread void *data, const size_t size)
+{
+    SIGNAL sig;
+    __mem_ring_get_freely(rnum, raddr, data, size, size, ctx_swap, &sig);
+}
+
+
+__intrinsic void
+__mem_ring_pop(unsigned int rnum, mem_ring_addr_t raddr,  __xread void *data,
+               size_t size, const size_t max_size, sync_t sync,
+               SIGNAL_PAIR *sigpair)
+{
+    ctassert(__is_read_reg(data));
+    _MEM_RING_CMD_SIGPAIR(pop, data, rnum, raddr, size, max_size,
+                          sync, sigpair);
+}
+
+__intrinsic int
+mem_ring_pop(unsigned int rnum, mem_ring_addr_t raddr, __xread void *data,
+             const size_t size)
+{
+    SIGNAL_PAIR sigpair;
+
+    __mem_ring_pop(rnum, raddr, data, size, size, sig_done, &sigpair);
+
+    /* Wait for the completion signal */
+    wait_for_all_single(&sigpair.even);
+
+    /* Check for an error signal error signal */
+    if (signal_test(&sigpair.odd))
+        return -1;
+
+    return 0;
+}
+
+__intrinsic void
+__mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr,  __xrw void *data,
+               size_t size, const size_t max_size, sync_t sync,
+               SIGNAL_PAIR *sigpair)
+{
+    ctassert(__is_read_reg(data));
+    ctassert(__is_write_reg(data));
+    _MEM_RING_CMD_SIGPAIR(put, data, rnum, raddr, size, max_size,
+                          sync, sigpair);
+
+    /* mem[put] returns a status word in data[0]. It is the user's
+     * responsibility to check this status word when calling this method.
+     * mem_ring_put waits on sigpair, and performs the check for the user.*/
+}
+
+__intrinsic int
+mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr, __xrw void *data,
+             const size_t size)
+{
+    SIGNAL_PAIR sigpair;
+    int result;
+
+    __mem_ring_put(rnum, raddr, data, size, size, sig_done, &sigpair);
+    wait_for_all(&sigpair);
+
+    result = ((__xread int *) data)[0];
+    return (result & (1 << 31)) ? (result << 2) : -1;
+}
+
+
+__intrinsic void
+__mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr,
+                   __xwrite void *data, size_t size, const size_t max_size,
+                   sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_write_reg(data));
+    _MEM_RING_CMD_SIG(journal, data, rnum, raddr, size, max_size, sync, sig);
+}
+
+__intrinsic void
+mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr, __xwrite void *data,
+                 const size_t size)
+{
+    SIGNAL sig;
+    __mem_ring_journal(rnum, raddr, data, size, size, ctx_swap, &sig);
+}
+
+__intrinsic void
+mem_ring_journal_fast(unsigned int rnum, mem_ring_addr_t raddr,
+                      unsigned int value)
+{
+    struct nfp_mecsr_prev_alu ind;
+
+    try_ctassert(rnum < 1024);
+
+    ind.__raw = 0;
+    ind.data16 = rnum;
+    ind.ove_data = 1;
+    __asm {
+        alu[--, --, B, ind.__raw];
+        mem[fast_journal,--, raddr, <<8, value, 0], indirect_ref
+    }
+}
+
+
+__intrinsic void
 __mem_workq_add_work(unsigned int rnum, mem_ring_addr_t raddr,
                      __xwrite void *data, size_t size, const size_t max_size,
                      sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
-    _MEM_WORKQ_CMD(qadd_work, data, rnum, raddr, size, max_size, sync, sig);
+    _MEM_RING_CMD_SIG(qadd_work, data, rnum, raddr, size, max_size,
+                      sync, sig);
 }
 
 __intrinsic void
@@ -348,7 +363,8 @@ __mem_workq_add_thread(unsigned int rnum, mem_ring_addr_t raddr,
                        sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_read_reg(data));
-    _MEM_WORKQ_CMD(qadd_thread, data, rnum, raddr, size, max_size, sync, sig);
+    _MEM_RING_CMD_SIG(qadd_thread, data, rnum, raddr, size, max_size,
+                      sync, sig);
 }
 
 __intrinsic void

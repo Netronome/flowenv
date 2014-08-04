@@ -137,6 +137,41 @@ __intrinsic void __mem_ring_get(unsigned int rnum, mem_ring_addr_t raddr,
 __intrinsic int mem_ring_get(unsigned int rnum, mem_ring_addr_t raddr,
                              __xread void *data, const size_t size);
 
+
+/**
+ * Get entries off memory ring using "freely" option
+ *
+ * @param rnum          ring number
+ * @param data          output data
+ * @param size          size of output
+ * @param max_size      used to determine largest op, if size is not a constant
+ * @param sync          type of synchronization
+ * @param sig           signal to report completion/failure
+ *
+ * Removes entries from the head of the ring and signal @sig when done.
+ * If the ring is not sufficiently full to complete the request, @data is padded
+ * with zeros to make up @size bytes.
+ */
+__intrinsic void __mem_ring_get_freely(unsigned int rnum, mem_ring_addr_t raddr,
+                                       __xread void *data,
+                                       size_t size, const size_t max_size,
+                                       sync_t sync, SIGNAL *sig);
+
+/**
+ * Get entries off memory ring using "freely" option
+ *
+ * @param rnum          ring number
+ * @param data          output data
+ * @param size          size of output
+ *
+ * Removes entries from the head of the ring swapping until complete.
+ * If the ring is not sufficiently full to complete the request, @data is padded
+ * with zeros to make up @size bytes.
+ */
+__intrinsic void mem_ring_get_freely(unsigned int rnum, mem_ring_addr_t raddr,
+                                     __xread void *data, const size_t size);
+
+
 /**
  * Pop entries off memory ring
  *
@@ -219,8 +254,8 @@ __intrinsic int mem_ring_put(unsigned int rnum,mem_ring_addr_t raddr,
  * @param data          input data
  * @param size          size of output
  * @param max_size      used to determine largest op, if size is not a constant
- * @param sync          type of synchronization (must be sig_done)
- * @param sigpair       signal pair to report completion/failure
+ * @param sync          type of synchronization
+ * @param sig           signal to report completion
  *
  * Add entries to the tail of the ring, overwriting oldest entries if
  * ring is full.
@@ -228,7 +263,7 @@ __intrinsic int mem_ring_put(unsigned int rnum,mem_ring_addr_t raddr,
 __intrinsic void __mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr,
                                     __xwrite void *data,
                                     size_t size, const size_t max_size,
-                                    sync_t sync, SIGNAL_PAIR *sigpair);
+                                    sync_t sync, SIGNAL *sig);
 
 /**
  * Journal entries onto memory ring
@@ -237,10 +272,9 @@ __intrinsic void __mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr,
  * @param size          size of input (in bytes)
  *
  * Add entries to the tail of the ring, overwriting oldest entries if
- * ring is full. A return value of -1 indicates that the ring overflowed.
- * This is not an error strictly for journals.
+ * ring is full.
  */
-__intrinsic int mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr,
+__intrinsic void mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr,
                                  __xwrite void *data, const size_t size);
 
 /**
