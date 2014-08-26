@@ -12,6 +12,24 @@
 #if defined(__NFP_LANG_MICROC)
 
 /**
+ * Get the current microengine number.
+ */
+__intrinsic unsigned int __ME(void);
+
+/**
+ * Read local ME CSR
+ * @param mecsr         CSR number
+ */
+__intrinsic unsigned int local_csr_read(int mecsr);
+
+/**
+ * Write local ME CSR
+ * @param mecsr         CSR number
+ * @param data          data to write
+ */
+__intrinsic void local_csr_write(int mecsr, unsigned int data);
+
+/**
  * Wait for signal.
  * @param sig           signal
  *
@@ -28,15 +46,69 @@ __intrinsic void ctx_wait(signal_t sig);
 #define ctx_swap() ctx_wait(voluntary)
 
 /**
- * Halt all contexts on the microengine.
+ * Wait for signals indicated in a signal mask
+ * @param sigmask       Signal mask
+ *
+ * Swap out the current context and wait for the signals indicated in the mask.
  */
-__intrinsic void halt(void);
+__intrinsic void wait_sig_mask(SIGNAL_MASK sigmask);
+
+/**
+ * Signal a context within the same ME
+ *
+ * @param ctx            Context to signal
+ * @param sig_no         Signal number to use
+ */
+__intrinsic void signal_ctx(unsigned int ctx, unsigned int sig_no);
+
+/**
+ * Signal the next context within the same ME
+ *
+ * @param sig_no         Signal number to use
+ */
+__intrinsic void signal_next_ctx(unsigned int sig_no);
+
+/**
+ * Signal a context in the next (numerically) ME in the cluster
+ *
+ * @param ctx            Context to signal
+ * @param sig_no         Signal number to use
+ */
+__intrinsic void signal_next_me(unsigned int ctx, unsigned int sig_no);
+
+/**
+ * Signal a context in the previous (numerically) ME in the cluster
+ *
+ * @param ctx            Context to signal
+ * @param sig_no         Signal number to use
+ */
+__intrinsic void signal_prev_me(unsigned int ctx, unsigned int sig_no);
+
+/**
+ * Set an alarm and use @sig when it goes off.
+ * @param sig           Signal to assert after @cycles cycles.
+ * @param cycles        approx number of cycles for the alarm
+ *
+ * This function asserts the signal after @cycles cycles.  A context
+ * can only have one active alarm at a time.
+ */
+__intrinsic void set_alarm(unsigned int cycles, SIGNAL *sig);
+
+/**
+ * Clear a previously set alarm.
+ */
+__intrinsic void clear_alarm(void);
 
 /**
  * Sleep for a number of cycles.
  * @param cycles        approx number of cycles to sleep
  */
 __intrinsic void sleep(unsigned int cycles);
+
+/**
+ * Halt all contexts on the microengine.
+ */
+__intrinsic void halt(void);
 
 /**
  * Test the bit_pos in data word and return a 1 if set or 0 if clear.
@@ -47,6 +119,93 @@ __intrinsic void sleep(unsigned int cycles);
  * try to use br_bset and br_bclr for regular C tests where possible.
  */
 __intrinsic int bit_test(unsigned int data, unsigned int bit_pos);
+
+/**
+ * Find the first (least significant) bit set in 32bit @data.
+ *
+ * @param data          Data to examine
+ *
+ * This function finds the first (least significant) bit set in data
+ * and returns its bit position.  If there are no bits set (i.e., the
+ * data argument is 0) then the return value is undefined.  Otherwise,
+ * the return value is in the range 0 through 31.
+ */
+__intrinsic unsigned int ffs(unsigned int data);
+
+/**
+ * Find the first (least significant) bit set in 64bit @data.
+ *
+ * @param data          Data to examine
+ *
+ * This function finds the first (least significant) bit set in 64bit
+ * @data and returns its bit position.  If there are no bits set
+ * (i.e., the data argument is 0) then the return value is -1,
+ * otherwise, the return value is in the range 0 through 63.
+ */
+__intrinsic int ffs64(unsigned long long int data);
+
+/**
+ * CRC bytes specifier.
+ *
+ * The bytes_specifier_t enumeration is used as an argument to the CRC
+ * functions and specifies one or more contiguous bytes within a
+ * longword of big-endian or little-endian data. For example, the
+ * bytes_0_3 item in this enumeration refers to bytes 0 through
+ * 3. When using the big-endian CRC functions, byte 0 refers to the
+ * most significant byte and byte 3 refers to the least significant
+ * byte. When using the little-endian CRC functions, byte 0 refers to
+ * the least significant byte and byte 3 refers to the most
+ * significant byte. This enumeration type specifies the bytes to be
+ * used with CRC operations.
+ */
+typedef enum {
+    crc_bytes_0_3,                  /**< BE: 0, 1, 2, 3      LE: 3, 2, 1, 0. */
+    crc_bytes_0_2,                  /**< BE: 0, 1, 2         LE:    2, 1, 0. */
+    crc_bytes_0_1,                  /**< BE: 0, 1            LE:       1, 0. */
+    crc_byte_0,                     /**< BE: 0               LE:          0. */
+    crc_bytes_1_3,                  /**< BE:    1, 2, 3      LE: 3, 2, 1   . */
+    crc_bytes_2_3,                  /**< BE:       2, 3      LE: 3, 2      . */
+    crc_byte_3                      /**< BE:          3      LE: 3         . */
+} crc_bytes_t;
+
+/**
+ * Read CRC remainder accumulated so far.
+ */
+__intrinsic unsigned int crc_read(void);
+
+/**
+ * Write the CRC remainder.
+ * @param residue       value to initialize the CRC remainder
+ */
+__intrinsic void crc_write(unsigned int residue);
+
+/**
+ * 32-bit CRC-32 computation in Big-endian format.
+ * @param data      data to perform the CRC computation on
+ * @param bspec     bytes on which to perform the computation
+ *
+ * Perform a CRC-32 computation on specified bytes in the data
+ * argument that is assumed to be in Big-endian format and return the
+ * unmodified value of data.
+ *
+ * crc_write() can be used to initialize the CRC value and the result
+ * can be obtained from crc_read().  @see crc_read() and crc_write().
+ */
+__intrinsic unsigned int crc_32_be(unsigned int data, crc_bytes_t bspec);
+
+/**
+ * 32-bit iSCSI CRC computation in Big-endian format.
+ * @param data      data to perform the iSCSI CRC computation on
+ * @param bspec     bytes on which to perform the computation
+ *
+ * Perform a 32-bit iSCSI CRC computation on specified bytes in the
+ * data argument that is assumed to be in Big-endian format and return
+ * the unmodified value of data.
+ *
+ * crc_write() can be used to initialize the CRC value and the result
+ * can be obtained from crc_read().
+ */
+__intrinsic unsigned int crc_iscsi_be(unsigned int data, crc_bytes_t bspec);
 
 /*
  * Input state names.
@@ -93,25 +252,6 @@ enum inp_state_e {
  * literal as required by the microcode assembler.
  */
 __intrinsic int inp_state_test(int statename);
-
-/**
- * Get the current microengine number.
- */
-__intrinsic unsigned int __ME(void);
-
-/**
- * Read local ME CSR
- * @param mecsr         CSR number
- */
-__intrinsic unsigned int local_csr_read(int mecsr);
-
-/**
- * Write local ME CSR
- * @param mecsr         CSR number
- * @param data          data to write
- */
-__intrinsic void local_csr_write(int mecsr, unsigned int data);
-
 
 #endif /* __NFP_LANG_MICROC */
 
