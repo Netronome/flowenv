@@ -31,6 +31,13 @@
 #include <nfp6000/nfp_pcie.h>
 #include <nfp6000/nfp_qc.h>
 
+/* libnet header files */
+#include <net/eth.h>
+#include <net/gre.h>
+#include <net/ip.h>
+#include <net/tcp.h>
+#include <net/udp.h>
+
 /* libnfp related header files */
 #include <nfp/cls.h>
 #include <nfp/me.h>
