@@ -73,7 +73,7 @@ mem_ring_setup(unsigned int rnum, __dram void *base, size_t size)
     desc_tmp.ring_size = __log2(entries) - 9;
     desc_tmp.head_ptr = (((unsigned int) base) >> 2) & 0xffffff;
     desc_tmp.eop = 0;
-    desc_tmp.tail_ptr = (((unsigned int) base) >> 2) & 0xffffff;
+    desc_tmp.tail_ptr = (((unsigned int) base) >> 2) & 0x3fffffff;
     desc_tmp.ring_type = 2;
     desc_tmp.q_loc = 0; /* Use high locality of reference */
     desc_tmp.q_page = (((unsigned long long) base) >> 32) & 0x3;
