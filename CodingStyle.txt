@@ -509,3 +509,88 @@ older compilers:
 non-GCC compilers.  You can, however, use GCC extensions and C99
 features in code that compiles only on GNU/Linux (such as
 lib/netdev-linux.c), because GCC is the system compiler there.
+
+
+MICRO C
+
+  The microC language is not quite the same as the C programming
+language and there are some sharp corners that one should avoid when
+writing in microC.  There are also a few coding conventions that a
+flowenv contribution should stick to to maintain consistency with other
+flowenv code.
+
+  Never use implicit I/O operations in flowenv microC code.  This could
+occur by assigning to or from a variable that is declared with an
+external storage qualifier such as __dram, __mem, __cls, __ctm, __imem,
+__emem or the like.  Although allowed by the compiler, this hides
+expensive I/O operations and prevents the program from being confident
+that it is updating ME-local state atomically since it may end up
+unexpectedly yielding to other threads.  (Note that passing around
+_pointers_ to variables in these locations is perfectly fine.)
+
+  We highly recommend that you compile with the flag -Qspill=7.  This
+prevents any variable spilling, especially to non-local memories which
+might lead to the situation mentioned above but in an even more subtle
+way as the compiler puts the variable in an external memory without an
+explicit declaration.
+
+  For functions that perform I/O operations, observe the following
+conventions.  If the function will block until all I/O is complete give
+it a regular function name and do NOT pass it any parameters of type
+sync_t, SIGNAL, SIGNAL_PAIR or pointers thereto.  If the function will
+start an I/O operation or a series of I/O operations, and will return
+with one or more of them in flight, then the name of the function must
+start with two underscores (i.e. "__") and the last parameters of
+the function should be of type sync_t followed by one or more "SIGNAL *"
+or "SIGNAL_PAIR *".  The behavior of this function should depend on the
+value of the sync_t variable:
+
+  * If the sync_t parameter is 'sig_done' the function should return
+    before the last I/O operation(s) complete leaving the caller to
+    wait on the "SIGNAL *" or "SIGNAL_PAIR *" parameters to complete
+    the I/O.
+  * If the sync_t parameter is 'ctx_swap' then the function should
+    block until all I/O operations are complete.
+  * If the sync_t parameter is 'sig_none' then the signal parameters
+    should all be NULL and the function should return immediately
+    leaving the last I/O operations in flight.  Software would use
+    this option when it could infer the completion of the current 
+    operation from the completion of subsequent operations.
+
+A function need not support all three of sync_t values.  It should 
+always use ctassert() to ensure that it only gets invoked with the 
+sync_t values that it supports.
+
+  If library code contains an I/O function starting with "__" it must
+also contain the blocking variant that simply invokes the "__" variant 
+with a sync_t value of 'ctx_swap' and supplies an appropriate SIGNAL or
+SIGNAL_PAIR parameter to that function.
+
+  When creating I/O functions also observe all of the following
+conventions:
+  * Verify the correctness of all sync_t parameters with compile
+    time assertions.
+  * Specify sizes of I/O transfers in bytes.
+  * If the size of a transfer must be a compile-time constant, use
+    ctassert() to verify the correctness of the specified length.
+  * If the size of a transfer is not compile-time constant, use
+    try_ctassert() to attempt to verify any size parameter in case
+    it is a compile-time constant.
+
+  Be careful when using the '/' or '%' operators.  While the compiler
+will generate correct code for these operations, the run-time of such an
+operator can rival or exceed that of an I/O operation in the system.  In
+particular, if the right hand side of the '/' or '%' operator is a
+variable expression, you should expect that this code will be very slow.
+This might well be fine if the code isn't in the fast path.  But it is
+something to be aware of.
+
+  The (char *) type is not the useful universal pointer type that it
+normally is in C code.  When it refers to ME local memory values, it can
+produce very inefficient code.  It should almost never be used to refer
+to variables declared as __gpr, __read or __write.  It is ok to use
+(char *) for pointer arithmetic on variables stored in memory external
+to the ME.
+
+  Do not use any of the functions from the ANSI standard C libraries.
+They do not behave in the way that the programmer usually expects.
