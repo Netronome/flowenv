@@ -26,17 +26,15 @@
 #include <nfp/mem_bulk.h>
 
 
-#define _MEM_CMD(cmdname, data, addr, size, max_size, sync, sig)        \
+#define _MEM_CMD(cmdname, data, addr, size, max_size, sync, sig, shift) \
 do {                                                                    \
     struct nfp_mecsr_prev_alu ind;                                      \
-    unsigned int count = (size >> 3);                                   \
-    unsigned int max_count = (max_size >> 3);                           \
+    unsigned int count = (size >> shift);                               \
+    unsigned int max_count = (max_size >> shift);                       \
     unsigned int addr_hi, addr_lo;                                      \
                                                                         \
     ctassert(__is_ct_const(sync));                                      \
     try_ctassert(size != 0);                                            \
-    try_ctassert(__is_aligned(size, 8));                                \
-    try_ctassert(size <= 128);                                          \
     ctassert(sync == sig_done || sync == ctx_swap);                     \
                                                                         \
     /* This code is inefficient if addr is >256B aligned, */            \
@@ -46,7 +44,7 @@ do {                                                                    \
     addr_lo = (unsigned long long int)addr & 0xffffffff;                \
                                                                         \
     if (__is_ct_const(size)) {                                          \
-        if (size <= 64) {                                               \
+        if (count <= 8) {                                               \
             if (sync == sig_done) {                                     \
                 __asm { mem[cmdname, *data, addr_hi, <<8, addr_lo,      \
                             __ct_const_val(count)], sig_done[*sig] }    \
@@ -93,18 +91,96 @@ do {                                                                    \
 } while (0)
 
 __intrinsic void
+__mem_read8(__xread void *data, __dram void *addr,
+            size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_read_reg(data));
+    try_ctassert(size <= 32);
+
+    _MEM_CMD(read8, data, addr, size, max_size, sync, sig, 0);
+}
+
+__intrinsic void
+mem_read8(__xread void *data, __dram void *addr, const size_t size)
+{
+    SIGNAL sig;
+
+    __mem_read8(data, addr, size, size, ctx_swap, &sig);
+}
+
+__intrinsic void
+__mem_read32(__xread void *data, __dram void *addr,
+             size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_read_reg(data));
+    try_ctassert(__is_aligned(size, 4));
+    try_ctassert(size <= 128);
+
+    _MEM_CMD(read32, data, addr, size, max_size, sync, sig, 2);
+}
+
+__intrinsic void
+mem_read32(__xread void *data, __dram void *addr, const size_t size)
+{
+    SIGNAL sig;
+
+    __mem_read32(data, addr, size, size, ctx_swap, &sig);
+}
+
+__intrinsic void
 __mem_read64(__xread void *data, __dram void *addr,
              size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_read_reg(data));
-    _MEM_CMD(read, data, addr, size, max_size, sync, sig);
+    try_ctassert(__is_aligned(size, 8));
+    try_ctassert(size <= 128);
+
+    _MEM_CMD(read, data, addr, size, max_size, sync, sig, 3);
 }
 
 __intrinsic void
 mem_read64(__xread void *data, __dram void *addr, const size_t size)
 {
     SIGNAL sig;
+
     __mem_read64(data, addr, size, size, ctx_swap, &sig);
+}
+
+__intrinsic void
+__mem_write8(__xwrite void *data, __dram void *addr,
+             size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_write_reg(data));
+    try_ctassert(size <= 32);
+
+    _MEM_CMD(write8, data, addr, size, max_size, sync, sig, 0);
+}
+
+__intrinsic void
+mem_write8(__xwrite void *data, __dram void *addr, const size_t size)
+{
+    SIGNAL sig;
+
+    __mem_write8(data, addr, size, size, ctx_swap, &sig);
+}
+
+__intrinsic void
+__mem_write32(__xwrite void *data, __dram void *addr,
+              size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_write_reg(data));
+    try_ctassert(__is_aligned(size, 4));
+    try_ctassert(size <= 128);
+
+    _MEM_CMD(write32, data, addr, size, max_size, sync, sig, 2);
+}
+
+__intrinsic void
+mem_write32(__xwrite void *data, __dram void *addr, const size_t size)
+{
+    SIGNAL sig;
+
+    __mem_write32(data, addr, size, size, ctx_swap, &sig);
 }
 
 __intrinsic void
@@ -112,7 +188,10 @@ __mem_write64(__xwrite void *data, __dram void *addr,
               size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
-    _MEM_CMD(write, data, addr, size, max_size, sync, sig);
+    try_ctassert(__is_aligned(size, 8));
+    try_ctassert(size <= 128);
+
+    _MEM_CMD(write, data, addr, size, max_size, sync, sig, 3);
 }
 
 __intrinsic void
