@@ -790,18 +790,18 @@ struct nfp_pcie_dma_cmd {
     union {
         struct {
 #           ifdef BIGENDIAN
-            unsigned int length:12;
-            unsigned int rid:8;
-            unsigned int rid_override:1;
-            unsigned int trans_class:3;
-            unsigned int pcie_addr_hi:8;
-            unsigned int pcie_addr_lo:32;
+            unsigned int cpp_addr_lo:32;
             unsigned int mode_sel:2;
             unsigned int dma_mode:16;
             unsigned int cpp_token:2;
             unsigned int dma_cfg_index:4;
             unsigned int cpp_addr_hi:8;
-            unsigned int cpp_addr_lo:32;
+            unsigned int pcie_addr_lo:32;
+            unsigned int length:12;
+            unsigned int rid:8;
+            unsigned int rid_override:1;
+            unsigned int trans_class:3;
+            unsigned int pcie_addr_hi:8;
 #           else
             unsigned int cpp_addr_lo:32;
             unsigned int cpp_addr_hi:8;
