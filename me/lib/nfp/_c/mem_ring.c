@@ -133,6 +133,7 @@ mem_workq_setup(unsigned int rnum, __dram void *base, size_t size)
         try_ctassert(size != 0);                                        \
         try_ctassert(__is_aligned(size, 4));                            \
         try_ctassert(size <= (16 * 4));                                 \
+        ctassert(__is_ct_const(sync));                                  \
         ctassert(sync == sig_done);                                     \
                                                                         \
         if (__is_ct_const(size)) {                                      \
@@ -177,22 +178,37 @@ mem_workq_setup(unsigned int rnum, __dram void *base, size_t size)
         try_ctassert(__is_aligned(size, 4));                            \
         try_ctassert(size <= (16 * 4));                                 \
         ctassert(max_sz <= (16 * 4));                                   \
+        ctassert(__is_ct_const(sync));                                  \
+        ctassert(sync == sig_done || sync == ctx_swap);                 \
                                                                         \
         if (__is_ct_const(size)) {                                      \
             if (size <= (8*4)) {                                        \
-                __asm { mem[cmdname, *data, raddr, <<8, rnum,           \
-                            __ct_const_val(count)],                     \
-                            sig_done[*sig] }                            \
+                if (sync == sig_done) {                                 \
+                    __asm { mem[cmdname, *data, raddr, <<8, rnum,       \
+                                __ct_const_val(count)],                 \
+                                sig_done[*sig] }                        \
+                } else {                                                \
+                    __asm { mem[cmdname, *data, raddr, <<8, rnum,       \
+                                __ct_const_val(count)],                 \
+                                ctx_swap[*sig] }                        \
+                }                                                       \
             } else {                                                    \
                 /* Setup length in PrevAlu for the indirect */          \
                 ind.__raw = 0;                                          \
                 ind.ov_len = 1;                                         \
                 ind.length = count - 1;                                 \
                                                                         \
-                __asm { alu[--, --, B, ind] }                           \
-                __asm { mem[cmdname, *data, raddr, <<8, rnum,           \
-                            __ct_const_val(count)], indirect_ref,       \
-                            sig_done[*sig] }                            \
+                if (sync == sig_done) {                                 \
+                    __asm { alu[--, --, B, ind] }                       \
+                    __asm { mem[cmdname, *data, raddr, <<8, rnum,       \
+                                __ct_const_val(count)], indirect_ref,   \
+                                sig_done[*sig] }                        \
+                } else {                                                \
+                    __asm { alu[--, --, B, ind] }                       \
+                    __asm { mem[cmdname, *data, raddr, <<8, rnum,       \
+                                __ct_const_val(count)], indirect_ref,   \
+                                ctx_swap[*sig] }                        \
+                }                                                       \
             }                                                           \
         } else {                                                        \
             unsigned int max_count = (max_sz >> 2);                     \
@@ -202,10 +218,17 @@ mem_workq_setup(unsigned int rnum, __dram void *base, size_t size)
             ind.ov_len = 1;                                             \
             ind.length = count - 1;                                     \
                                                                         \
-            __asm { alu[--, --, B, ind] }                               \
-            __asm { mem[cmdname, *data, raddr, <<8, rnum,               \
-                        __ct_const_val(max_count)], indirect_ref,       \
-                        sig_done[*sig] }                                \
+            if (sync == sig_done) {                                     \
+                __asm { alu[--, --, B, ind] }                           \
+                __asm { mem[cmdname, *data, raddr, <<8, rnum,           \
+                            __ct_const_val(max_count)], indirect_ref,   \
+                            sig_done[*sig] }                            \
+            } else {                                                    \
+                __asm { alu[--, --, B, ind] }                           \
+                __asm { mem[cmdname, *data, raddr, <<8, rnum,           \
+                            __ct_const_val(max_count)], indirect_ref,   \
+                            ctx_swap[*sig] }                            \
+            }                                                           \
         }                                                               \
     } while (0)
 
