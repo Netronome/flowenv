@@ -609,6 +609,15 @@ unsigned int __nctx_mode(void);
 long long __LoadTimeConstant(char *name);
 
 /**
+ * Allocate from a generic resource
+ * @param argstr  Argument string
+ *
+ * The argument string has the following format:
+ * __alloc_resource("name resource[+offset] scope size [align]");
+ */
+unsigned long long __alloc_resource(const char *argstr);
+
+/**
  * Marks a section of code as being on the critical path of the application.
  *
  * @param ...  Optional argument indicates priority in 0-100.  Default is 100.
