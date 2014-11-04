@@ -543,16 +543,58 @@ __intrinsic __addr40 void *pkt_ctm_ptr40(unsigned char isl, unsigned int pnum,
  */
 __intrinsic __addr32 void *pkt_ctm_ptr32(unsigned int pnum, unsigned int off);
 
+
+/* packet engine packet wait/read status response structure */
+typedef union pkt_status_t
+{
+    struct
+    {
+        unsigned int error:1;                    /**< Error. */
+        unsigned int last_seg_rcvd:1;            /**< Last segment received. */
+        unsigned int first_seg_rcvd:1;           /**< First segment received. */
+        unsigned int sent_to_me:1;               /**< Packet sent to ME. */
+        unsigned int not_valid:1;                /**< Packet not valid, error.
+                                                   */
+        unsigned int owned_by_me:1;              /**< Packet owned by
+                                                   * 0 = packet owned by NBI
+                                                   * 1 = packet owned by ME. */
+        unsigned int owner:2;                    /**< Packet owner.
+                                                   * 0 = owned by ME
+                                                   * 1 = owned by NBI-0
+                                                   * 2 = owned by NBI-1
+                                                   * 3 = owned by ME. */
+        unsigned int resv_0:6;                   /**< Reserved. */
+        unsigned int size:2;                     /**< Packet size. */
+        unsigned int resv_1:6;                   /**< Reserved. */
+        unsigned int ctm_addr_div256:10;         /**< CTM DCACHE address.
+                                                   * Multiply by 256 to get
+                                                   * actual CTM address. */
+
+    };
+    unsigned int __raw;
+} pkt_status_t;
+
+#define MAX_PKT_NUM_mask   0x1ff  /* max bits for packet number is 9 but in
+                                   * some cases documentation refers to 10 */
+#define MAX_PKT_NUM_of(_x) (_x & MAX_PKT_NUM_mask)
+
+
 /**
- * Get the size of a CTM packet buffer. Can only refer to a packet in the
- * local island.
+ * Get the status response of a CTM packet buffer. Can only refer to a packet
+ * in the local island.
  *
- * @param pnum  The CTM packet number
- * @param sync  The type of synchronization (sig_done or ctx_swap)
- * @param sig   The signal to use.
+ * @param pnum        The CTM packet number
+ * @param pkt_status  The packet status response structure pkt_status_t
+ * @param sync        The type of synchronization (sig_done or ctx_swap)
+ * @param sig         The signal to use.
  */
-__intrinsic unsigned int pkt_ctm_buf_size(unsigned int pnum, sync_t sync,
-                                          SIGNAL *sig_ptr);
+__intrinsic void __pkt_status_read(unsigned int pnum,
+                                   __xread pkt_status_t *pkt_status,
+                                   sync_t sync, SIGNAL *sig_ptr);
+
+__intrinsic void pkt_status_read(unsigned int pnum,
+                                 __xread pkt_status_t *pkt_status);
+
 
 /**
  * Get the number of packet bytes sitting in the CTM packet buffer.

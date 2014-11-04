@@ -79,54 +79,24 @@ pkt_ctm_ptr32(unsigned int pnum, unsigned int off)
     return (__addr32 void *)((1 << 31) | (pnum << 16) | off);
 }
 
-/* packet engine packet wait/read status response structure */
-typedef union pe_packet_status_response_t
+
+__intrinsic void
+__pkt_status_read(unsigned int pnum, __xread pkt_status_t *pkt_status,
+                  sync_t sync, SIGNAL *sig_ptr)
 {
-    struct
-    {
-        unsigned int error:1;                    /**< Error. */
-        unsigned int last_segment_received:1;    /**< Last segment received. */
-        unsigned int first_segment_received:1;   /**< First segment received. */
-        unsigned int sent_to_me:1;               /**< Packet sent to ME. */
-        unsigned int not_valid:1;                /**< Packet not valid, error.
-                                                   */
-        unsigned int owned_by_me:1;              /**< Packet owner = 0 or
-                                                   * packet owner = 1 is
-                                                   * packet owned by ME. */
-        unsigned int owner:2;                    /**< Packet owner. */
-        unsigned int resv_0:6;                   /**< Reserved. */
-        unsigned int size:2;                     /**< Packet size. */
-        unsigned int resv_1:6;                   /**< Reserved. */
-        unsigned int ctm_dcache_address_256B:10; /**< CTM DCACHE address.
-                                                   * Multiply by 256 to get
-                                                   * actual CTM address. */
-
-    };
-    unsigned int __raw;
-} pe_packet_status_response_t;
-
-#define MAX_PACKET_NUMBER_mask   0x1ff  /* max bits for packet number is 9 but
-                                         * in some cases documentation refers
-                                         * to 10 */
-#define MAX_PACKET_NUMBER_of(_x) (_x & MAX_PACKET_NUMBER_mask)
-
-__intrinsic unsigned int
-pkt_ctm_buf_size(unsigned int pnum, sync_t sync, SIGNAL *sig_ptr)
-{
-    __gpr unsigned int address;
-    __xread pe_packet_status_response_t data;
+    __gpr unsigned int addr;
 
     ctassert(__is_ct_const(sync));
     ctassert(sync == sig_done || sync == ctx_swap);
-    assert(pnum <= MAX_PACKET_NUMBER_mask);
+    assert(pnum <= MAX_PKT_NUM_mask);
 
-    address = MAX_PACKET_NUMBER_of(pnum);
+    addr = MAX_PKT_NUM_of(pnum);
 
     if (sync == sig_done)
     {
         __asm
         {
-            mem[packet_wait_packet_status, data, address, 0, 1], \
+            mem[packet_wait_packet_status, *pkt_status, addr, 0, 1], \
                 sig_done[*sig_ptr]
         }
     }
@@ -134,13 +104,20 @@ pkt_ctm_buf_size(unsigned int pnum, sync_t sync, SIGNAL *sig_ptr)
     {
         __asm
         {
-            mem[packet_wait_packet_status, data, address, 0, 1], \
+            mem[packet_wait_packet_status, *pkt_status, addr, 0, 1], \
                 ctx_swap[*sig_ptr]
         }
     }
-
-    return data.size;
 }
+
+__intrinsic void
+pkt_status_read(unsigned int pnum, __xread pkt_status_t *pkt_status)
+{
+    SIGNAL add_thread_sig;
+
+    __pkt_status_read(pnum, pkt_status, ctx_swap, &add_thread_sig);
+}
+
 
 __intrinsic size_t
 pkt_ctm_data_size(unsigned int pkt_len, unsigned int pkt_offset,
