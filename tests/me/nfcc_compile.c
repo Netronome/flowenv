@@ -42,6 +42,7 @@
 /* libnfp related header files */
 #include <nfp/cls.h>
 #include <nfp/me.h>
+#include <nfp/xpb.h>
 #include <nfp/mem_bulk.h>
 #include <nfp/mem_ring.h>
 

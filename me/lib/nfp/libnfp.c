@@ -33,6 +33,7 @@
 #include "_c/me.c"
 #include "_c/mem_bulk.c"
 #include "_c/mem_ring.c"
+#include "_c/xpb.c"
 
 /*
  * The following code implements all the functionality in <nfp.h>.  It
