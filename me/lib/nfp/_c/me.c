@@ -182,16 +182,18 @@ __intrinsic int
 ffs64(unsigned long long int data)
 {
     unsigned int hi;
+    unsigned int result;
 
     if ((unsigned int)data != 0) {
-        return ffs((unsigned int)data);
+        result = ffs((unsigned int)data);
     } else {
         hi = (unsigned int)(data >> 32);
         if (hi != 0)
-            return ffs(hi) + 32;
+            result = ffs(hi) + 32;
         else
-            return -1;
+            result = -1;
     }
+    return result;
 }
 
 __intrinsic unsigned int
