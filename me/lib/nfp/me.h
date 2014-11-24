@@ -265,6 +265,25 @@ enum inp_state_e {
  */
 __intrinsic int inp_state_test(int statename);
 
+/**
+ * Return the current 64bit ME timestamp counter value.
+ *
+ * The timestamp counter is maintained in two adjacent CSRs. This function
+ * reads these CSRs in a safe fashion and combines the values. The timestamp
+ * counter increments every 16 clock cycles.
+ *
+ **/
+__intrinsic unsigned long long int me_tsc_read(void);
+
+/**
+ * Return the 16bit profile count value.
+ *
+ * The profile count is a 16bit value which increments every clock-cycle. It
+ * can be used to profile small sections of code.
+ *
+ **/
+__intrinsic unsigned short int me_pc_read(void);
+
 #endif /* __NFP_LANG_MICROC */
 
 #endif /* !_NFP__NFP_ME_H_ */

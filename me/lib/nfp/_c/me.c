@@ -279,3 +279,21 @@ inp_state_test(int statename)
 
     return result;
 }
+
+__intrinsic unsigned long long int
+me_tsc_read()
+{
+    unsigned int lo, hi;
+
+    lo = local_csr_read(NFP_MECSR_TIMESTAMP_LOW);
+    hi = local_csr_read(NFP_MECSR_TIMESTAMP_HIGH);
+
+    return ((unsigned long long int)hi << 32) | lo;
+}
+
+__intrinsic unsigned short int
+me_pc_read()
+{
+    return local_csr_read(NFP_MECSR_PROFILE_COUNT);
+}
+
