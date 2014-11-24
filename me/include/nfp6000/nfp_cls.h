@@ -322,8 +322,84 @@
 #define     NFP_CLS_AUTOPUSH_VF_TRANSLATION_ENABLE_msk       (0x1)
 #define     NFP_CLS_AUTOPUSH_VF_TRANSLATION_ENABLE_bit       (0)
 
-/* ClsHashMap: <base>.Hash */
-#define NFP_CLS_HASH                                       0x40000
+
+/*
+ * Register: ClsHashMultiply
+ *   [8]       SboxEnable
+ *   [7:4]     NumSboxes
+ *   [3]       Mult63
+ *   [2]       Mult53
+ *   [1]       Mult36
+ *   [0]       Mult4
+ *
+ * Name(s):
+ * <base>.Hash.HashMultiply
+ */
+#define NFP_CLS_HASH_MULT                                  0x40000
+#define   NFP_CLS_HASH_MULT_SBOXEN                           (1 << 8)
+#define     NFP_CLS_HASH_MULT_SBOXEN_bf                      0, 8, 8
+#define     NFP_CLS_HASH_MULT_SBOXEN_msk                     (0x1)
+#define     NFP_CLS_HASH_MULT_SBOXEN_bit                     (8)
+#define   NFP_CLS_HASH_MULT_NUMSBOXES(x)                     (((x) & 0xf) << 4)
+#define   NFP_CLS_HASH_MULT_NUMSBOXES_of(x)                  (((x) >> 4) & 0xf)
+#define     NFP_CLS_HASH_MULT_NUMSBOXES_bf                   0, 7, 4
+#define     NFP_CLS_HASH_MULT_NUMSBOXES_msk                  (0xf)
+#define     NFP_CLS_HASH_MULT_NUMSBOXES_shf                  (4)
+#define   NFP_CLS_HASH_MULT_M63                              (1 << 3)
+#define     NFP_CLS_HASH_MULT_M63_bf                         0, 3, 3
+#define     NFP_CLS_HASH_MULT_M63_msk                        (0x1)
+#define     NFP_CLS_HASH_MULT_M63_bit                        (3)
+#define   NFP_CLS_HASH_MULT_M53                              (1 << 2)
+#define     NFP_CLS_HASH_MULT_M53_bf                         0, 2, 2
+#define     NFP_CLS_HASH_MULT_M53_msk                        (0x1)
+#define     NFP_CLS_HASH_MULT_M53_bit                        (2)
+#define   NFP_CLS_HASH_MULT_M36                              (1 << 1)
+#define     NFP_CLS_HASH_MULT_M36_bf                         0, 1, 1
+#define     NFP_CLS_HASH_MULT_M36_msk                        (0x1)
+#define     NFP_CLS_HASH_MULT_M36_bit                        (1)
+#define   NFP_CLS_HASH_MULT_M4                               (1 << 0)
+#define     NFP_CLS_HASH_MULT_M4_bf                          0, 0, 0
+#define     NFP_CLS_HASH_MULT_M4_msk                         (0x1)
+#define     NFP_CLS_HASH_MULT_M4_bit                         (0)
+
+
+/*
+ * Register: ClsHashIndexLow
+ *   [31:0]    IndexLow
+ *
+ * Name(s):
+ * <base>.Hash.HashIndexLow0...
+ */
+#define NFP_CLS_HASH_IDX_LO(x)                             (0x40010 + ((x) * 0x100))
+#define   NFP_CLS_HASH_IDX_LO_VAL(x)                         (((x) & 0xffffffff) << 0)
+#define   NFP_CLS_HASH_IDX_LO_VAL_of(x)                      (((x) >> 0) & 0xffffffff)
+#define     NFP_CLS_HASH_IDX_LO_VAL_bf                       0, 31, 0
+#define     NFP_CLS_HASH_IDX_LO_VAL_msk                      (0xffffffff)
+#define     NFP_CLS_HASH_IDX_LO_VAL_shf                      (0)
+
+
+/*
+ * Register: ClsHashIndexHigh
+ *   [31:0]    IndexHigh
+ *
+ * Name(s):
+ * <base>.Hash.HashIndexHigh0...
+ */
+#define NFP_CLS_HASH_IDX_HI(x)                             (0x40018 + ((x) * 0x100))
+#define   NFP_CLS_HASH_IDX_HI_VAL(x)                         (((x) & 0xffffffff) << 0)
+#define   NFP_CLS_HASH_IDX_HI_VAL_of(x)                      (((x) >> 0) & 0xffffffff)
+#define     NFP_CLS_HASH_IDX_HI_VAL_bf                       0, 31, 0
+#define     NFP_CLS_HASH_IDX_HI_VAL_msk                      (0xffffffff)
+#define     NFP_CLS_HASH_IDX_HI_VAL_shf                      (0)
+
+
+/*
+ * Register: ClsHashIndex64
+ *
+ * Name(s):
+ * <base>.Hash.HashIndex0...
+ */
+#define NFP_CLS_HASH_IDX64(x)                              (0x40800 + ((x) * 0x8))
 /* InterruptManagerMap: <base>.InterruptManager */
 #define NFP_CLS_IM                                         0x50000
 /* PeripheralTrngDataMap: <base>.PeripheralTrngData */
@@ -529,6 +605,58 @@ struct nfp_cls_autopush_vf_translation {
         unsigned int __raw;
     };
 };
+
+struct nfp_cls_hash_mult {
+    union {
+        struct {
+#           ifdef BIGENDIAN
+            unsigned int __reserved_9:23;
+            unsigned int sboxen:1;
+            unsigned int numsboxes:4;
+            unsigned int m63:1;
+            unsigned int m53:1;
+            unsigned int m36:1;
+            unsigned int m4:1;
+#           else
+            unsigned int m4:1;
+            unsigned int m36:1;
+            unsigned int m53:1;
+            unsigned int m63:1;
+            unsigned int numsboxes:4;
+            unsigned int sboxen:1;
+            unsigned int __reserved_9:23;
+#           endif
+        };
+        unsigned int __raw;
+    };
+};
+
+struct nfp_cls_hash_idx_lo {
+    union {
+        struct {
+#           ifdef BIGENDIAN
+            unsigned int val:32;
+#           else
+            unsigned int val:32;
+#           endif
+        };
+        unsigned int __raw;
+    };
+};
+
+struct nfp_cls_hash_idx_hi {
+    union {
+        struct {
+#           ifdef BIGENDIAN
+            unsigned int val:32;
+#           else
+            unsigned int val:32;
+#           endif
+        };
+        unsigned int __raw;
+    };
+};
+
 
 
 

@@ -20,6 +20,7 @@
 #define _NFP__CLS_H_
 
 #include <nfp.h>
+#include <stdint.h>
 #include <types.h>
 
 /**
@@ -95,6 +96,37 @@ __intrinsic void __cls_write_le(__xwrite void *data, __cls void *addr,
 
 __intrinsic void cls_write_le(__xwrite void *data, __cls void *addr,
                               size_t size);
+
+/**
+ * Create a 64-bit hash_index over the transfer registers
+ * @param key       pointer to sufficient write transfer registers for the hash
+ * @param mask      32-bit pointer to the start of the mask in CLS
+ * @param size      size of the key/mask, must be a multiple of 4. Valid [4-128]
+ * @param max_size  used to determine largest hash, if size is not a constant
+ * @param idx       CLS hash index. Valid [0-7]
+ * @param sync      type of synchronisation (sig_done or ctx_swap)
+ * @param sig       signal to use
+ *
+ * These functions perform a hash on up to 128 bytes of data in the transfer
+ * registers. The user should configure the CLS hash multiply register and
+ * initialize the hash before calling this function. See std/hash.h
+ * The clear function is the same as hash_mask, but also clears the initial
+ * value of hash_index before calculating the new value. cls_hash_mask() can be
+ * used to chain several hashes together.
+ */
+__intrinsic void __cls_hash_mask_clr(__xwrite void *key, __cls void *mask,
+                                     size_t size, const size_t max_size,
+                                     uint32_t idx, sync_t sync, SIGNAL *sig);
+
+__intrinsic void cls_hash_mask_clr(__xwrite void *key, __cls void *mask,
+                                   size_t size, uint32_t idx);
+
+__intrinsic void __cls_hash_mask(__xwrite void *key, __cls void *mask,
+                                 size_t size, const size_t max_size,
+                                 uint32_t idx, sync_t sync, SIGNAL *sig);
+
+__intrinsic void cls_hash_mask(__xwrite void *key, __cls void *mask,
+                               size_t size, uint32_t idx);
 
 /* Bit atomic functions */
 /**

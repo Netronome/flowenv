@@ -206,6 +206,50 @@ cls_write(__xwrite void *data, __cls void *addr, size_t size)
 
 #endif /* __LITLEENDIAN */
 
+__intrinsic void
+__cls_hash_mask_clr(__xwrite void *key, __cls void *mask, size_t size,
+                    const size_t max_size, uint32_t idx, sync_t sync,
+                    SIGNAL *sig)
+{
+    ctassert(__is_write_reg(key));
+    ctassert(__is_aligned(size, 2));
+    ctassert(__is_aligned(max_size, 2));
+
+    /* hash_index_select = addr[18:16]. See hash_mask_clear in databook */
+    mask = (__cls void *)((idx << 16) | (uint32_t)mask);
+    _CLS_CMD(hash_mask_clear, key, mask, size, max_size, sync, sig, 2, 8);
+}
+
+__intrinsic void
+cls_hash_mask_clr(__xwrite void *key, __cls void *mask, size_t size,
+                  uint32_t idx)
+{
+    SIGNAL sig;
+
+    __cls_hash_mask_clr(key, mask, size, size, idx, ctx_swap, &sig);
+}
+
+__intrinsic void
+__cls_hash_mask(__xwrite void *key, __cls void *mask, size_t size,
+                const size_t max_size, uint32_t idx, sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_write_reg(key));
+    ctassert(__is_aligned(size, 2));
+    ctassert(__is_aligned(max_size, 2));
+
+    /* hash_index_select = addr[18:16] See hash_mask in databook*/
+    mask = (__cls void *)((idx << 16) | (uint32_t)mask);
+    _CLS_CMD(hash_mask, key, mask, size, max_size, sync, sig, 2, 8);
+}
+
+__intrinsic void
+cls_hash_mask(__xwrite void *key, __cls void *mask, size_t size, uint32_t idx)
+{
+    SIGNAL sig;
+
+    __cls_hash_mask(key, mask, size, size, idx, ctx_swap, &sig);
+}
+
 /* bit atomic functions */
 __intrinsic void
 __cls_clr(__xwrite void *data, __cls void *addr, size_t size,

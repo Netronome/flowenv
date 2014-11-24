@@ -22,6 +22,11 @@
 
 #include <assert.h>
 #include <nfp.h>
+#include <stdint.h>
+#include <types.h>
+
+#include <nfp6000/nfp_cls.h>
+
 #include <std/hash.h>
 
 /* macro for hash_me_crc32 and hash_me_crc32c implementation */
@@ -214,6 +219,63 @@ hash_me_crc32c(void *s, size_t n, uint32_t init)
     }
 
     return result;
+}
+
+/* Hash mask can support 128 bytes, but allocate half to conserve transfer
+   registers */
+#define CLS_HASH_MASK_HALF  (64)
+
+void
+cls_hash_init(__cls void *mask, uint32_t size)
+{
+    __xwrite uint32_t mult_val;
+    __xwrite uint64_t hashmask[CLS_HASH_MASK_HALF >> 3];
+
+    try_ctassert(size <= 128);
+
+    /* Initialize to all bits set so no bits of the key are ignored */
+    hashmask[0] = 0xffffffffffffffff;
+    hashmask[1] = 0xffffffffffffffff;
+    hashmask[2] = 0xffffffffffffffff;
+    hashmask[3] = 0xffffffffffffffff;
+    hashmask[4] = 0xffffffffffffffff;
+    hashmask[5] = 0xffffffffffffffff;
+    hashmask[6] = 0xffffffffffffffff;
+    hashmask[7] = 0xffffffffffffffff;
+
+    /* If there are enough transfer registers for one write */
+    if (size <= CLS_HASH_MASK_HALF) {
+        cls_write(&hashmask[0], (__cls void *)mask, size);
+    /* Else, write the first half of the mask, then the remaining bytes */
+    } else {
+        cls_write(&hashmask[0], (__cls void *)mask, CLS_HASH_MASK_HALF);
+        cls_write((void *)&hashmask[0],
+                  ((__cls uint8_t *)mask) + CLS_HASH_MASK_HALF,
+                  size - CLS_HASH_MASK_HALF);
+    }
+
+    /* Configure the Hash Multiplier CSR */
+    mult_val = NFP_CLS_HASH_MULT_M4 |
+               NFP_CLS_HASH_MULT_M36 |
+               NFP_CLS_HASH_MULT_M53 |
+               NFP_CLS_HASH_MULT_M63 ;
+    cls_write(&mult_val, (__cls void *)NFP_CLS_HASH_MULT, sizeof(uint32_t));
+}
+
+uint64_t
+cls_hash(__xwrite void *key, __cls void *mask, uint32_t size, uint32_t idx)
+{
+    __cls void *hash_idx_csr;
+    __xread uint64_t data;
+
+    /* Clear the hash index CSR, then perform the hash */
+    cls_hash_mask_clr(key, mask, size, idx);
+
+    /* Setup the hash index CSR address, then read the calculated hash */
+    hash_idx_csr = (__cls void *)NFP_CLS_HASH_IDX64(idx);
+    cls_read((void *)&data, hash_idx_csr, sizeof(uint64_t));
+
+    return data;
 }
 
 #endif /* !_STD__HASH_C_ */

@@ -24,7 +24,9 @@
 #ifndef _STD__HASH_H_
 #define _STD__HASH_H_
 
+#include <nfp.h>
 #include <stdint.h>
+#include <types.h>
 
 /**
  * Compute the CRC32 over a region located in registers
@@ -51,6 +53,35 @@ __intrinsic uint32_t hash_me_crc32(void *s, size_t n, uint32_t init);
  * @n must be a compile time constant and multiple of 4.
  */
  __intrinsic uint32_t hash_me_crc32c(void *s, size_t n, uint32_t init);
+
+/**
+ * Initialize the CLS hash mask and configure the CLS hash multiply register.
+ * @param mask      Pointer to the mask in CLS memory
+ * @param size      Size in bytes of the memory allocated for mask.
+ *                  Valid [4-128]
+ *
+ * This function will initialize the mask to all bits set so that no bits of
+ * the data are ignored. It also configures the CLS multiply register to use
+ * m63, m53, m36, and m4 in the hash multiplication equation.
+ */
+void cls_hash_init(__cls void *mask, uint32_t size);
+
+/**
+ * Create a 64-bit hash_index over the transfer registers
+ * @param key       Pointer to sufficient write transfer registers for the hash
+ * @param mask      Pointer to the start of the mask in CLS
+ * @param size      Size of the key/mask, must be a multiple of 4. Valid [4-128]
+ * @param idx       CLS hash index. Valid [0-7]
+ * @return          a 64-bit hash of the key
+ *
+ * This function clears the hash index before creating the hash over the
+ * transfer registers. User should call cls_hash_init() prior to this.
+ * There are 8 hash indicies, so only 8 contexts can perform a hash at the same
+ * time if they use unique indicies. It is the user's responsibility to make
+ * sure that only 1 context is hashing each index at a time.
+ */
+uint64_t cls_hash(__xwrite void *key, __cls void *mask, uint32_t size,
+                  uint32_t idx);
 
 #endif /* !_STD__HASH_H_ */
 
