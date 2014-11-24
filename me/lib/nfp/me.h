@@ -270,7 +270,7 @@ __intrinsic int inp_state_test(int statename);
  *
  * The timestamp counter is maintained in two adjacent CSRs. This function
  * reads these CSRs in a safe fashion and combines the values. The timestamp
- * counter increments every 16 clock cycles.
+ * counter increments every 16 ME clock cycles.
  *
  **/
 __intrinsic unsigned long long int me_tsc_read(void);
