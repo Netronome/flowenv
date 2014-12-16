@@ -28,13 +28,13 @@
  * @param addr      32-bit pointer to the memory start address in local CLS
  * @param size      size of the read, must be a multiple of 4
  * @param max_size  used to determine largest read, if size is not a constant
- * @param sync      type of synchronisation (sig_done or ctx_swap)
+ * @param sync      type of synchronization (sig_done or ctx_swap)
  * @param sig       signal to use
  *
- * This method provides basic bulk reads to the current island's CLS.  There is
- * currently limited support for size to be a runtime value, and for reads >64B.
- * cls_read() provides a simplified interface where size is assumed to be
- * compile time constant, and the context swaps on an internal signal while
+ * This function provides basic bulk reads to the current island's CLS.  There
+ * is currently limited support for size to be a runtime value, and for reads
+ * >64B. cls_read() provides a simplified interface where size is assumed to
+ * be compile time constant, and the context swaps on an internal signal while
  * waiting for the read to complete.
  */
 __intrinsic void __cls_read(__xread void *data, __cls void *addr,
@@ -49,13 +49,13 @@ __intrinsic void cls_read(__xread void *data, __cls void *addr, size_t size);
  * @param addr      32-bit pointer to the memory start address in local CLS
  * @param size      size of the write, must be a multiple of 4
  * @param max_size  used to determine largest write, if size is not a constant
- * @param sync      type of synchronisation (sig_done or ctx_swap)
+ * @param sync      type of synchronization (sig_done or ctx_swap)
  * @param sig       signal to use
  *
- * This method provides basic bulk writes to the current island's CLS.  There is
- * currently limited support for size to be a runtime value, and for reads >64B.
- * cls_write() provides a simplified interface where size is assumed to be
- * compile time constant, and the context swaps on an internal signal while
+ * This function provides basic bulk writes to the current island's CLS. There
+ * is currently limited support for size to be a runtime value, and for read
+ * >64B. cls_write() provides a simplified interface where size is assumed to
+ * be compile time constant, and the context swaps on an internal signal while
  * waiting for the write to complete.
  */
 __intrinsic void __cls_write(__xwrite void *data, __cls void *addr,
@@ -94,6 +94,106 @@ __intrinsic void __cls_write_le(__xwrite void *data, __cls void *addr,
                                 sync_t sync, SIGNAL *sig);
 
 __intrinsic void cls_write_le(__xwrite void *data, __cls void *addr,
+                              size_t size);
+
+/* Bit atomic functions */
+/**
+ * Clear the bit(s) in multiples of 4B from CLS.
+ * @param data     pointer to sufficient write transfer registers for the op
+ * @param addr     32-bit pointer to the memory start address in local CLS
+ * @param size     size of the write, must be a multiple of 4
+ * @param max_size used to determine largest write, if size is not a constant
+ * @param sync     type of synchronization (sig_done or ctx_swap)
+ * @param sig      signal to use
+ *
+ * This function provides bit atomic clear of the bit(s) at the specified
+ * address according to a bit mask provided in the xfer register(s).
+ * A 1 in the bit position of the bit mask signifies that the bit should be
+ * cleared.
+ * There is currently limited support for size to be a runtime value, and for
+ * clears >64B. cls_clr() provides a simplified interface where size is
+ * assumed to be compile time constant, and the context swaps on an internal
+ * signal while waiting for the write to complete.
+ */
+__intrinsic void __cls_clr(__xwrite void *data, __cls void *addr, size_t size,
+                           const size_t max_size, sync_t sync, SIGNAL *sig);
+
+__intrinsic void cls_clr(__xwrite void *data, __cls void *addr, size_t size);
+
+/**
+ * Set the bit(s) in multiples of 4B from CLS.
+ * @param data     pointer to sufficient write transfer registers for the op
+ * @param addr     32-bit pointer to the memory start address in local CLS
+ * @param size     size of the write, must be a multiple of 4
+ * @param max_size used to determine largest write, if size is not a constant
+ * @param sync     type of synchronization (sig_done or ctx_swap)
+ * @param sig      signal to use
+ *
+ * This function provides bit atomic set of the bit(s) at the specified
+ * address according to a bit mask provided in the transfer register(s). A 1
+ * in the bit position of the bit mask signifies that the bit should be set.
+ * There is currently limited support for size to be a runtime value, and for
+ * sets >64B. cls_set() provides a simplified interface where size is assumed
+ * to be compile time constant, and the context swaps on an internal signal
+ * while waiting for the write to complete.
+
+ */
+__intrinsic void __cls_set(__xwrite void *data, __cls void *addr, size_t size,
+                           const size_t max_size, sync_t sync, SIGNAL *sig);
+
+__intrinsic void cls_set(__xwrite void *data, __cls void *addr, size_t size);
+
+/**
+ * Test and Clear the bit(s) in multiples of 4B from CLS.
+ * @param data     pointer to sufficient RW transfer registers for the op
+ * @param addr     32-bit pointer to the memory start address in local CLS
+ * @param size     size of the write, must be a multiple of 4
+ * @param max_size used to determine largest write, if size is not a constant
+ * @param sync     type of synchronization (sig_done or ctx_swap)
+ * @param sig      signal to use
+ *
+ * This function provides bit atomic clear of the bit(s) at the specified
+ * address according to a bit mask provided in the write transfer register(s)
+ * and returns the premodified memory contents in the read transfer
+ * register(s). A 1 in the bit position of the bit mask signifies that the bit
+ * should be cleared.
+ * There is currently limited support for size to be a runtime value, and for
+ * test and clears >64B. cls_test_clr() provides a simplified interface
+ * where size is assumed to be compile time constant, and the context swaps on
+ * an internal signal while waiting for the write to complete.
+ */
+
+__intrinsic void __cls_test_clr(__xrw void *data, __cls void *addr,
+                                size_t size, const size_t max_size,
+                                sync_t sync, SIGNAL *sig);
+
+__intrinsic void cls_test_clr(__xrw void *data, __cls void *addr,
+                              size_t size);
+
+/**
+ * Test and Set the bit(s) in multiples of 4B from CLS.
+ * @param data     pointer to sufficient RW transfer registers for the op
+ * @param addr     32-bit pointer to the memory start address in local CLS
+ * @param size     size of the write, must be a multiple of 4
+ * @param max_size used to determine largest write, if size is not a constant
+ * @param sync     type of synchronization (sig_done or ctx_swap)
+ * @param sig      signal to use
+ *
+ * This function provides bit atomic set of the bit(s) at the specified
+ * address according to a bit mask provided in the write transfer register(s)
+ * and returns the premodified memory contents in the read transfer
+ * register(s). A 1 in the bit position of the bit mask signifies that the bit
+ * should be set.
+ * There is currently limited support for size to be a runtime value,
+ * and for test and sets >64B. cls_test_set() provides a simplified interface
+ * where size is assumed to be compile time constant, and the context swaps on
+ * an internal signal while waiting for the write to complete.
+ */
+__intrinsic void __cls_test_set(__xrw void *data, __cls void *addr,
+                                size_t size, const size_t max_size,
+                                sync_t sync, SIGNAL *sig);
+
+__intrinsic void cls_test_set(__xrw void *data, __cls void *addr,
                               size_t size);
 
 #endif /* !_NFP__CLS_H_ */

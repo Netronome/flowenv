@@ -205,3 +205,68 @@ cls_write(__xwrite void *data, __cls void *addr, size_t size)
 }
 
 #endif /* __LITLEENDIAN */
+
+/* bit atomic functions */
+__intrinsic void
+__cls_clr(__xwrite void *data, __cls void *addr, size_t size,
+          const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    try_ctassert(size <= 64);
+    _CLS_CMD(clr, data, addr, size, max_size, sync, sig, 1, 8);
+}
+
+__intrinsic void
+cls_clr(__xwrite void *data, __cls void *addr, size_t size)
+{
+    SIGNAL sig;
+    __cls_clr(data, addr, size, size, ctx_swap, &sig);
+}
+
+
+__intrinsic void
+__cls_set(__xwrite void *data, __cls void *addr, size_t size,
+          const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    try_ctassert(size <= 64);
+    _CLS_CMD(set, data, addr, size, max_size, sync, sig, 1, 8);
+}
+
+__intrinsic void
+cls_set(__xwrite void *data, __cls void *addr, size_t size)
+{
+    SIGNAL sig;
+    __cls_set(data, addr, size, size, ctx_swap, &sig);
+}
+
+
+__intrinsic void
+__cls_test_clr(__xrw void *data, __cls void *addr, size_t size,
+               const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    try_ctassert(size <= 64);
+    _CLS_CMD(test_clr, data, addr, size, max_size, sync, sig, 1, 8);
+}
+
+__intrinsic void
+cls_test_clr(__xrw void *data, __cls void *addr, size_t size)
+{
+    SIGNAL sig;
+    __cls_test_clr(data, addr, size, size, ctx_swap, &sig);
+}
+
+
+__intrinsic void
+__cls_test_set(__xrw void *data, __cls void *addr, size_t size,
+               const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    try_ctassert(size <= 64);
+    _CLS_CMD(test_set, data, addr, size, size, sync, sig, 1, 8);
+}
+
+__intrinsic void
+cls_test_set(__xrw void *data, __cls void *addr, size_t size)
+{
+    SIGNAL sig;
+    __cls_test_set(data, addr, size, size, ctx_swap, &sig);
+}
+
