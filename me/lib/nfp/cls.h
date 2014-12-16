@@ -196,4 +196,24 @@ __intrinsic void __cls_test_set(__xrw void *data, __cls void *addr,
 __intrinsic void cls_test_set(__xrw void *data, __cls void *addr,
                               size_t size);
 
+/**
+ * Single instruction to increment by 1 a value in CLS.
+ * @param addr     pointer to the memory address in CLS.
+ *
+ * These functions provide bit atomic 32 or 64 bit CLS increment by 1.
+ */
+__intrinsic void cls_incr(__cls void *addr);
+
+__intrinsic void cls_incr64(__cls void *addr);
+
+/**
+ * Single instruction to decrement by 1 a value in CLS.
+ * @param addr     pointer to the memory address in CLS.
+ *
+ * These functions provide bit atomic 32 or 64 bit CLS decrement by 1.
+ */
+__intrinsic void cls_decr(__cls void *addr);
+
+__intrinsic void cls_decr64(__cls void *addr);
+
 #endif /* !_NFP__CLS_H_ */

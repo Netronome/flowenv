@@ -270,3 +270,27 @@ cls_test_set(__xrw void *data, __cls void *addr, size_t size)
     __cls_test_set(data, addr, size, size, ctx_swap, &sig);
 }
 
+/* cls arithmetic functions */
+__intrinsic void
+cls_incr(__cls void *addr)
+{
+    __asm cls[incr, --, addr, 0]
+}
+
+__intrinsic void
+cls_incr64(__cls void *addr)
+{
+    __asm cls[incr64, --, addr, 0]
+}
+
+__intrinsic void
+cls_decr(__cls void *addr)
+{
+    __asm cls[decr, --, addr, 0]
+}
+
+__intrinsic void
+cls_decr64(__cls void *addr)
+{
+    __asm cls[decr64, --, addr, 0]
+}
