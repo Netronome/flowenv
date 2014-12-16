@@ -47,6 +47,7 @@
 #include <nfp/mem_ring.h>
 
 /* libstd related header files */
+#include <std/cntrs.h>
 #include <std/event.h>
 #include <std/reg_utils.h>
 
