@@ -57,6 +57,7 @@
 #define __emem          __declspec(emem)
 #define __emem_n(x)     __declspec(emem##x)
 #define __dram          __declspec(dram)
+#define __mem           __declspec(mem)
 #define __cls           __declspec(cls)
 #define __ctm           __declspec(ctm)
 #define __ctm_n(x)      __declspec(ctm##x)
