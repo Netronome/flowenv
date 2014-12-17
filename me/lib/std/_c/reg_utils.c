@@ -35,6 +35,26 @@
  * utility functions, manually unrolling loops.
  */
 
+/* The following intrinsic functions could be implemented in a simpler
+ * way. For a simplified reg_cp function for only 4 bytes:
+ * __intrinsic
+ * reg_cp_4B(void *d, void *s)
+ * {
+ *     uint32_t *dst = d;
+ *     uint32_t *src = s;
+ *
+ *     dst[0] = s[0];
+ * }
+ *
+ * Due to current compiler limitation the void * must be cast to
+ * specific register types. For Local Memory a cast with __lmem must
+ * be used, while for other register types (GPRs, Transfer Registers,
+ * and Next Neighbor Registers), somewhat counterintuitively, a cast
+ * to __gpr is sufficient. Without the cast the pointers will default
+ * to the wrong size resulting in compilation errors or runtime issues
+ * (THSDK-1913).
+ */
+
 /* TODO: Investigate if a register type is indexable, convert to a loop. */
 /* TODO: Expand to handle larger 128 if in 4 context mode. */
 
@@ -217,6 +237,7 @@ reg_zero(void *s, size_t n)
     unsigned int lmem_found;
     /* Make sure the parameters are as we expect */
     ctassert(__is_in_reg_or_lmem(s));
+    ctassert(!__is_read_reg(s));
     ctassert(__is_ct_const(n));
     ctassert(n <= 64);
     ctassert((n % 4) == 0);
@@ -224,17 +245,16 @@ reg_zero(void *s, size_t n)
     #error "Attempting to redefine __REG_ZERO"
 #endif
 
-    /* if type lmem must be defined as such */
+    /* every type has to be explicitly cast */
     if (__is_in_lmem(s)) {
 #define __REG_ZERO(_x) ((__lmem unsigned int *)s)[_x] = 0
 
         _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_ZERO);
 
 #undef __REG_ZERO
-    }
-    /* else is a register type */
-    else {
-#define __REG_ZERO(_x) ((unsigned int *)s)[_x] = 0
+    } else {
+        /* all types of registers */
+#define __REG_ZERO(_x) ((__gpr unsigned int *)s)[_x] = 0
 
         _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_ZERO);
 
@@ -255,37 +275,34 @@ reg_cp(void *d, void *s, size_t n)
 #ifdef __REG_CP
     #error "Attempting to redefine __REG_CP"
 #endif
-    /* if both dst and src are lmem */
     if (__is_in_lmem(d) && __is_in_lmem(s)) {
+    /* both dst and src are lmem */
 #define __REG_CP(_x) (((__lmem unsigned int *)d)[_x] = \
                       ((__lmem unsigned int *)s)[_x])
 
         _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_CP);
 
 #undef __REG_CP
-    }
-    /* else if dst is lmem and src is reg */
-    else if (__is_in_lmem(d) && __is_in_reg(s)){
+    } else if (__is_in_lmem(d) && __is_in_reg(s)){
+        /* dst is lmem and src is reg */
 #define __REG_CP(_x) (((__lmem unsigned int *)d)[_x] = \
-                      ((       unsigned int *)s)[_x])
+                      ((__gpr  unsigned int *)s)[_x])
 
         _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_CP);
 
 #undef __REG_CP
-    }
-    /* else if dst is reg and src is lmem */
-    else if (__is_in_reg(d) && __is_in_lmem(s)){
-#define __REG_CP(_x) (((       unsigned int *)d)[_x] = \
+    } else if (__is_in_reg(d) && __is_in_lmem(s)){
+        /* else if dst is reg and src is lmem */
+#define __REG_CP(_x) (((__gpr  unsigned int *)d)[_x] = \
                       ((__lmem unsigned int *)s)[_x])
 
         _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_CP);
 
 #undef __REG_CP
-    }
-    /* else both dst and src are reg */
-    else {
-#define __REG_CP(_x) (((unsigned int *)d)[_x] = \
-                      ((unsigned int *)s)[_x])
+    } else {
+        /* both dst and src are reg */
+#define __REG_CP(_x) (((__gpr unsigned int *)d)[_x] = \
+                      ((__gpr unsigned int *)s)[_x])
 
         _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_CP);
 
@@ -309,37 +326,34 @@ reg_eq(void *s1, void *s2, size_t n)
     #error "Attempting to redefine __REG_EQ"
 #endif
 
-    /* if both s1 and s2 are lmem */
     if (__is_in_lmem(s1) && __is_in_lmem(s2)) {
+        /* both s1 and s2 are lmem */
 #define __REG_EQ(_x) (((__lmem unsigned int *)s1)[_x] == \
                       ((__lmem unsigned int *)s2)[_x])
 
         _REG_UTILS_EQ_SWITCH_CASE_IMPLEMENT(n);
 
 #undef __REG_EQ
-    }
-    /* else s1 is lmem and s2 is reg */
-    else if (__is_in_lmem(s1) && __is_in_reg(s2)) {
+    } else if (__is_in_lmem(s1) && __is_in_reg(s2)) {
+        /* s1 is lmem and s2 is reg */
 #define __REG_EQ(_x) (((__lmem unsigned int *)s1)[_x] == \
-                      ((       unsigned int *)s2)[_x])
+                      ((__gpr  unsigned int *)s2)[_x])
 
         _REG_UTILS_EQ_SWITCH_CASE_IMPLEMENT(n);
 
 #undef __REG_EQ
-    }
-    /* else s1 is reg and s2 is lmem */
-    else if (__is_in_reg(s1) && __is_in_lmem(s2)) {
-#define __REG_EQ(_x) (((       unsigned int *)s1)[_x] == \
+    } else if (__is_in_reg(s1) && __is_in_lmem(s2)) {
+        /* s1 is reg and s2 is lmem */
+#define __REG_EQ(_x) (((__gpr  unsigned int *)s1)[_x] == \
                       ((__lmem unsigned int *)s2)[_x])
 
         _REG_UTILS_EQ_SWITCH_CASE_IMPLEMENT(n);
 
         #undef __REG_EQ
-    }
-    /* else s1 and s2 are reg */
-    else {
-#define __REG_EQ(_x) (((unsigned int *)s1)[_x] == \
-                      ((unsigned int *)s2)[_x])
+    } else {
+        /* s1 and s2 are reg */
+#define __REG_EQ(_x) (((__gpr unsigned int *)s1)[_x] == \
+                      ((__gpr unsigned int *)s2)[_x])
 
         _REG_UTILS_EQ_SWITCH_CASE_IMPLEMENT(n);
 

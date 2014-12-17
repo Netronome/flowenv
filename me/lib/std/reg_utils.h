@@ -21,9 +21,9 @@
  * generic implementations of some useful functions to handle such
  * data structures.
  *
- * Note, these functions essentially manually unroll loops depending
- * on the size_t parameter.  For good performance and small code size
- * it is important that the size parameter is a compile time constant.
+ * These functions manually unroll loops depending on the size_t
+ * parameter. For good performance and small code size it is
+ * important that the size parameter is a compile time constant.
  */
 
 #ifndef _STD__REG_UTILS_H_
