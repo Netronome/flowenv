@@ -59,7 +59,7 @@
 /* TODO: Expand to handle larger 128 if in 4 context mode. */
 
 
-/* MACRO for reg_zero and reg_cp switch case implementation */
+/* MACRO for reg_set and reg_cp switch case implementation */
 #define _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, EXEC_MACRO)                     \
 {                                                                           \
     switch (n) {                                                            \
@@ -232,34 +232,39 @@
 
 
 __intrinsic void
-reg_zero(void *s, size_t n)
+reg_set(void *d, unsigned int s_val, size_t n)
 {
-    unsigned int lmem_found;
     /* Make sure the parameters are as we expect */
-    ctassert(__is_in_reg_or_lmem(s));
-    ctassert(!__is_read_reg(s));
+    ctassert(__is_in_reg_or_lmem(d));
+    ctassert(!__is_read_reg(d));
     ctassert(__is_ct_const(n));
     ctassert(n <= 64);
     ctassert((n % 4) == 0);
-#ifdef __REG_ZERO
-    #error "Attempting to redefine __REG_ZERO"
+#ifdef __REG_SET
+    #error "Attempting to redefine __REG_SET"
 #endif
 
-    /* every type has to be explicitly cast */
-    if (__is_in_lmem(s)) {
-#define __REG_ZERO(_x) ((__lmem unsigned int *)s)[_x] = 0
+    if (__is_in_lmem(d)) {
+        /* if type lmem must be defined as such */
+#define __REG_SET(_x) ((__lmem unsigned int *)d)[_x] = s_val
 
-        _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_ZERO);
+        _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_SET);
 
-#undef __REG_ZERO
+#undef __REG_SET
     } else {
-        /* all types of registers */
-#define __REG_ZERO(_x) ((__gpr unsigned int *)s)[_x] = 0
+        /* else is a register type */
+#define __REG_SET(_x) ((__gpr unsigned int *)d)[_x] = s_val
 
-        _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_ZERO);
+        _REG_UTILS_SWITCH_CASE_IMPLEMENT(n, __REG_SET);
 
-#undef __REG_ZERO
+#undef __REG_SET
     }
+}
+
+__intrinsic void
+reg_zero(void *s, size_t n)
+{
+    reg_set(s, 0, n);
 }
 
 __intrinsic void
@@ -276,7 +281,7 @@ reg_cp(void *d, void *s, size_t n)
     #error "Attempting to redefine __REG_CP"
 #endif
     if (__is_in_lmem(d) && __is_in_lmem(s)) {
-    /* both dst and src are lmem */
+        /* both dst and src are lmem */
 #define __REG_CP(_x) (((__lmem unsigned int *)d)[_x] = \
                       ((__lmem unsigned int *)s)[_x])
 

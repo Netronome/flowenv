@@ -34,6 +34,20 @@
 
 
 /**
+ * Set a region located in registers to set value
+ *
+ * @param d     Destination
+ * @param s_val Set value
+ * @param n     Size of region (in bytes)
+ *
+ * @d can be located in any type of register (GPR, NN, XFER) or LMEM.
+ * @s_val can be any unsigned int.
+ * @n must be a compile time constant and multiple of 4.
+ */
+__intrinsic void reg_set(void *d, unsigned int s_val, size_t n);
+
+
+/**
  * Zero a region located in registers.
  *
  * @param s     Pointer to the region
