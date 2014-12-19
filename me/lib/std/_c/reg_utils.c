@@ -236,7 +236,6 @@ reg_set(void *d, unsigned int s_val, size_t n)
 {
     /* Make sure the parameters are as we expect */
     ctassert(__is_in_reg_or_lmem(d));
-    ctassert(!__is_read_reg(d));
     ctassert(__is_ct_const(n));
     ctassert(n <= 64);
     ctassert((n % 4) == 0);
