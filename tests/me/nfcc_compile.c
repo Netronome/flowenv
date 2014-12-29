@@ -50,6 +50,7 @@
 #include <std/cntrs.h>
 #include <std/event.h>
 #include <std/reg_utils.h>
+#include <std/write_alert.h>
 
 /* libpkt related header files */
 #include <pkt/pkt.h>

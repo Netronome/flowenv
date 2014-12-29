@@ -27,6 +27,7 @@
 #include "_c/cntrs.c"
 #include "_c/event.c"
 #include "_c/reg_utils.c"
+#include "_c/write_alert.c"
 
 #endif /* !_STD__LIBSTD_C_ */
 
