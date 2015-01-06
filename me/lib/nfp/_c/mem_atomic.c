@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Netronome, Inc.
+ * Copyright (C) 2012-2015 Netronome, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,46 @@ do {                                                                           \
                         __ct_const_val(max_count)], ctx_swap[*sig],            \
                         indirect_ref }                                         \
         }                                                                      \
+    }                                                                          \
+} while (0)
+
+#define _MEM_ATOMIC_CMD_TEST(cmdname, data, addr, size, max_size, sync, sig_pair, shift, \
+                        cmdlen)                                                \
+do {                                                                           \
+    struct nfp_mecsr_prev_alu ind;                                             \
+    unsigned int count = (size >> shift);                                      \
+    unsigned int max_count = (max_size >> shift);                              \
+    unsigned int addr_hi, addr_lo;                                             \
+                                                                               \
+    ctassert(__is_ct_const(sync));                                             \
+    ctassert(__is_ct_const(max_size));                                         \
+    try_ctassert(size != 0);                                                   \
+    ctassert(sync == sig_done);                                                \
+    try_ctassert(count <= 8);                                                  \
+    ctassert(__is_ct_const(cmdlen));                                           \
+    ctassert((cmdlen == _MEM_ATOMIC_32_CMD) ||                                 \
+             (cmdlen == _MEM_ATOMIC_64_CMD));                                  \
+                                                                               \
+    /* This code is inefficient if addr is >256B aligned, */                   \
+    /* but will work for 40bit or 32bit pointers. */                           \
+                                                                               \
+    addr_hi = ((unsigned long long int)addr >> 8) & 0xff000000;                \
+    addr_lo = (unsigned long long int)addr & 0xffffffff;                       \
+                                                                               \
+    if (__is_ct_const(size) ) {                                                \
+            __asm { mem[cmdname, *data, addr_hi, <<8, addr_lo,                 \
+                        __ct_const_val(count)], sig_done[*sig_pair] }          \
+    } else {                                                                   \
+        /* Setup length in PrevAlu for the indirect */                         \
+        ind.__raw = 0;                                                         \
+        ind.ov_len = 1;                                                        \
+        /* length[2:2] must be set for 64-bit non-imm arithmetic operations */ \
+        ind.length = (count-1) | (cmdlen<<2);                                  \
+                                                                               \
+        __asm { alu[--, --, B, ind.__raw] }                                    \
+        __asm { mem[cmdname, *data, addr_hi, <<8, addr_lo,                     \
+                    __ct_const_val(max_count)], sig_done[*sig_pair],           \
+                    indirect_ref }                                             \
     }                                                                          \
 } while (0)
 
@@ -332,4 +372,44 @@ mem_bitclr(__xwrite void *data, __mem void *addr, size_t size)
     SIGNAL sig;
 
     __mem_bitclr(data, addr, size, size, ctx_swap, &sig);
+}
+
+__intrinsic void
+__mem_test_set(__xrw void *data, __mem void *addr, size_t size,
+               const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
+{
+    try_ctassert(size <= 32);
+    ctassert(__is_ct_const(size));
+
+    _MEM_ATOMIC_CMD_TEST(test_set, data, addr, size, max_size, sync, sig_pair,
+                         2, _MEM_ATOMIC_32_CMD);
+}
+
+__intrinsic void
+mem_test_set(__xrw void *data, __mem void *addr, size_t size)
+{
+    SIGNAL_PAIR sig_pair;
+
+    __mem_test_set(data, addr, size, size, sig_done, &sig_pair);
+    __wait_for_all(&sig_pair);
+}
+
+__intrinsic void
+__mem_test_clr(__xrw void *data, __mem void *addr, size_t size,
+               const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
+{
+    try_ctassert(size <= 32);
+    ctassert(__is_ct_const(size));
+
+    _MEM_ATOMIC_CMD_TEST(test_clr, data, addr, size, max_size, sync, sig_pair,
+                         2, _MEM_ATOMIC_32_CMD);
+}
+
+__intrinsic void
+mem_test_clr(__xrw void *data, __mem void *addr, size_t size)
+{
+    SIGNAL_PAIR sig_pair;
+
+    __mem_test_clr(data, addr, size, size, sig_done, &sig_pair);
+    __wait_for_all(&sig_pair);
 }

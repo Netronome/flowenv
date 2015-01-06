@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Netronome, Inc.
+ * Copyright (C) 2012-2015 Netronome, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,5 +174,33 @@ __intrinsic void __mem_bitclr(__xwrite void *data, __mem void *addr,
 
 __intrinsic void mem_bitclr(__xwrite void *data,
                             __mem void *addr, size_t size);
+
+/**
+ * Atomic test and set/clr bits in multiple of 4B values (EMEM, IMEM, or CTM)
+ * @param data      pointer to sufficient RW transfer registers for the op
+ * @param addr      40-bit pointer to the first value in memory
+ * @param size      size of the op, must be a multiple of 4
+ * @param max_size  used to determine largest op, if size is not a constant
+ * @param sync      type of synchronization (must be sig_done)
+ * @param sig_pair  signal pair to use
+ *
+ * Note: Maximum for @max_size is 32.
+ *
+ * These functions provide basic atomic bit test and set/clr in NFP EMEM,
+ * IMEM or CTM memory types.
+ */
+__intrinsic void __mem_test_set(__xrw void *data, __mem void *addr,
+                                size_t size, const size_t max_size,
+                                sync_t sync, SIGNAL_PAIR *sig_pair);
+
+__intrinsic void mem_test_set(__xrw void *data, __mem void *addr,
+                              size_t size);
+
+__intrinsic void __mem_test_clr(__xrw void *data, __mem void *addr,
+                                size_t size, const size_t max_size,
+                                sync_t sync, SIGNAL_PAIR *sig);
+
+__intrinsic void mem_test_clr(__xrw void *data, __mem void *addr,
+                              size_t size);
 
 #endif /* !_NFP__MEM_ATOMIC_H_ */
