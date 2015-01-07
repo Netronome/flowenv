@@ -26,6 +26,7 @@
 
 #include "_c/cntrs.c"
 #include "_c/event.c"
+#include "_c/hash.c"
 #include "_c/reg_utils.c"
 #include "_c/write_alert.c"
 

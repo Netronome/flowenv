@@ -49,6 +49,7 @@
 /* libstd related header files */
 #include <std/cntrs.h>
 #include <std/event.h>
+#include <std/hash.h>
 #include <std/reg_utils.h>
 #include <std/write_alert.h>
 
