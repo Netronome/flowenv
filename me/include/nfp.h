@@ -619,6 +619,12 @@ long long __LoadTimeConstant(char *name);
 unsigned long long __alloc_resource(const char *argstr);
 
 /**
+ * Lookup value of a linker symbol
+ * @param name          name of the linker symbol
+ */
+unsigned long long __link_sym(const char *argstr);
+
+/**
  * Marks a section of code as being on the critical path of the application.
  *
  * @param ...  Optional argument indicates priority in 0-100.  Default is 100.
