@@ -32,6 +32,7 @@
 #include "_c/cls.c"
 #include "_c/me.c"
 #include "_c/mem_bulk.c"
+#include "_c/mem_cam.c"
 #include "_c/mem_ring.c"
 #include "_c/mem_atomic.c"
 #include "_c/xpb.c"
