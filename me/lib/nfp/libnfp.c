@@ -35,6 +35,7 @@
 #include "_c/mem_cam.c"
 #include "_c/mem_ring.c"
 #include "_c/mem_atomic.c"
+#include "_c/pcie.c"
 #include "_c/xpb.c"
 
 /*
