@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2013-2014 Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2013-2015 Netronome Systems, Inc.  All rights reserved.
  *
  * @file        rtsym.c
  * @brief       Dump runtime symbols in the current environment.

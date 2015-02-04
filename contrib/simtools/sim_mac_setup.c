@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2013-2014 Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2013-2015 Netronome Systems, Inc.  All rights reserved.
  *
  * @file        sim_mac_setup.c
  * @brief       Set up a MAC in the NFP simulator.

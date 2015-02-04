@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2013-2014 Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2013-2015 Netronome Systems, Inc.  All rights reserved.
  *
  * @file        sim_nbi_dma_setup.c
  * @brief       Initialize an NFP simulator NBI DMA engine

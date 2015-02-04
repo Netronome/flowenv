@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2013-2014 Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2013-2015 Netronome Systems, Inc.  All rights reserved.
  *
  * @file        nfp_ctm.c
  * @brief       Set cluster target memory either from a file or from a static

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2013-2014 Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2013-2015 Netronome Systems, Inc.  All rights reserved.
  *
  * @file        sim_pcap_play.c
  * @brief       Inject packets from a PCAP file into the NFP simulator
