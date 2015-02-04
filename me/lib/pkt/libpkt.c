@@ -446,14 +446,141 @@ pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
     }
 }
 
-
 __intrinsic void
 pkt_ctm_free(unsigned char isl, unsigned int pnum)
 {
-     __gpr unsigned int addr_hi = 0;
+    __gpr unsigned int addr_hi = 0;
 
     if (isl != 0)
         addr_hi = (0x80 | isl) << 24;
 
     __asm mem[packet_free, --, addr_hi, <<8, pnum]
+}
+
+__intrinsic unsigned int
+pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
+              unsigned char isl, enum PKT_CTM_SIZE size,
+              unsigned char alloc_internal)
+{
+    __gpr unsigned int addr_hi = 0;
+    __gpr unsigned int addr_lo = 0;
+    __gpr unsigned int ind;
+    __xread struct pe_pkt_alloc_res pe_res;
+    SIGNAL sig_alloc;
+    __xrw struct ctm_pkt_credits credits_update;
+    SIGNAL sig_cls;
+    __gpr unsigned int pnum;
+
+    /* Allocate one packet credit and one buffer credit if requested */
+    if (alloc_internal)
+        pkt_ctm_get_credits(credits, 1, 1);
+
+    if (isl != 0)
+        addr_hi = (0x80 | isl) << 24;
+
+    ind = size << NFP_MECSR_PREV_ALU_LENGTH_shift;
+    __asm {
+        alu[ind, ind, OR, 1, <<NFP_MECSR_PREV_ALU_OV_LEN_bit];
+        mem[packet_alloc_poll, pe_res, addr_hi, <<8, addr_lo, 1],\
+            indirect_ref, ctx_swap[sig_alloc];
+    }
+
+    /* An all 1s response indicates failure to allocate */
+    if (pe_res.__raw == 0xffffffff)
+        pnum = 0xffffffff;
+    else {
+        pnum = pe_res.pnum;
+        if((pe_res.pkt_credit > 0) || (pe_res.buf_credit > 0)) {
+            /* credits where returned add them back to the buckets */
+            credits_update.pkts = pe_res.pkt_credit;
+            credits_update.bufs = pe_res.buf_credit;
+            __asm {
+                cls[test_add, credits_update, credits, 0, 2],\
+                    ctx_swap[sig_cls];
+            }
+        }
+    }
+    return pnum;
+}
+
+__intrinsic void
+pkt_ctm_init_credits(__cls struct ctm_pkt_credits *credits,
+                     unsigned int pkt_credits,
+                     unsigned int buf_credits)
+{
+    credits->pkts = pkt_credits;
+    credits->bufs = buf_credits;
+}
+
+__intrinsic void
+pkt_ctm_poll_pe_credit(__cls struct ctm_pkt_credits *credits)
+{
+    __xread struct pe_credit_get_res pe_res;
+    __xrw struct ctm_pkt_credits credits_update;
+    SIGNAL sig_pe;
+    SIGNAL sig_cls;
+    __gpr unsigned int master = 0;
+
+    __asm {
+        /* poll for returned credits */
+        mem[packet_credit_get, pe_res, 0, <<8, master, 1], ctx_swap[sig_pe];
+    }
+
+    /* If needed, update the credits management structure */
+    if((pe_res.pkt_credit > 0) || (pe_res.buf_credit > 0)) {
+        credits_update.pkts = pe_res.pkt_credit;
+        credits_update.bufs = pe_res.buf_credit;
+        __asm {
+            cls[test_add, credits_update, credits, 0, 2], ctx_swap[sig_cls];
+        }
+    }
+}
+
+__intrinsic void
+pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
+                    unsigned int pkt_credits, unsigned int buf_credits)
+{
+    __xrw struct ctm_pkt_credits credits_update;
+    SIGNAL sig_cls;
+
+    credits_update.pkts = pkt_credits;
+    credits_update.bufs = buf_credits;
+    __asm {
+        cls[test_subsat, credits_update, credits, 0, 2], ctx_swap[sig_cls];
+    }
+
+    /* Check the returned number of credits (the value before the sub) */
+    while ((credits_update.pkts < pkt_credits) ||
+           (credits_update.bufs < buf_credits)) {
+        /* Either the packet or the buffer credits have run out */
+        /* return the credit(s) acquired, and wait for both     */
+        if (credits_update.pkts >= pkt_credits) {
+            /* Add back what we asked for */
+            credits_update.pkts = pkt_credits;
+        } else {
+            /* Since the value in the management struct saturated
+               to 0 we should add back the value before the sub */
+            /* wr               = rd */
+            credits_update.pkts = credits_update.pkts;
+        }
+
+        if (credits_update.bufs >= buf_credits) {
+            credits_update.bufs = buf_credits;
+        } else {
+            /* wr               = rd */
+            credits_update.bufs = credits_update.bufs;
+        }
+
+        __asm {
+            cls[add, credits_update, credits, 0, 2], ctx_swap[sig_cls];
+        }
+
+        /* Try again */
+        credits_update.pkts = pkt_credits;
+        credits_update.bufs = buf_credits;
+        __asm {
+            cls[test_subsat, credits_update, credits, 0, 2],\
+                ctx_swap[sig_cls];
+        }
+    }
 }

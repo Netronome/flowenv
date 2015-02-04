@@ -158,11 +158,11 @@
  * perform TCP checksum updates if the ME prepended the packet with a
  * command to do so.  Finally, the egress MAC block will transmit the packet
  * onto the physicial media.
- * 
- * In order to recycle MU buffers back into use by ingress processing, 
+ *
+ * In order to recycle MU buffers back into use by ingress processing,
  * software must include a special purpose ME that drains the egress MU
  * buffer handle queues and re-enqueues the buffer handles to the NBI DMA
- * engines.  This "buffer list manager" software might alternately make 
+ * engines.  This "buffer list manager" software might alternately make
  * the MU buffers available for other types of packet operations such as
  * PCIe reception, packet copying, etc...
  */
@@ -422,8 +422,8 @@ struct pkt_ms_info {
  * NBI Packet Modify Modification Script format
  *
  * In order to send a packet in the NFP 6xxx A0/A1 chip, one
- * must prepend the packet with a "modification script" for the NBI 
- * TM packet modifier.  One must do this even if one does not want 
+ * must prepend the packet with a "modification script" for the NBI
+ * TM packet modifier.  One must do this even if one does not want
  * any modifications to the packet.
  *
  * The script must be placed at an 8-byte aligned location in
@@ -437,7 +437,7 @@ struct pkt_ms_info {
  * This implies that a packet can only start at an 8-byte aligned
  * address, by default.
  *
- * The way to get around this is to create an 8-byte modification 
+ * The way to get around this is to create an 8-byte modification
  * script starting at the nearest 8-byte address boundary 8 or more
  * bytes below the start of the packet that deletes the intervening
  * bytes between the modification script and the start of the packet.
@@ -446,7 +446,7 @@ struct pkt_ms_info {
  *
  * NFP 6xxx B0 and later chips will allow NOT using a modification
  * script as well as arbitrary byte offsets for the start of packet
- * when the modification script is disabled.  (The packet must still 
+ * when the modification script is disabled.  (The packet must still
  * start at start at byte 8 or later in the CTM buffer).
  *
  * See:
@@ -507,6 +507,47 @@ enum PKT_CTM_SIZE {
     PKT_CTM_SIZE_1024,
     PKT_CTM_SIZE_2048,
 };
+
+/*
+ * Packets and Buffers credits structure.
+ * Used for CTM packets and buffers credits management.
+ */
+struct ctm_pkt_credits {
+    unsigned int pkts;
+    unsigned int bufs;
+};
+
+/*
+ * Packet Engine response for packet_alloc commands.
+ */
+struct pe_pkt_alloc_res {
+    union {
+        struct {
+            unsigned int resv:2;        /**< Reserved */
+            unsigned int pnum:10;       /**< Packet number */
+            unsigned int pkt_credit:11; /**< Packet credits */
+            unsigned int buf_credit:9;  /**< Buffer credits */
+        };
+
+        unsigned int __raw;
+    };
+};
+
+/*
+ * Packet Engine response for packet_credit_get command.
+ */
+struct pe_credit_get_res {
+    union {
+        struct {
+            unsigned int resv:12;       /**< Reserved */
+            unsigned int pkt_credit:11; /**< Packet Credit */
+            unsigned int buf_credit:9;  /**< Buffer Credit */
+        };
+
+        unsigned int __raw;
+    };
+};
+
 
 /**
  * Receive a packet from a the local island's CTM workq.
@@ -736,6 +777,30 @@ __intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
                                   unsigned int seq);
 
 
+/*
+ *  The following sequence of actions is expected to properly allocate and
+ *  free CTM packets:
+ *
+ *  1. Allocate a credits management structure in CLS memory.
+ *      __export __shared __cls struct ctm_pkt_credits my_credits;
+ *
+ *  2. Initialize the credits structure with the packets and buffers credits.
+ *      pkt_ctm_init_credits(&my_credits, INIT_PKT_CREDITS, INIT_BUF_CREDITS);
+ *
+ *  3. Get credits for the packets to be allocated (could be skipped if done
+ *     internally in the pkt_ctm_alloc function).
+ *      pkt_ctm_get_credits(&my_credits, NUM_PKTS, NUM_BUFS);
+ *
+ *  4. Allocate packets (one at a time, in this example 256 bytes)
+ *      pkt_num = pkt_ctm_alloc(&my_credits, isl_num, PKT_CTM_SIZE_256, 0);
+ *
+ *  5. Periodically replenish the credit buckets.
+ *      pkt_ctm_poll_pe_credit(&my_credits, PKT_CTM_SIZE_256);
+ *
+ *  6. Free CTM packets (using pkt_num from stage 4).
+ *      pkt_ctm_free(isl_num, pkt_num);
+ */
+
 /**
  * Free a packet from CTM. Does not notify sequencer.
  *
@@ -744,6 +809,81 @@ __intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
  *
  */
 __intrinsic void pkt_ctm_free(unsigned char isl, unsigned int pnum);
+
+/**
+ * Allocate a CTM packet buffer.
+ *
+ * @param credits           The credits management struct
+ * @param isl               The island of the CTM packet
+ * @param size              CTM buffer size (PKT_CTM_SIZE_*)
+ * @param alloc_internal    If credits are to be allocated internally
+ *
+ * @return - the allocated packet number on success, 0xffffffff on failure.
+ *
+ * If the "alloc_internal" param is 0 - this function does not check for
+ * available credits in the given credits structure.
+ * It is assumed that the user has already called "pkt_ctm_get_credits"
+ * and has successfully acquired the needed credits.
+ * Returned credits, upon successful packet allocation, will update the
+ * credits structure.
+ *
+ * A note of caution:
+ *  Since the PE "assumes" that the ME has allocated 1 buffer credit before
+ *  calling the "packet_alloc_poll" command, it will always return 1 buffer
+ *  credit if no new buffer was allocated. This can overflow the initial
+ *  credits (since the credits management structure is always updates with
+ *  the returned credits). If the user prefers to allocate packets and credits
+ *  once (for efficiency reasons) and skip the credits allocation done
+ *  internally, he/she must make sure one buffer credit is allocated for every
+ *  packet allocation request.
+ *  For more details see Data Book section 9.2.2.7.1 Packet Allocation Request.
+ *
+ *  No overflow checking is done internally (for efficiency reasons).
+ */
+__intrinsic unsigned int pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
+                                       unsigned char isl,
+                                       enum PKT_CTM_SIZE size,
+                                       unsigned char alloc_internal);
+
+/**
+ * Initialises the credit management structure.
+ *
+ * @param credits       The credits management structure to initialize.
+ * @param pkt_credits   The number of packet credits.
+ * @param buf_credits   The number of buffer credits.
+ *
+ * The user is expected to allocate the credits management structure and call
+ * this function to initialize the required packets and buffers credits.
+ * The user must not update the credits structure manualy since it is used
+ * for an entire island's credit management.
+ */
+__intrinsic void pkt_ctm_init_credits(__cls struct ctm_pkt_credits *credits,
+                                      unsigned int pkt_credits,
+                                      unsigned int buf_credits);
+
+/**
+ * Poll for credits from the Packet Engine.
+ *
+ * @param credits   The credits management structure to update.
+ *
+ * Updates the credits management structure with the new polled credits.
+ * This function must be run periodically to replenish the credit buckets.
+ */
+__intrinsic void pkt_ctm_poll_pe_credit(__cls struct ctm_pkt_credits *credits);
+
+/**
+ * Get credits for allocation of packet(s) in CTM.
+ *
+ * @param pkt_credits   The desired amount of packet credits
+ * @param buf_credits   The desired amount of buffer credits
+ *
+ * This function gets credits from the credits mangment structure
+ * in a safe way.
+ * Will block until the requested packet and buffer credits could be acquired.
+ */
+__intrinsic void pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
+                                     unsigned int pkt_credits,
+                                     unsigned int buf_credits);
 
 #endif /* __NFP_LANG_MICROC */
 
