@@ -46,25 +46,25 @@
  * assumed to be compile time constant, and the context swaps on an internal
  * signal while waiting for the read to complete.
  */
-__intrinsic void __mem_read64(__xread void *data, __dram void *addr,
+__intrinsic void __mem_read64(__xread void *data, __mem void *addr,
                               size_t size, const size_t max_size,
                               sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_read64(__xread void *data, __dram void *addr,
+__intrinsic void mem_read64(__xread void *data, __mem void *addr,
                             const size_t size);
 
-__intrinsic void __mem_read32(__xread void *data, __dram void *addr,
+__intrinsic void __mem_read32(__xread void *data, __mem void *addr,
                               size_t size, const size_t max_size,
                               sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_read32(__xread void *data, __dram void *addr,
+__intrinsic void mem_read32(__xread void *data, __mem void *addr,
                             const size_t size);
 
-__intrinsic void __mem_read8(__xread void *data, __dram void *addr,
+__intrinsic void __mem_read8(__xread void *data, __mem void *addr,
                              size_t size, const size_t max_size,
                              sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_read8(__xread void *data, __dram void *addr,
+__intrinsic void mem_read8(__xread void *data, __mem void *addr,
                            const size_t size);
 
 /**
@@ -89,25 +89,25 @@ __intrinsic void mem_read8(__xread void *data, __dram void *addr,
  * assumed to be compile time constant, and the context swaps on an internal
  * signal while waiting for the write to complete.
  */
-__intrinsic void __mem_write64(__xwrite void *data, __dram void *addr,
+__intrinsic void __mem_write64(__xwrite void *data, __mem void *addr,
                                size_t size, const size_t max_size,
                                sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_write64(__xwrite void *data, __dram void *addr,
+__intrinsic void mem_write64(__xwrite void *data, __mem void *addr,
                              const size_t size);
 
-__intrinsic void __mem_write32(__xwrite void *data, __dram void *addr,
+__intrinsic void __mem_write32(__xwrite void *data, __mem void *addr,
                                size_t size, const size_t max_size,
                                sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_write32(__xwrite void *data, __dram void *addr,
+__intrinsic void mem_write32(__xwrite void *data, __mem void *addr,
                              const size_t size);
 
-__intrinsic void __mem_write8(__xwrite void *data, __dram void *addr,
+__intrinsic void __mem_write8(__xwrite void *data, __mem void *addr,
                               size_t size, const size_t max_size,
                               sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_write8(__xwrite void *data, __dram void *addr,
+__intrinsic void mem_write8(__xwrite void *data, __mem void *addr,
                             const size_t size);
 
 #endif /* !_NFP__MEM_BULK_H_ */
