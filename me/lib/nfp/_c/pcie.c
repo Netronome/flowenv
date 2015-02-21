@@ -191,7 +191,7 @@ pcie_dma_cfg_set_one(unsigned int pcie_isl, unsigned int index,
     count = ((sizeof cfg) >> 2);
     reg_no = (((index >> 1) & 0x7) << 2);
     addr_lo = NFP_PCIE_DMA_CFG0 + reg_no;
-    pcie_isl << 30;
+    addr_hi = pcie_isl << 30;
 
     /* Read original configuration */
     __asm pcie[read_pci, cfg, addr_hi, <<8, addr_lo, __ct_const_val(count)], \
