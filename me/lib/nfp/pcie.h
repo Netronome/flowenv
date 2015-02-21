@@ -8,6 +8,8 @@
 #ifndef _NFP__PCIE_H_
 #define _NFP__PCIE_H_
 
+#include <nfp6000/nfp_pcie.h>
+
 /*
  * Interface for the direct PCIe read/writes through a BAR
  */
