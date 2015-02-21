@@ -250,15 +250,22 @@ pcie_dma_set_sig(void *cmd, unsigned int meid, unsigned int ctx,
                  unsigned int sig_no)
 {
     struct nfp_pcie_dma_cmd *cmd_ptr;
-    unsigned int mode_msk;
-    unsigned int tmp;
+    unsigned int mode_msk_inv;
+    unsigned int mode;
 
-    mode_msk = ((1 << 31 - 1) - (NFP_PCIE_DMA_CMD_DMA_MODE_shf - 1));
-    tmp = (((meid & 0xF) << 13) | (((meid >> 4) & 0x3F) << 7) |
-           ((ctx & 0x7) << 4) | sig_no);
+    mode_msk_inv = ((1 << NFP_PCIE_DMA_CMD_DMA_MODE_shf) - 1);
+    /* "mode" fills the ModeSelect and DmaMode fields, 18bits
+     * 17:17 zero (selects signal autopush)
+     * 16:13 master ID within island
+     * 12:7  master island
+     * 6:4   context num
+     * 3:0   signal within context
+     */
+    mode = (((meid & 0xF) << 13) | (((meid >> 4) & 0x3F) << 7) |
+            ((ctx & 0x7) << 4) | sig_no);
     cmd_ptr = cmd;
-    cmd_ptr->__raw[1] = ((tmp << NFP_PCIE_DMA_CMD_DMA_MODE_shf) |
-                         (cmd_ptr->__raw[1] & ~mode_msk));
+    cmd_ptr->__raw[1] = ((mode << NFP_PCIE_DMA_CMD_DMA_MODE_shf) |
+                         (cmd_ptr->__raw[1] & mode_msk_inv));
 }
 
 __intrinsic void
