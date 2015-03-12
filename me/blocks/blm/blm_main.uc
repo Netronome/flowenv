@@ -672,13 +672,24 @@ end_cache_fill#:
     /* NOTE :                                                       */
     /* Using "emem" for the island number is covering both emem and */
     /* emem_cache_upper ring location.                              */
+
+    /* For a ring the maximum entries permitted is size-1, so if    */
+    /* the initial count equals the ring size we must decrease the  */
+    /* initial count by 1.                                          */
+    #if (R_SIZE == INIT_COUNT)
+        #define_eval BUF_CNT (INIT_COUNT - 1)
+    #else
+        #define_eval BUF_CNT (INIT_COUNT)
+    #endif
+
     .load_mu_qdesc \
             emem/**/_ISL_ R_NUM \
             ((_SIZE_ <<28) | (R_BASE & 0x03fffffc)) \
-            (((R_BASE + INIT_COUNT*4) & 0xfffffffc) | 2) \
-            ((Q_LOC << 30) | ((R_BASE >> 8) & 0x03000000) | INIT_COUNT) \
+            (((R_BASE + BUF_CNT*4) & 0xfffffffc) | 2) \
+            ((Q_LOC << 30) | ((R_BASE >> 8) & 0x03000000) | BUF_CNT) \
             0
 
+    #undef BUF_CNT
     #undef _ISL_
     #undef _SIZE_
 
