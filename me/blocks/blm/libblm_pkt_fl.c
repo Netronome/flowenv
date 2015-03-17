@@ -21,107 +21,108 @@
  * The BLM code will initialize the rings (i.e. write the queue descriptors)
  * when the compile time swith "BLM_INIT_EMU_RINGS" is defined.
  *
- * This implemetation tries to folow the ASM inplementation.
+ * This implementation tries to folow the ASM implementation.
  * (See libblm_pkt_fl.uc for ASM details).
  *
  * @file        libblm_pkt_fl.c
- * @brief
+ * @brief       Buffers alloc and free using BLM EMU rings.
  *
  */
-
-#include "libblm_pkt_fl.h"
 #include <nfp6000/nfp_me.h>
+#include <assert.h>
 
-__intrinsic mem_ring_addr_t
-nfp_blm_buf_get_ring_addr(__addr40 void* rbase)
-{
-    return mem_ring_get_addr(rbase);
-}
+#include "libblm.h"
+#include "libblm_pkt_fl.h"
 
-__intrinsic void
-__nfp_blm_buf_alloc_base40(__xread void* pBuf, unsigned int rnum,
-                           __addr40 void* rbase, unsigned int count,
-                           SIGNAL_PAIR *sigpair, sync_t sync)
+__intrinsic int
+__blm_buf_alloc(__xread blm_buf_handle_t *buf, unsigned int blq,
+                SIGNAL_PAIR *sigpair, sync_t sync)
 {
-    mem_ring_addr_t raddr_hi;
-    raddr_hi = mem_ring_get_addr(rbase);
-    __mem_ring_get(rnum, raddr_hi, pBuf, (count<<2), 64, sync, sigpair);
-}
-
-__intrinsic void
-__nfp_blm_buf_alloc(__xread void* pBuf, unsigned int rnum,
-                    mem_ring_addr_t rbase, unsigned int count,
-                    SIGNAL_PAIR *sigpair, sync_t sync)
-{
-    __mem_ring_get(rnum, rbase, pBuf, (count<<2), 64, sync, sigpair);
+    return __blm_buf_alloc_bulk(buf, 1, blq, sigpair, sync);
 }
 
 __intrinsic int
-nfp_blm_buf_alloc_base40(__xread void* pBuf, unsigned int rnum,
-                         __addr40 void* rbase, unsigned int count)
+blm_buf_alloc(__xread blm_buf_handle_t *buf, unsigned int blq)
 {
-    mem_ring_addr_t raddr_hi;
-    raddr_hi = mem_ring_get_addr(rbase);
-    return mem_ring_get(rnum, raddr_hi, pBuf, (count << 2));
+    return blm_buf_alloc_bulk(buf, 1, blq);
 }
 
 __intrinsic int
-nfp_blm_buf_alloc(__xread void* pBuf, unsigned int rnum, mem_ring_addr_t rbase,
-                  unsigned int count)
-{
-    return mem_ring_get(rnum, rbase, pBuf, (count << 2));
-}
-
-__intrinsic void
-__nfp_blm_buf_free_base40(__xrw void* pBuf, unsigned int rnum,
-                          __addr40 void* rbase, unsigned int count,
-                          SIGNAL_PAIR *sigpair, sync_t sync)
+__blm_buf_alloc_bulk(__xread blm_buf_handle_t *bufs, unsigned int count,
+                     unsigned int blq, SIGNAL_PAIR *sigpair, sync_t sync)
 {
     mem_ring_addr_t raddr_hi;
-    raddr_hi = mem_ring_get_addr(rbase);
-    __mem_ring_put(rnum, raddr_hi, pBuf, (count << 2), 64, sync, sigpair);
-}
+    unsigned int rnum;
 
-__intrinsic void
-__nfp_blm_buf_free(__xrw void* pBuf, unsigned int rnum, mem_ring_addr_t rbase,
-                   unsigned int count, SIGNAL_PAIR *sigpair, sync_t sync)
-{
-    __mem_ring_put(rnum, rbase, pBuf, (count << 2), 64, sync, sigpair);
-}
+    try_ctassert(blq <= 3);
+    try_ctassert(count <= 16);
 
-__intrinsic int
-nfp_blm_buf_free_base40(__xrw void* pBuf, unsigned int rnum,
-                        __addr40 void* rbase, unsigned int count)
-{
-    mem_ring_addr_t raddr_hi;
-    raddr_hi = mem_ring_get_addr(rbase);
-    return mem_ring_put(rnum, raddr_hi, pBuf, (count << 2));
-}
+    /* BLM ring IDs are always allocated in an ordered sequance */
+    rnum = blq + BLM_EMU_RING_ID(8,0);
+    /* All BLM rings are allocated in the same island */
+    raddr_hi = mem_ring_get_addr((__dram void *)BLM_NBI8_BLQ0_EMU_Q_BASE);
 
-__intrinsic int
-nfp_blm_buf_free(__xrw void* pBuf, unsigned int rnum, mem_ring_addr_t rbase,
-                 unsigned int count)
-{
-    return mem_ring_put(rnum, rbase, pBuf, (count << 2));
-}
-
-__intrinsic void
-nfp_blm_buf_free_j_base40(void* pBuf, unsigned int rnum, __addr40 void* rbase)
-{
-    mem_ring_addr_t raddr_hi;
-    raddr_hi = mem_ring_get_addr(rbase);
-    nfp_blm_buf_free_j(pBuf, rnum, raddr_hi);
-}
-
-__intrinsic void
-nfp_blm_buf_free_j(void* pBuf, unsigned int rnum, mem_ring_addr_t rbase)
-{
-    struct nfp_mecsr_prev_alu ind;
-    ind.__raw = 0;
-    ind.data16 = rnum;
-    ind.ove_data = 1;
-    __asm {
-        alu[--, --, B, ind.__raw];
-        mem[fast_journal,--, rbase, <<8, pBuf], indirect_ref;
+    if (sync == sig_done) {
+        __mem_ring_pop(rnum, raddr_hi, bufs, (count << 2), 64,
+                       sync, sigpair);
+    } else {
+        __mem_ring_pop(rnum, raddr_hi, bufs, (count << 2), 64,
+                       sig_done, sigpair);
+        /* Wait for the completion signal */
+        wait_for_all_single(&sigpair->even);
+        /* Check for an error signal error signal */
+        if (signal_test(&sigpair->odd))
+            return -1;
     }
+    return 0;
+}
+
+__intrinsic int
+blm_buf_alloc_bulk(__xread blm_buf_handle_t *bufs, unsigned int count,
+                   unsigned int blq)
+{
+    SIGNAL_PAIR sigpair;
+    return __blm_buf_alloc_bulk(bufs, count, blq, &sigpair, ctx_swap);
+}
+
+__intrinsic void
+blm_buf_free(blm_buf_handle_t buf, unsigned int blq)
+{
+    mem_ring_addr_t raddr_hi;
+    unsigned int rnum;
+
+    try_ctassert(blq <= 3);
+
+    /* BLM ring IDs are always allocated in an ordered sequance */
+    rnum = blq + BLM_EMU_RING_ID(8,0);
+    /* All BLM rings are allocated in the same island */
+    raddr_hi = mem_ring_get_addr((__dram void *)BLM_NBI8_BLQ0_EMU_Q_BASE);
+
+    mem_ring_journal_fast(rnum, raddr_hi, buf);
+}
+
+__intrinsic void
+__blm_buf_free_bulk(__xwrite blm_buf_handle_t *bufs, unsigned int count,
+                    unsigned int blq, SIGNAL *sig, sync_t sync)
+{
+    mem_ring_addr_t raddr_hi;
+    unsigned int rnum;
+
+    try_ctassert(blq <= 3);
+    try_ctassert(count <= 16);
+
+    /* BLM ring IDs are always allocated in an ordered sequance */
+    rnum = blq + BLM_EMU_RING_ID(8,0);
+    /* All BLM rings are allocated in the same island */
+    raddr_hi = mem_ring_get_addr((__dram void *)BLM_NBI8_BLQ0_EMU_Q_BASE);
+
+    __mem_ring_journal(rnum, raddr_hi, bufs, (count << 2), 64, sync, sig);
+}
+
+__intrinsic void
+blm_buf_free_bulk(__xwrite blm_buf_handle_t *bufs, unsigned int count,
+                  unsigned int blq)
+{
+    SIGNAL sig;
+    __blm_buf_free_bulk(bufs, count, blq, &sig, ctx_swap);
 }

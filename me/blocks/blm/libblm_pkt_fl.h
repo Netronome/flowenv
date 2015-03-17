@@ -26,164 +26,125 @@
  * @brief         Buffers alloc and free using BLM EMU rings.
  */
 
-#ifndef __NFP_BLM_BUF_API_H__
-#define __NFP_BLM_BUF_API_H__
+#ifndef __LIBBLM_PKT_FL_H__
+#define __LIBBLM_PKT_FL_H__
 
 /* flowenv dependency */
-#include "mem_ring.h"
-
+#include <nfp/mem_ring.h>
 
 /**
- * Get the EMU ring base address.
- *
- * @param rbase [in] The ring's memory base address (use the names allocated
- *                   in blm_iface_c.h)
+ * This file contains the API for accessing BLM-managed freelists of
+ * MU buffers.  A client would typically use blm_buf_alloc() to allocate
+ * an MU buffer and blm_buf_free() to release it.  The _bulk() variants
+ * allow the user to allocate and free buffers in batches.  These APIs
+ * do not maintain any local state in the client microengine and do
+ * not require any explicit initialization.
  */
-__intrinsic mem_ring_addr_t nfp_blm_buf_get_ring_addr(__addr40 void* rbase);
+
+/* Not supporting SPLIT_EMU configuration */
+#ifdef SPLIT_EMU_RINGS
+    #error "SPLIT_EMU_RINGS configuration not supported."
+#endif
+
+/*
+ * For optimization reasons the following assumptions are made:
+ *  1. BLM ring IDs are always allocated in an ordered sequance.
+ *  2. All BLM rings for a given NBI are allocated in the same island.
+ *  3. BLM rings are big enough to never overflow.
+ */
+
+/* blm buffer type */
+typedef unsigned int blm_buf_handle_t;
+
+/* convert a blm buffer handle to a 40 bit address */
+#define blm_buf_handle2ptr(_bh) (__addr40 __mem void *)\
+                                ((unsigned long long)(_bh) << 11)
+
+/* convert a 40 bit address to a blm buffer handle */
+#define blm_buf_ptr2handle(_bp) (blm_buf_handle_t)\
+                                ((unsigned long long)(_bp) >> 11)
 
 /**
- * Allocate buffers from the BLM EMU rings.
+ * Allocate a single buffer from the BLM EMU rings.
  *
- * @param pBuf      [out] Packet buffer Transfer register array.
- * @param rnum      [in]  The ring number to allocate the buffer(s) from.
- * @param rbase     [in]  The ring's memory base address (use the names
- *                         allocated in blm_iface_c.h)
- * @param count     [in]  Number of buffers to allocate
- * @param sigpair   [in]  Signal Pair to use
+ * @param buf       [out] Transfer read register to hold the buffer handle.
+ * @param blq       [in]  The blq number to allocate from (0-3).
+ * @param sigpair   [in]  Signal pair to use
  * @param sync      [in]  Sync type to use (sig_done or sig_wait)
+ *
+ * @return - 0 on success, -1 on failure.
  */
-__intrinsic void __nfp_blm_buf_alloc_base40(__xread void *pBuf,
-                                            unsigned int rnum,
-                                            __addr40 void *rbase,
-                                            unsigned int count,
-                                            SIGNAL_PAIR *sigpair,
-                                            sync_t sync);
+__intrinsic int __blm_buf_alloc(__xread blm_buf_handle_t *buf,
+                                unsigned int blq, SIGNAL_PAIR *sigpair,
+                                sync_t sync);
 
 /**
- * Allocate buffers from the BLM EMU rings.
+ * Allocate a single buffer from the BLM EMU rings.
  *
- * @param pBuf      [out] Packet buffer Transfer register array.
- * @param rnum      [in]  The ring number to allocate the buffer(s) from.
- * @param rbase     [in]  The ring's memory address - as returned from
- *                        nfp_blm_buf_get_ring_addr()
- * @param count     [in]  Number of buffers to allocate
- * @param sigpair   [in]  Signal Pair to use
- * @param sync      [in]  Sync type to use (sig_done or sig_wait)
+ * @param buf   [out] Transfer read register to hold the buffer handle.
+ * @param blq   [in]  The blq number to allocate from (0-3).
+ *
+ * @return - 0 on success, -1 on failure.
  */
-__intrinsic void __nfp_blm_buf_alloc(__xread void* pBuf, unsigned int rnum,
-                                     mem_ring_addr_t rbase, unsigned int count,
+__intrinsic int blm_buf_alloc(__xread blm_buf_handle_t *buf,
+                              unsigned int blq);
+
+/**
+ * Allocate a bulk of buffers from the BLM EMU rings.
+ *
+ * @param bufs      [out] Packet buffer transfer register array.
+ * @param count     [in]  Number of buffers to allocate
+ * @param blq       [in]  The blq number to allocate from (0-3).
+ * @param sigpair   [in]  Signal pair to use
+ * @param sync      [in]  Sync type to use (sig_done or sig_wait)
+ *
+ * @return - 0 on success, -1 on failure.
+ */
+__intrinsic int __blm_buf_alloc_bulk(__xread blm_buf_handle_t *bufs,
+                                     unsigned int count, unsigned int blq,
                                      SIGNAL_PAIR *sigpair, sync_t sync);
 
 /**
- * Allocate buffers from the BLM EMU rings.
+ * Allocate an array of buffers from the BLM EMU rings.
  *
- * @param pBuf      [out] Packet buffer Transfer register array.
- * @param rnum      [in]  The ring number to allocate the buffer(s) from.
- * @param rbase     [in]  The ring's memory base address
-                          (use the names allocated in blm_iface_c.h)
- * @param count     [in]  Number of buffers to allocate
+ * @param bufs  [out] Packet buffer transfer register array.
+ * @param count [in]  Number of buffers to allocate
+ * @param blq   [in]  The blq number to allocate from (0-3).
  *
- * @return 0 on success -1 on error
+ * @return - 0 on success, -1 on failure.
  */
-__intrinsic int nfp_blm_buf_alloc_base40(__xread void* pBuf, unsigned int rnum,
-                                         __addr40 void* rbase,
-                                         unsigned int count);
+__intrinsic int blm_buf_alloc_bulk(__xread blm_buf_handle_t *bufs,
+                                   unsigned int count, unsigned int blq);
 
 /**
- * Allocate buffers from the BLM EMU rings.
+ * Free a single buffer back into the BLM EMU rings.
  *
- * @param pBuf      [out] Packet buffer Transfer register array.
- * @param rnum      [in]  The ring number to allocate the buffer(s) from.
- * @param rbase     [in]  The ring's memory base address
- *                        as returned from nfp_blm_buf_get_ring_addr
- * @param count     [in]  Number of buffers to allocate
- *
- * @return 0 on success -1 on error
+ * @param buf   [in] The buffer handle to free.
+ * @param blq   [in] The blq number to free into (0-3).
  */
-__intrinsic int nfp_blm_buf_alloc(__xread void* pBuf, unsigned int rnum,
-                                  mem_ring_addr_t rbase, unsigned int count);
+__intrinsic void blm_buf_free(blm_buf_handle_t buf, unsigned int blq);
 
 /**
- * Free buffers back into the BLM EMU ring.
+ * Free an array of buffers back into the BLM EMU rings.
  *
- * @param pBuf      [in] Packet buffer Transfer register array.
- * @param rnum      [in] The ring number to free the buffer(s) to.
- * @param rbase     [in] The ring's memory base address
- *                       (use the names allocated in blm_iface_c.h)
- * @param count     [in] Number of buffers to free
- * @param sigpair   [in] Signal Pair to use
- * @param sync      [in] Sync type to use (sig_done or sig_wait)
+ * @param buf   [in] The buffers array to free.
+ * @param count [in] Number of buffers to free.
+ * @param blq   [in] The blq number to free into (0-3).
+ * @param sig   [in] Signal to use
+ * @param sync  [in] Sync type to use (sig_done or sig_wait)
  */
-__intrinsic void __nfp_blm_buf_free_base40(__xrw void* pBuf, unsigned int rnum,
-                                           __addr40 void* rbase,
-                                           unsigned int count,
-                                           SIGNAL_PAIR *sigpair, sync_t sync);
+__intrinsic void __blm_buf_free_bulk(__xwrite blm_buf_handle_t *bufs,
+                                     unsigned int count, unsigned int blq,
+                                     SIGNAL *sig, sync_t sync);
 
 /**
- * Free buffers back into the BLM EMU ring.
+ * Free an array of buffers back into the BLM EMU rings.
  *
- * @param pBuf      [in] Packet buffer Transfer register array.
- * @param rnum      [in] The ring number to free the buffer(s) to.
- * @param rbase     [in] The ring's memory base address
- *                       as returned from nfp_blm_buf_get_ring_addr()
- * @param count     [in] Number of buffers to free
- * @param sigpair   [in] Signal Pair to use
- * @param sync      [in] Sync type to use (sig_done or sig_wait)
+ * @param bufs  [in] The buffers array to free.
+ * @param count [in] Number of buffers to free.
+ * @param blq   [in] The blq number to free into (0-3).
  */
-__intrinsic void __nfp_blm_buf_free(__xrw void* pBuf, unsigned int rnum,
-                                    mem_ring_addr_t rbase, unsigned int count,
-                                    SIGNAL_PAIR *sigpair, sync_t sync);
+__intrinsic void blm_buf_free_bulk(__xwrite blm_buf_handle_t *bufs,
+                                   unsigned int count, unsigned int blq);
 
-/**
- * Free buffers back into the BLM EMU ring using ring "put" command.
- *
- * @param pBuf      [in] Packet buffer Transfer register array.
- * @param rnum      [in] The ring number to free the buffer(s) to.
- * @param rbase     [in] The ring's memory base address
- *                       (use the names allocated in blm_iface_c.h)
- * @param count     [in] Number of buffers to free
- *
- * @return the size of the ring before the free on success, -1 on error
- */
-__intrinsic int nfp_blm_buf_free_base40(__xrw void* pBuf, unsigned int rnum,
-                                        __addr40 void* rbase, unsigned int count);
-
-/**
- * Free buffers back into the BLM EMU ring using ring "put" command.
- *
- * @param pBuf      [in] Packet buffer Transfer register array.
- * @param rnum      [in] The ring number to free the buffer(s) to.
- * @param rbase     [in] The ring's memory base address
- *                       as returned from nfp_blm_buf_get_ring_addr()
- * @param count     [in] Number of buffers to free
- *
- * @return the size of the ring before the free on success, -1 on error
- */
-__intrinsic int nfp_blm_buf_free(__xrw void* pBuf, unsigned int rnum,
-                                 mem_ring_addr_t rbase, unsigned int count);
-
-/**
- * Free a single buffer back into the BLM EMU ring using
- * ring "fast_journal" command.
- *
- * @param pBuf      [in] Packet buffer Transfer register array.
- * @param rnum      [in] The ring number to free the buffer(s) to.
- * @param rbase     [in] The ring's memory base address
- *                       (use the names allocated in blm_iface_c.h)
- */
-__intrinsic void nfp_blm_buf_free_j_base40(void* pBuf, unsigned int rnum,
-                                           __addr40 void* rbase);
-
-/*
- * Free a single buffer back into the BLM EMU ring using
- * ring "fast_journal" command.
- *
- * @param pBuf      [in] Packet buffer Transfer register array.
- * @param rnum      [in] The ring number to free the buffer(s) to.
- * @param rbase     [in] The ring's memory base address
- *                       as returned from nfp_blm_buf_get_ring_addr()
- */
-__intrinsic void nfp_blm_buf_free_j(void* pBuf, unsigned int rnum,
-                                    mem_ring_addr_t rbase);
-
-#endif /* __NFP_BLM_BUF_API_H__ */
+#endif /* __LIBBLM_PKT_FL_H__ */
