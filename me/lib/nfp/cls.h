@@ -22,6 +22,7 @@
 #include <nfp.h>
 #include <stdint.h>
 #include <types.h>
+#include <nfp6000/nfp_cls.h>
 
 /**
  * Read a multiple of 4B from CLS
@@ -248,4 +249,66 @@ __intrinsic void cls_decr(__cls void *addr);
 
 __intrinsic void cls_decr64(__cls void *addr);
 
+/**
+ * The VF Translate functions provides an API to use the CLS VF (Virtual
+ * Function) Translate feature. The VF translate provides a address space
+ * remapping invoked when bit 31 of an CLS address is set. The following items
+ * are configurable. The starting offset into CLS, VF page size, CLS bytes per
+ * VF, alignment, if any padding between pages and how the write alert, if any
+ * is triggered.
+ *
+ * If using write alert with VF translate you should use the write_alert
+ * library to configure aspects related to write alerting.
+ *
+ * Valid configurations for VF translate are:
+ * base_addr = Starting address location in CLS.
+ * page_size = 4K, 32K, 256K and 2M.
+ * cls_bytes = 64, 1K, 4K and 16K.
+ * alert_trig = 0 for bit 11 of address, 1 for bit 20 of address.
+ * alignment = None, Resv, 32 bit word and 64 bit word.
+ * padding = Provides a protection between VF address spaces.
+ *
+ */
+
+/**
+ * Usage example:
+ * VF Translate with 64 CLS bytes per VF, a 4K page size aligned on 32 bit
+ * words, no padding and alert being triggered via bit 11 of address starting
+ * at address 0x0 of CLS.
+ *
+ * A CLS address range for VF 0  = 0x80000800 - 0x8000083F
+ *                         VF 1  = 0x80001800 - 0x8000183F
+ *                         ...
+ *                         VF 64 = 0x8003F800 - 0x8003F83F
+ *
+ * Configures VF translate as described above.
+ * cls_vf_translate_setup(0x0, 0, 0, 0, 2, 0);
+ *
+ * Disables VF translate.
+ * cls_vf_translate_disable();
+ *
+ */
+
+/**
+ * Setup a CLS VF Translate config.
+ *
+ * @param base_addr  Starting address in CLS.
+ * @param cls_bytes  Number of CLS bytes per VF.
+ * @param page_size  Page size of VF BAR.
+ * @param alert_trig Type of alert trigger configured
+ * @param alignment  VF alignment configuration.
+ * @param padding    Padding between CLS VF address spaces.
+ *
+ **/
+__intrinsic void cls_vf_translate_setup(unsigned int base_addr,
+                                        unsigned int cls_bytes,
+                                        unsigned int page_size,
+                                        unsigned int alert_trig,
+                                        unsigned int alignment,
+                                        unsigned int padding);
+
+/**
+ * Disables a CLS VF Translate config
+ */
+__intrinsic void cls_vf_translate_disable();
 #endif /* !_NFP__CLS_H_ */

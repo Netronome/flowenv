@@ -338,3 +338,38 @@ cls_decr64(__cls void *addr)
 {
     __asm cls[decr64, --, addr, 0]
 }
+
+/* VF Translate functions */
+__intrinsic void
+cls_vf_translate_setup(unsigned int base_addr, unsigned int cls_bytes,
+                       unsigned int page_size, unsigned int alert_trig,
+                       unsigned int alignment, unsigned int padding)
+{
+    __cls void *vftaddr = (__cls void *)NFP_CLS_AUTOPUSH_VF_TRANSLATION;
+    __gpr unsigned int vftcfg_temp = 0;
+    __xwrite unsigned int vftcfg;
+
+    if (padding) {
+       vftcfg_temp |= NFP_CLS_AUTOPUSH_VF_TRANSLATION_PROT_VFS;
+    }
+
+    vftcfg_temp |= (NFP_CLS_AUTOPUSH_VF_TRANSLATION_BASE(base_addr) |
+                    NFP_CLS_AUTOPUSH_VF_TRANSLATION_OFFSET_SIZE(cls_bytes) |
+                    NFP_CLS_AUTOPUSH_VF_TRANSLATION_VF_OFS(page_size) |
+                    NFP_CLS_AUTOPUSH_VF_TRANSLATION_VF_ALERT(alert_trig) |
+                    NFP_CLS_AUTOPUSH_VF_TRANSLATION_ALIGN(alignment) |
+                    NFP_CLS_AUTOPUSH_VF_TRANSLATION_ENABLE);
+
+    vftcfg = vftcfg_temp;
+    cls_write(&vftcfg, vftaddr, sizeof(vftcfg));
+}
+
+__intrinsic void
+cls_vf_translate_disable()
+{
+    __cls void *vftaddr = (__cls void *)NFP_CLS_AUTOPUSH_VF_TRANSLATION;
+    __xwrite unsigned int vftcfg = 0;
+
+    cls_write(&vftcfg, vftaddr, sizeof(vftcfg));
+}
+
