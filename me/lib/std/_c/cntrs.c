@@ -20,7 +20,7 @@
 
 #include <nfp6000/nfp_me.h>
 #include <assert.h>
-#include "cntrs.h"
+#include <std/cntrs.h>
 
 __intrinsic unsigned int
 cntr64_get_addr(__mem void *base)
