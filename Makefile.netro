@@ -7,6 +7,9 @@ flowenv_absdir := $(SRCDIR_ABS)
 flowenv-me_reldir := $(flowenv_reldir)/me
 flowenv-me_absdir := $(flowenv_absdir)/me
 
+flowenv-me-blocks_reldir := $(flowenv-me_reldir)/blocks
+flowenv-me-blocks_absdir := $(flowenv-me_absdir)/blocks
+
 flowenv-me-include_reldir := $(flowenv-me_reldir)/include
 flowenv-me-include_absdir := $(flowenv-me_absdir)/include
 
