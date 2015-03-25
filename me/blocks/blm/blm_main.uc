@@ -149,21 +149,6 @@
 #endloop
 
 /*
- * ============  Reference Code THSDK-833 ================
-
-.init_csr nbi:i8.NbiDmaCpp.NbiDmaBufferList.BLQueCtrl0  "0x23_00000376" const
-.init_csr nbi:i8.NbiDmaCpp.NbiDmaBufferList.BLQueCtrl0.BLQSize 2 const
-.init_csr "nbi:i8.NbiDmaCpp.NbiDmaBufferList.BLQueCtrl0.BLTlPtr" 0x376
-
-#if (is_csr_set("nbi:i8.NbiDmaCpp.NbiDmaBufferList.BLQueCtrl0.BLTlPtr", 0x376))
-    #warning "T"
-#else
-    #warning "F"
-#endif
-
-*/
-
-/*
  *
  */
 #macro blm_init_mailbox()
@@ -544,11 +529,13 @@
     D(MAILBOX3, 0x3334)
 
     aggregate_copy($nbidmabuf, $nbidmabuf, 16)
+    blm_cache_acquire_lock()
     alu[cache_offset, --, b, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET], <<2]
     alu[cache_offset, cache_offset, +, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ADDR_OFFSET]]
     mem[write, $nbidmabuf[0], 0, <<8,  cache_offset, 8], sig_done[sig_cache_fill]
     ctx_arb[sig_cache_fill]
     blm_incr_cache_cnt(16)
+    blm_cache_release_lock()
     blm_stats(BLM_STATS_CACHE_REFILLS)
     br[end_cache_fill#]
 emu_ring_underflow#:
@@ -1297,6 +1284,7 @@ blm_ctx_init_end#:
 .reg cls_ap_filter_number
 .reg blq_stats_base
 .reg ringid
+.reg cache_cnt
 .set ringid
 
 #ifdef THSDK_558_FIX
@@ -1438,7 +1426,10 @@ blm_egress_blq_processing#:
                     blm_decr_dma_evnt_pend_cnt()
                     blm_stats(BLM_STATS_RECYCLE_DIRECT)
                 .else
-                    .if (BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET] >= BLM_BLQ_CACHE_HWM)
+                    blm_cache_acquire_lock()
+                    alu[cache_cnt, --, b, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET]]
+                    blm_cache_release_lock()
+                    .if (cache_cnt >= BLM_BLQ_CACHE_HWM)
                         blm_egress_pull_buffers_to_emu_ring(NbiNum, blq, addr, ringid)
                         blm_stats(BLM_STATS_RECYCLE_TM_TO_EMU)
                     .else
@@ -1523,7 +1514,10 @@ blm_ingress_blq_processing#:
             .endw
 
             .while (BLM_BLQ_LM_REF[BLM_LM_BLQ_DMA_EVNT_PEND_CNT_OFFSET] > BLM_MAX_DMA_PENDING_EVNTS)
-                .if (BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET] >= NBI_BLQ_EVENT_THRESHOLD)
+                blm_cache_acquire_lock()
+                alu[cache_cnt, --, b, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET]]
+                blm_cache_release_lock()
+                .if (cache_cnt >= NBI_BLQ_EVENT_THRESHOLD)
                     D(MAILBOX3, 0x1111)
                     blm_ingress_push_buffers_from_cache(NbiNum, blq, NBI_BLQ_EVENT_THRESHOLD)
                     blm_decr_dma_evnt_pend_cnt()
@@ -1535,9 +1529,15 @@ blm_ingress_blq_processing#:
                 .endif
             .endw
 
-            .while (BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET] < BLM_BLQ_CACHE_LWM)
+            blm_cache_acquire_lock()
+            alu[cache_cnt, --, b, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET]]
+            blm_cache_release_lock()
+            .while (cache_cnt < BLM_BLQ_CACHE_LWM)
                 D(MAILBOX3, 0x3333)
                 blm_cache_fill(addr, ringid, sig_memget0, cache_fill_complete#)
+                blm_cache_acquire_lock()
+                alu[cache_cnt, --, b, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET]]
+                blm_cache_release_lock()
             .endw
             cache_fill_complete#:
         .endif
