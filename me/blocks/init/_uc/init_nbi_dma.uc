@@ -34,6 +34,19 @@
  *              NbiDmaXpb_NbiDmaCsr_NbiDmaBpeCfg
  *              NbiDmaXpb_NbiDmaCsr_NbiDmaBPCfg
  *
+ * @note This code produces a 'NBI DMA BPE credit symbol'. It's required by
+ *       Netronome NIC kernel module to offer safe NFP soft reset functionality
+ *       (device quiescing). The symbol has the following structure:
+ *
+ *         struct nfp_nbiX_dma_bpe_credits {
+ *             uint32_t version_magic;  // (0xDADA0000 | (version & 0xFF << 8) | (bpe_count & 0xFF))
+ *             uint32_t NbiDmaBpe0Cfg;
+ *             uint32_t NbiDmaBpe1Cfg;
+ *             uint32_t NbiDmaBpe2Cfg;
+ *             ....<bpe_count>
+ *         }
+ *
+ *
  */
 
 #ifndef _INIT_NBI_DMA_UC_
@@ -110,6 +123,16 @@
     #error "ME Island0's CTM Buffer credits are not allocated appropriately"
 #endif
 
+/* A helper macro to populate the NBI DMA BPE credit symbol */
+#macro Nbi_Dma_Bpe_Credits_Populate(NBI_ID, BPE, CTM, PKT_CREDIT, BUF_CREDIT)
+    #define_eval OFFSET (BPE*4 + 4)
+    #if (NBI_ID == 0)
+        .init nbi0_dma_bpe_credits+OFFSET (((BPE & 0x1F)<< 27) | ((CTM & 0x3F) << 21) | ((PKT_CREDIT & 0x7FF) << 10) | (BUF_CREDIT & 0x3FF))
+    #else
+        .init nbi1_dma_bpe_credits+OFFSET (((BPE & 0x1F)<< 27) | ((CTM & 0x3F) << 21) | ((PKT_CREDIT & 0x7FF) << 10) | (BUF_CREDIT & 0x3FF))
+    #endif
+    #undef OFFSET
+#endm
 
 /** Nbi_Dma_Init
  *
@@ -119,6 +142,7 @@
  */
 #macro Nbi_Dma_Init(NBI_ID)
     #define NBI_DMA_LOOP 0
+
 
     /* The following 3 registers do not require modification by developers,
      * hence they can be defined statically here */
@@ -219,8 +243,14 @@
         NBI_DMA_BP_DROP_ENABLE
     )
 
+    #define NBI_DMA_BPE_NUM 32
+    #define NBI_DMA_BPE_VERSION 0x01
+
     /* Configure Buffer Pool Entries */
     #if (NBI_ID==0)
+        /* NBI DMA BPE Credit symbol */
+        .alloc_mem nbi0_dma_bpe_credits emem global ((NBI_DMA_BPE_NUM+1)*4) 8
+        .init nbi0_dma_bpe_credits+0 (0xDADA0000 | ((NBI_DMA_BPE_VERSION & 0xFF) << 8) | (NBI_DMA_BPE_NUM & 0xFF))
 
         #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND0) == 1)
             NbiDmaXpb_NbiDmaCsr_NbiDmaBpeCfg(NBI_ID,
@@ -229,6 +259,9 @@
             BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND0),
             PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND0)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 32, \
+                    PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND0), \
+                    BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND0))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND1) == 1)
@@ -238,6 +271,9 @@
             BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND1),
             PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND1)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 33, \
+                    PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND1), \
+                    BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND1))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND2) == 1)
@@ -247,6 +283,9 @@
             BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND2),
             PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND2)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 34, \
+                    PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND2), \
+                    BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND2))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND3) == 1)
@@ -256,6 +295,9 @@
             BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND3),
             PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND3)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 35, \
+                    PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND3), \
+                    BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND3))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND4) == 1)
@@ -265,6 +307,9 @@
             BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND4),
             PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND4)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 36, \
+                    PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND4), \
+                    BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND4))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND5) == 1)
@@ -274,6 +319,9 @@
             BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND5),
             PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND5)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 37, \
+                    PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND5), \
+                    BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND5))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND6) == 1)
@@ -283,6 +331,9 @@
             BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND6),
             PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND6)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 38, \
+                    PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND6), \
+                    BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND6))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
 
@@ -299,9 +350,10 @@
         NbiDmaXpb_NbiDmaCsr_NbiDmaBpeChainEnd(NBI_ID, CHAINEND)
         #undef CHAINEND
 
-
     #elif(NBI_ID==1)
-        #define NBI_DMA_LOOP 0
+        /* NBI DMA BPE Credit symbol */
+        .alloc_mem nbi1_dma_bpe_credits emem global ((NBI_DMA_BPE_NUM+1)*4) 8
+        .init nbi1_dma_bpe_credits+0 (0xDADA0000 | ((NBI_DMA_BPE_VERSION & 0xFF) << 8) | (NBI_DMA_BPE_NUM & 0xFF))
 
         #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0) == 1)
             NbiDmaXpb_NbiDmaCsr_NbiDmaBpeCfg(NBI_ID,
@@ -310,6 +362,9 @@
             BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0),
             PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 32, \
+                    PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0), \
+                    BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND1) == 1)
@@ -319,6 +374,9 @@
             BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND1),
             PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND1)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 33, \
+                    PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND1), \
+                    BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND1))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND2) == 1)
@@ -328,6 +386,9 @@
             BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND2),
             PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND2)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 34, \
+                    PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND2), \
+                    BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND2))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND3) == 1)
@@ -337,6 +398,9 @@
             BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND3),
             PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND3)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 35, \
+                    PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND3), \
+                    BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND3))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND4) == 1)
@@ -346,6 +410,9 @@
             BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND4),
             PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND4)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 36, \
+                    PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND4), \
+                    BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND4))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND5) == 1)
@@ -355,6 +422,9 @@
             BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND5),
             PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND5)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 37, \
+                    PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND5), \
+                    BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND5))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
         #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND6) == 1)
@@ -364,6 +434,9 @@
             BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND6),
             PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND6)
             )
+            Nbi_Dma_Bpe_Credits_Populate(NBI_ID, NBI_DMA_LOOP, 38, \
+                    PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND6), \
+                    BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND6))
             #define_eval NBI_DMA_LOOP (NBI_DMA_LOOP+1)
         #endif
 
@@ -381,6 +454,8 @@
         #undef CHAINEND
 
     #endif /* NBI_ID == 1 */
+    #undef NBI_DMA_BPE_NUM
+    #undef NBI_DMA_BPE_VERSION
 
     /* Now that we kow what the BPE number is for dropping, we can populate the
      * final Buffer Pool 7 to Drop */
