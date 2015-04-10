@@ -35,6 +35,7 @@
 /* libnet header files */
 #include <net/eth.h>
 #include <net/gre.h>
+#include <net/hdr_ext.h>
 #include <net/ip.h>
 #include <net/tcp.h>
 #include <net/udp.h>
