@@ -147,22 +147,7 @@ hash_me_crc32(void *s, size_t n, uint32_t init)
 #undef __HASH_ME_CRC32
     }
 
-    /* when jira THSDK-1392 is fixed we should be able to do:
-     *     return crc_read();
-     * for the meantime we have to manually wait 5 cycles before
-     * reading the crc_remainder
-     */
-    __asm {
-        nop;
-        nop;
-        nop;
-        nop;
-        nop;
-        local_csr_rd[crc_remainder];
-        immed[result, 0];
-    }
-
-    return result;
+    return crc_read();
 }
 
 
@@ -203,22 +188,7 @@ hash_me_crc32c(void *s, size_t n, uint32_t init)
 #undef __HASH_ME_CRC32C
     }
 
-    /* when jira THSDK-1392 is fixed we should be able to do:
-     *     return crc_read();
-     * for the meantime we have to manually wait 5 cycles before
-     * reading the crc_remainder
-     */
-    __asm {
-        nop;
-        nop;
-        nop;
-        nop;
-        nop;
-        local_csr_rd[crc_remainder];
-        immed[result, 0];
-    }
-
-    return result;
+    return crc_read();
 }
 
 /* Hash mask can support 128 bytes, but allocate half to conserve transfer

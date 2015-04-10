@@ -48,8 +48,8 @@ void main(void)
     __xread struct nbi_meta_pkt_info *pi = &nbi_meta.pkt_info;
 
     if (ctx() == 0) {
-        local_csr_write(NFP_MECSR_MAILBOX_0, 0);
-        local_csr_write(NFP_MECSR_MAILBOX_1, 0);
+        local_csr_write(local_csr_mailbox_0, 0);
+        local_csr_write(local_csr_mailbox_1, 0);
     }
 
 
@@ -57,7 +57,7 @@ void main(void)
         pkt_nbi_recv(&nbi_meta, sizeof(nbi_meta));
 
         nrecv++;
-        local_csr_write(NFP_MECSR_MAILBOX_0, nrecv);
+        local_csr_write(local_csr_mailbox_0, nrecv);
 
         pbuf = pkt_ctm_ptr40(pi->isl, pi->pnum, 0);
         msi = pkt_msd_noop_write(pbuf, PKT_NBI_OFFSET);
@@ -65,6 +65,6 @@ void main(void)
                      nbi_meta.seqr, nbi_meta.seq);
 
         nsent++;
-        local_csr_write(NFP_MECSR_MAILBOX_1, nsent);
+        local_csr_write(local_csr_mailbox_1, nsent);
     }
 }

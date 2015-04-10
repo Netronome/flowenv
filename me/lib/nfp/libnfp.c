@@ -46,8 +46,8 @@
 __noinline void
 ___rt_assert(void *addr)
 {
-    local_csr_write(NFP_MECSR_MAILBOX_1, (unsigned int) addr);
-    local_csr_write(NFP_MECSR_MAILBOX_0, 0);
+    local_csr_write(local_csr_mailbox_1, (unsigned int) addr);
+    local_csr_write(local_csr_mailbox_0, 0);
     __asm ctx_arb[bpt];
 }
 

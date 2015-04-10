@@ -29,19 +29,6 @@
 __intrinsic unsigned int __ME(void);
 
 /**
- * Read local ME CSR
- * @param mecsr         CSR number
- */
-__intrinsic unsigned int local_csr_read(int mecsr);
-
-/**
- * Write local ME CSR
- * @param mecsr         CSR number
- * @param data          data to write
- */
-__intrinsic void local_csr_write(int mecsr, unsigned int data);
-
-/**
  * Wait for signal.
  * @param sig           signal
  *

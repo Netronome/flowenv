@@ -310,7 +310,7 @@ pkt_nbi_send(unsigned char isl, unsigned int pnum,
     csr0.__raw = 0;
     csr0.seqr = seqr;
     csr0.seq = seq;
-    local_csr_write(NFP_MECSR_CMD_INDIRECT_REF_0, csr0.__raw);
+    local_csr_write(local_csr_cmd_indirect_ref_0, csr0.__raw);
 
     /*
      * XXX We clear the reserved bits of the previous ALU instruction
@@ -374,7 +374,7 @@ pkt_nbi_send_dont_free(unsigned char isl, unsigned int pnum,
     csr0.__raw = 0;
     csr0.seqr = seqr;
     csr0.seq = seq;
-    local_csr_write(NFP_MECSR_CMD_INDIRECT_REF_0, csr0.__raw);
+    local_csr_write(local_csr_cmd_indirect_ref_0, csr0.__raw);
 
     /*
      * XXX We clear the reserved bits of the previous ALU instruction
@@ -439,7 +439,7 @@ pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
      * sequencer to the whole value. */
     csr0.__raw = seqr;
     csr0.seq = seq;
-    local_csr_write(NFP_MECSR_CMD_INDIRECT_REF_0, csr0.__raw);
+    local_csr_write(local_csr_cmd_indirect_ref_0, csr0.__raw);
 
     /* XXX cheat by knowing that the least significant byte is the 'magic' */
     /* byte saves an extra initialization step. */

@@ -2,8 +2,10 @@ SDKHOME ?= /opt/netronome
 
 NFCC=$(SDKHOME)/bin/nfcc
 NFLD=$(SDKHOME)/bin/nfld
-PICO_CODE=$(SDKHOME)/components/standardlibrary/picocode/nfp6000/null/null.npfw
+STDLIB=$(SDKHOME)/components/standardlibrary
+PICO_CODE=$(STDLIB)/picocode/nfp6000/null/null.npfw
 MEBASE=../..
+
 
 CFLAGS=				\
 	-W3			\
@@ -17,9 +19,10 @@ LDFLAGS=			\
 	-mip
 
 
-INC=				\
-	-I.			\
-	-I$(MEBASE)/include	\
+INC=					\
+	-I	.			\
+	-I$(STDLIB)/microc/include	\
+	-I$(MEBASE)/include		\
 	-I$(MEBASE)/lib
 
 DEFS=-DPKT_NBI_OFFSET=64
@@ -27,7 +30,8 @@ DEFS=-DPKT_NBI_OFFSET=64
 
 STDSRC=					\
 	$(MEBASE)/lib/nfp/libnfp.c	\
-	$(MEBASE)/lib/pkt/libpkt.c
+	$(MEBASE)/lib/pkt/libpkt.c	\
+	$(STDLIB)/microc/src/rtl.c
 
 
 all: wire.nffw

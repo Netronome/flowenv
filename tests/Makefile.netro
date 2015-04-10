@@ -14,7 +14,8 @@ flowenv_tests_me_nfcc_compile_DEPS_common += $(flowenv-nfp6000-includes)
 flowenv_tests_me_nfcc_compile_NFCCFLAGS_common += \
 	-I$(flowenv-me-include_absdir) \
 	-I$(flowenv-me-include_reldir) \
-	-I$(flowenv-me-lib_absdir)
+	-I$(flowenv-me-lib_absdir) \
+	-I$(nfp-sdk-stdlib-absdir)/microc/include
 flowenv_tests_me_nfcc_compile_NFCCFLAGS_common += \
 	-Qnctx_mode=8 \
 	-Qnn_mode=1 \
@@ -39,7 +40,8 @@ flowenv_tests_me_nfas_compile_DEPS_common += $(flowenv-nfp6000-includes)
 flowenv_tests_me_nfas_compile_NFASFLAGS_common += \
 	-I$(flowenv-me-include_absdir) \
 	-I$(flowenv-me-include_reldir) \
-	-I$(flowenv-me-lib_absdir)
+	-I$(flowenv-me-lib_absdir) \
+	-I$(nfp-sdk-stdlib-absdir)/microcode/include
 flowenv_tests_me_nfas_compile.fw_DESCRIPTION = "FlowEnv nfas compile test"
 $(eval $(call mefw_template,flowenv_tests_me_nfas_compile,$(flowenv-tests-me_reldir)))
 

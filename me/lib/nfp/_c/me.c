@@ -30,40 +30,10 @@ __ME(void)
     unsigned int menum;
     struct nfp_mecsr_active_ctx_sts ctxsts;
 
-    ctxsts.__raw = local_csr_read(NFP_MECSR_ACTIVE_CTX_STS);
+    ctxsts.__raw = local_csr_read(local_csr_active_ctx_sts);
     menum = (ctxsts.il_id << 4) + ctxsts.me_id;
 
     return menum;
-}
-
-__intrinsic unsigned int
-local_csr_read(int mecsr)
-{
-    unsigned int csr_addr;
-    unsigned int result;
-
-    ctassert(__is_ct_const(mecsr));
-
-    csr_addr = mecsr >> 2;
-
-    __asm {
-        local_csr_rd[__ct_const_val(csr_addr)];
-        immed[result, 0];
-    }
-
-    return result;
-}
-
-__intrinsic void
-local_csr_write(int mecsr, unsigned int data)
-{
-    unsigned int csr_addr;
-
-    ctassert(__is_ct_const(mecsr));
-
-    csr_addr = mecsr >> 2;
-
-    __asm local_csr_wr[__ct_const_val(csr_addr), data];
 }
 
 __intrinsic void
@@ -84,40 +54,44 @@ wait_sig_mask(SIGNAL_MASK sigmask)
 {
     __asm {
         ctx_arb[--], defer[1]
-        local_csr_wr[NFP_MECSR_ACTIVE_CTX_WAKEUP_EVENTS >> 2, sigmask]
+        local_csr_wr[local_csr_active_ctx_wakeup_events, sigmask]
     }
 }
 
 __intrinsic void
 signal_ctx(unsigned int ctx, unsigned int sig_no)
 {
-    local_csr_write(NFP_MECSR_SAME_ME_SIGNAL,
+    local_csr_write(local_csr_same_me_signal,
                     (NFP_MECSR_SAME_ME_SIGNAL_SIG_NO(sig_no) |
                      NFP_MECSR_SAME_ME_SIGNAL_CTX(ctx)));
+
 }
 
 __intrinsic void
 signal_next_ctx(unsigned int sig_no)
 {
-    local_csr_write(NFP_MECSR_SAME_ME_SIGNAL,
+    local_csr_write(local_csr_same_me_signal,
                     (NFP_MECSR_SAME_ME_SIGNAL_NEXT_CTX |
                      NFP_MECSR_SAME_ME_SIGNAL_SIG_NO(sig_no)));
+
 }
 
 __intrinsic void
 signal_next_me(unsigned int ctx, unsigned int sig_no)
 {
-    local_csr_write(NFP_MECSR_NEXT_NEIGHBOR_SIGNAL,
+    local_csr_write(local_csr_next_neighbor_signal,
                     (NFP_MECSR_NEXT_NEIGHBOR_SIGNAL_SIG_NO(sig_no) |
                      NFP_MECSR_NEXT_NEIGHBOR_SIGNAL_CTX(ctx)));
+
 }
 
 __intrinsic void
 signal_prev_me(unsigned int ctx, unsigned int sig_no)
 {
-    local_csr_write(NFP_MECSR_PREV_NEIGHBOR_SIGNAL,
+    local_csr_write(local_csr_prev_neighbor_signal,
                     (NFP_MECSR_PREV_NEIGHBOR_SIGNAL_SIG_NO(sig_no) |
                      NFP_MECSR_PREV_NEIGHBOR_SIGNAL_CTX(ctx)));
+
 }
 
 __intrinsic void
@@ -127,16 +101,16 @@ set_alarm(unsigned int cycles, SIGNAL *sig)
 
     __implicit_write(sig);
     sig_num = __signal_number(sig);
-    tslo = local_csr_read(NFP_MECSR_TIMESTAMP_LOW);
+    tslo = local_csr_read(local_csr_timestamp_low);
     tslo += cycles >> 4;
-    local_csr_write(NFP_MECSR_ACTIVE_CTX_FUTURE_COUNT, tslo);
-    local_csr_write(NFP_MECSR_ACTIVE_FUTURE_COUNT_SIGNAL, sig_num);
+    local_csr_write(local_csr_active_ctx_future_count, tslo);
+    local_csr_write(local_csr_active_future_count_signal, sig_num);
 }
 
 __intrinsic void
 clear_alarm(void)
 {
-    local_csr_write(NFP_MECSR_ACTIVE_FUTURE_COUNT_SIGNAL, 0);
+    local_csr_write(local_csr_active_future_count_signal, 0);
 }
 
 __intrinsic void
@@ -199,13 +173,13 @@ ffs64(unsigned long long int data)
 __intrinsic unsigned int
 crc_read(void)
 {
-    return local_csr_read(NFP_MECSR_CRC_REMAINDER);
+    return local_csr_read(local_csr_crc_remainder);
 }
 
 __intrinsic void
 crc_write(unsigned int residue)
 {
-    local_csr_write(NFP_MECSR_CRC_REMAINDER, residue);
+    local_csr_write(local_csr_crc_remainder, residue);
 }
 
 __intrinsic unsigned int
@@ -285,8 +259,8 @@ me_tsc_read()
 {
     unsigned int lo, hi;
 
-    lo = local_csr_read(NFP_MECSR_TIMESTAMP_LOW);
-    hi = local_csr_read(NFP_MECSR_TIMESTAMP_HIGH);
+    lo = local_csr_read(local_csr_timestamp_low);
+    hi = local_csr_read(local_csr_timestamp_high);
 
     return ((unsigned long long int)hi << 32) | lo;
 }
@@ -294,6 +268,6 @@ me_tsc_read()
 __intrinsic unsigned short int
 me_pc_read()
 {
-    return local_csr_read(NFP_MECSR_PROFILE_COUNT);
+    return local_csr_read(local_csr_profile_count);
 }
 
