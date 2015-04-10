@@ -80,6 +80,23 @@ pkt_ctm_ptr32(unsigned int pnum, unsigned int off)
 }
 
 
+__intrinsic unsigned int
+pkt_csum_read(void *src_buf, int off)
+{
+    unsigned int ret;
+    /* This should probably also work for proper memory, but is not tested */
+    ctassert(__is_in_reg_or_lmem(src_buf));
+    ctassert(__is_ct_const(off));
+
+    if (__is_in_lmem(src_buf)) {
+        ret = *(__lmem unsigned int *)(((__lmem char *)src_buf) + off);
+    } else {
+        ret = *(__gpr unsigned int *)(((__gpr char *)src_buf) + off);
+    }
+
+    return ret;
+}
+
 __intrinsic void
 __pkt_status_read(unsigned int pnum, __xread pkt_status_t *pkt_status,
                   sync_t sync, SIGNAL *sig_ptr)

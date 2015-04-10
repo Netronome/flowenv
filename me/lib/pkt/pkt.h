@@ -621,6 +621,21 @@ typedef union pkt_status_t
 
 
 /**
+ * Extract the checksum-prepend word from a buffer.
+ *
+ * @src_buf     Input buffer
+ * @off         Byte offset within the buffer where the Ethernet header starts
+ * @return      Offset to the next protocol header
+ *
+ * The NFP-6000 MAC can be configured to prepend a word to a packet
+ * contain the results of checksum checks.  This function extracts
+ * this words from the front of the buffer. This function expects @off
+ * to be a compile time constant (which should be fine given that the
+ * prepend word is at the start of the buffer).
+ */
+__intrinsic unsigned int pkt_csum_read(void *src_buf, int off);
+
+/**
  * Get the status response of a CTM packet buffer. Can only refer to a packet
  * in the local island.
  *
