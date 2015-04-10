@@ -90,6 +90,8 @@ __intrinsic void signal_prev_me(unsigned int ctx, unsigned int sig_no);
  *
  * This function asserts the signal after @cycles cycles.  A context
  * can only have one active alarm at a time.
+ *
+ * Note: @cycles must be less than 0x00100000 (1 << 20).
  */
 __intrinsic void set_alarm(unsigned int cycles, SIGNAL *sig);
 
@@ -101,6 +103,8 @@ __intrinsic void clear_alarm(void);
 /**
  * Sleep for a number of cycles.
  * @param cycles        approx number of cycles to sleep
+ *
+ * Note: @cycles must be less than 0x00100000 (1 << 20).
  */
 __intrinsic void sleep(unsigned int cycles);
 
