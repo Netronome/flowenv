@@ -245,12 +245,12 @@
 
     #define NBI_DMA_BPE_NUM 32
     #define NBI_DMA_BPE_VERSION 0x01
+    #define NBI_DMA_MAGIC_VAL 0xDADA0000
 
     /* Configure Buffer Pool Entries */
     #if (NBI_ID==0)
         /* NBI DMA BPE Credit symbol */
         .alloc_mem nbi0_dma_bpe_credits emem global ((NBI_DMA_BPE_NUM+1)*4) 8
-        .init nbi0_dma_bpe_credits+0 (0xDADA0000 | ((NBI_DMA_BPE_VERSION & 0xFF) << 8) | (NBI_DMA_BPE_NUM & 0xFF))
 
         #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND0) == 1)
             NbiDmaXpb_NbiDmaCsr_NbiDmaBpeCfg(NBI_ID,
@@ -345,6 +345,9 @@
             (0)             //PktCredit
         )
 
+        /* Cap off BPE symbol and indicate how many BPEs we've used */
+        .init nbi0_dma_bpe_credits+0 (NBI_DMA_MAGIC_VAL | ((NBI_DMA_BPE_VERSION & 0xFF) << 8) | (NBI_DMA_LOOP & 0xFF))
+
         /* Populate ChainEnd register bit for last valid BPE + unused BPEs */
         #define_eval CHAINEND ((0xFFFFFFFF << (NBI_DMA_LOOP-1)) & 0xFFFFFFFF)
         NbiDmaXpb_NbiDmaCsr_NbiDmaBpeChainEnd(NBI_ID, CHAINEND)
@@ -353,7 +356,6 @@
     #elif(NBI_ID==1)
         /* NBI DMA BPE Credit symbol */
         .alloc_mem nbi1_dma_bpe_credits emem global ((NBI_DMA_BPE_NUM+1)*4) 8
-        .init nbi1_dma_bpe_credits+0 (0xDADA0000 | ((NBI_DMA_BPE_VERSION & 0xFF) << 8) | (NBI_DMA_BPE_NUM & 0xFF))
 
         #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0) == 1)
             NbiDmaXpb_NbiDmaCsr_NbiDmaBpeCfg(NBI_ID,
@@ -447,6 +449,9 @@
             (0),            //BufCredit
             (0)             //PktCredit
         )
+
+        /* Cap off BPE symbol and indicate how many BPEs we've used */
+        .init nbi1_dma_bpe_credits+0 (NBI_DMA_MAGIC_VAL | ((NBI_DMA_BPE_VERSION & 0xFF) << 8) | (NBI_DMA_LOOP & 0xFF))
 
         /* Populate ChainEnd register bit for last valid BPE + unused BPEs */
         #define_eval CHAINEND ((0xFFFFFFFF << (NBI_DMA_LOOP-1)) & 0xFFFFFFFF)
