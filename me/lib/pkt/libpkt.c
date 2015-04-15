@@ -230,7 +230,7 @@ __pkt_msd_write(__addr40 void *pbuf, unsigned char off,
     /* Check if a no-op modification script is possible */
     if (off <= 64 && off % 8 == 0) {
         /* Write a no-op modification script right before the packet start */
-        msi.len_adj = off - 8;
+        msi.len_adj = off;
         msi.off_enc = (off >> 3) - 2;
 
         xms[0] = (NBI_PM_TYPE(NBI_PM_TYPE_DIRECT) |
