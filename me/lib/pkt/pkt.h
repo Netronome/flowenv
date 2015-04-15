@@ -407,7 +407,6 @@ struct pkt_iref_palu {
 #define PKT_IREF_PALU_MAGIC     0xcb
 
 
-
 /**
  * Holds information pertaining to the addition of a modification script to
  * the beginning of a CTM buffer.
@@ -676,11 +675,65 @@ __intrinsic size_t pkt_emem_data_size(unsigned int pkt_len,
                                       unsigned int pkt_offset,
                                       enum PKT_CTM_SIZE ctm_buf_size);
 
+
+/*
+ * MAC Egress L3 and/or L4 Checksum Insertion Functionality
+ *
+ * In order to take advantage of the L3 and/or L4 checksum insertion
+ * functionality in the NFP 6xxx MAC blocks, one must prepend the packet
+ * with a 4-byte MAC egress command for the MAC.  One must do this if
+ * the MAC egress command functionality is enabled for the egress port,
+ * regardless of whether any L3 or L4 checksum insertion is desired for
+ * the given packet.  This 4-byte MAC egress command would then be
+ * stripped off by the MAC prior to being transmitted out the port.
+ *
+ * It is important to note that the NBI TM and PM treat this MAC egress
+ * command word as part of the packet data.  Therefore, the starting
+ * offset of the packet data becomes the offset of the MAC egress
+ * command, if present.
+ *
+ * If the MAC egress command functionality is NOT enabled for the given
+ * egress port, a MAC egress command should NOT be prepended to the
+ * packet.
+ *
+ * See:
+ *  - NFP 6xxx Databook Section 10.2.9.3 "Egress Command Prepend"
+ */
+
 /**
- * Write a direct NOOP packet modifier modification script to the beginning of
- * a packet and return the metadata required to send the packet.  The pointer
+ * Write a MAC egress command to the beginning of a packet.
+ *
+ * @param pbuf         A pointer to the start of the packet buffer
+ * @param off          The starting offset of the packet data
+ * @param l3_csum_ins  Enables insertion of L3 checksum
+ * @param l4_csum_ins  Enables insertion of L4 checksum
+ * @param xcmd         Transfer registers to hold the command
+ * @param sync         The type of synchronization (sig_done or ctx_swap)
+ * @param sig          The signal to use.
+ *
+ * @note 'off' must be set to 20 or higher.
+ * @note After calling this function, the 4-byte MAC egress command is
+ *       prepended to the packet data; therefore, when calling the packet
+ *       modifier modification script write function, the starting offset of
+ *       the packet data becomes 'off' - 4, in order to include the MAC egress
+ *       command word as part of the packet data.
+ */
+__intrinsic void
+    __pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
+                               int l3_csum_ins, int l4_csum_ins,
+                               __xwrite uint32_t *xcmd, sync_t sync,
+                               SIGNAL *sig);
+
+__intrinsic void pkt_mac_egress_cmd_write(__addr40 void *pbuf,
+                                          unsigned char off, int l3_csum_ins,
+                                          int l4_csum_ins);
+
+
+/**
+ * Write a direct packet modifier modification script to the beginning of a
+ * packet and return the metadata required to send the packet.  The pointer
  * must point to the first byte of the packet to go over the wire (or the
- * MAC prepend data that precedes it).  There must be at least 16 bytes
+ * MAC egress command that may precede it).  There must be at least 16 bytes
  * between this pointer and the beginning of the CTM buffer.
  *
  * @param pbuf  A pointer to the start of the packet buffer
@@ -690,40 +743,14 @@ __intrinsic size_t pkt_emem_data_size(unsigned int pkt_len,
  * @param sync  The type of synchronization (sig_done or ctx_swap)
  * @param sig   The signal to use.
  */
-__intrinsic struct pkt_ms_info __pkt_msd_noop_write(__addr40 void *pbuf,
-                                                    unsigned char off,
-                                                    __xwrite uint32_t xms[2],
-                                                    size_t size,
-                                                    sync_t sync, SIGNAL *sig);
+__intrinsic struct pkt_ms_info __pkt_msd_write(__addr40 void *pbuf,
+                                               unsigned char off,
+                                               __xwrite uint32_t xms[2],
+                                               size_t size, sync_t sync,
+                                               SIGNAL *sig);
 
-__intrinsic struct pkt_ms_info pkt_msd_noop_write(__addr40 void *pbuf,
-                                                  unsigned char off);
-
-
-/**
- * Write a direct Delete packet modifier modification script to the beginning
- * of a packet and return the metadata required to delete a specified number
- * bytes from packet.  The pointer must point to the first byte of the packet
- * to go over the wire (or the MAC prepend data that precedes it).  There must
- * be at least 16 bytes between this pointer and the beginning of the CTM
- * buffer.
- *
- * @param pbuf  A pointer to the start of the packet buffer
- * @param off   The starting offset of the packet data
- * @param d_cnt The number of bytes to drop. (1-16)
- * @param xms   Transfer registers to hold the script
- * @param size  The size of the xms.
- * @param sync  The type of synchronization (sig_done or ctx_swap)
- * @param sig   The signal to use.
- */
-__intrinsic struct pkt_ms_info
-    __pkt_msd_delete_write(__addr40 void *pbuf, unsigned char off,
-                           unsigned char d_cnt, __xwrite uint32_t xms[2],
-                           size_t size, sync_t sync, SIGNAL *sig);
-
-__intrinsic struct pkt_ms_info pkt_msd_delete_write(__addr40 void *pbuf,
-                                                    unsigned char off,
-                                                    unsigned char d_cnt);
+__intrinsic struct pkt_ms_info pkt_msd_write(__addr40 void *pbuf,
+                                             unsigned char off);
 
 
 /**

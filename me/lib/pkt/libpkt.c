@@ -28,6 +28,18 @@
 
 #include <pkt/pkt.h>
 
+
+/**
+ * MAC Egress Command format
+ */
+
+#define MAC_EGR_CMD_L3_CSUM_EN_shf 31
+#define MAC_EGR_CMD_L3_CSUM_EN     (1 << MAC_EGR_CMD_L3_CSUM_EN_shf)
+
+#define MAC_EGR_CMD_L4_CSUM_EN_shf 30
+#define MAC_EGR_CMD_L4_CSUM_EN     (1 << MAC_EGR_CMD_L4_CSUM_EN_shf)
+
+
 /*
  * This operation is supplied as a function and not a macro because
  * experience with the 'nfcc' compiler has shown that a simple,
@@ -176,16 +188,50 @@ pkt_emem_data_size(unsigned int pkt_len, unsigned int pkt_offset,
     return ret;
 }
 
+__intrinsic void
+__pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
+                           int l3_csum_ins, int l4_csum_ins,
+                           __xwrite uint32_t *xcmd, sync_t sync, SIGNAL *sig)
+{
+    /* Check for an illegal packet offset for MAC egress command word */
+    __RT_ASSERT(off >= 20);
+
+    /* Write a MAC egress command word for TCP/UDP checksum insertion */
+    (*xcmd) = (l3_csum_ins ? MAC_EGR_CMD_L3_CSUM_EN : 0)
+              | (l4_csum_ins ? MAC_EGR_CMD_L4_CSUM_EN : 0);
+
+    __mem_write32(xcmd, (__addr40 uint8_t *) pbuf + off - 4, sizeof(*xcmd),
+                  sizeof(*xcmd), sync, sig);
+
+    return;
+}
+
+__intrinsic void
+pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
+                         int l3_csum_ins, int l4_csum_ins)
+{
+    SIGNAL sig;
+    __xwrite uint32_t cmd;
+    __pkt_mac_egress_cmd_write(pbuf, off, l3_csum_ins, l4_csum_ins, &cmd,
+                               ctx_swap, &sig);
+    return;
+}
+
 __intrinsic struct pkt_ms_info
-__pkt_msd_noop_write(__addr40 void *pbuf, unsigned char off,
-                     __xwrite uint32_t xms[2], size_t size, sync_t sync,
-                     SIGNAL *sig)
+__pkt_msd_write(__addr40 void *pbuf, unsigned char off,
+                __xwrite uint32_t xms[2], size_t size, sync_t sync,
+                SIGNAL *sig)
 {
     __gpr struct pkt_ms_info msi;
 
-    if (off % 8 == 0) {
-        msi.off_enc = (off - 8) / 8 - 1;
-        msi.len_adj = off;
+    /* Check for an illegal packet offset for direct modification script */
+    __RT_ASSERT((off >= 16) && (off <= 80));
+
+    /* Check if a no-op modification script is possible */
+    if (off <= 64 && off % 8 == 0) {
+        /* Write a no-op modification script right before the packet start */
+        msi.len_adj = off - 8;
+        msi.off_enc = (off >> 3) - 2;
 
         xms[0] = (NBI_PM_TYPE(NBI_PM_TYPE_DIRECT) |
                   NBI_PM_OPCODE(NBI_PKT_MS_INSTRUCT_NOOP, 0, 0));
@@ -194,57 +240,38 @@ __pkt_msd_noop_write(__addr40 void *pbuf, unsigned char off,
         __mem_write64(xms, (__addr40 unsigned char *)pbuf + off - 8, size,
                       size, sync, sig);
     } else {
-        /* TODO: deal with rewrite scripts for arbitrarily aligned offsets */
-        __rt_assert();
-    }
-    return msi;
-}
+        /*
+         * Determine a starting offset for the 8-byte modification script that
+         * is closest to the start of packet, that is 8-byte aligned, and that
+         * is still within the 56-byte offset limit
+         */
+        unsigned char ms_off = 56;
 
+        if (off < 64)
+            ms_off = (off & ~0x7) - 8;
 
-__intrinsic struct pkt_ms_info
-pkt_msd_noop_write(__addr40 void *pbuf, unsigned char off)
-{
-    SIGNAL sig;
-   __xwrite uint32_t ms[2];
-    return __pkt_msd_noop_write(pbuf, off, ms, sizeof(ms), ctx_swap, &sig);
-}
-
-
-
-__intrinsic struct pkt_ms_info
-__pkt_msd_delete_write(__addr40 void *pbuf, unsigned char off,
-                       unsigned char d_cnt, __xwrite uint32_t xms[2],
-                       size_t size, sync_t sync, SIGNAL *sig)
-{
-    __gpr struct pkt_ms_info msi;
-
-    if (off % 8 == 0) {
-        msi.off_enc = ((off - 8) / 8) - 1;
-        msi.len_adj = off;
+        /* write a delete modification script to remove any excess bytes */
+        msi.len_adj = ms_off + 8;
+        msi.off_enc = (ms_off >> 3) - 1;
 
         xms[0] = (NBI_PM_TYPE(NBI_PM_TYPE_DIRECT) |
-                  NBI_PM_OPCODE(NBI_PKT_MS_INSTRUCT_DELETE, d_cnt, 0));
+                  NBI_PM_OPCODE(NBI_PKT_MS_INSTRUCT_DELETE,
+                                off - ms_off - 8, 0));
         xms[1] = 0;
 
-        __mem_write64(xms, (__addr40 unsigned char *)pbuf + off - 8, size,
+        __mem_write64(xms, (__addr40 unsigned char *) pbuf + ms_off, size,
                       size, sync, sig);
-    } else {
-        /* TODO: deal with rewrite scripts for arbitrarily aligned offsets */
-        __rt_assert();
     }
-
     return msi;
 }
 
+
 __intrinsic struct pkt_ms_info
-pkt_msd_delete_write(__addr40 void *pbuf, unsigned char off,
-                     unsigned char d_cnt)
+pkt_msd_write(__addr40 void *pbuf, unsigned char off)
 {
     SIGNAL sig;
-   __xwrite uint32_t ms[2];
-
-    return __pkt_msd_delete_write(pbuf, off, d_cnt, ms, sizeof(ms), ctx_swap,
-                                  &sig);
+    __xwrite uint32_t ms[2];
+    return __pkt_msd_write(pbuf, off, ms, sizeof(ms), ctx_swap, &sig);
 }
 
 
