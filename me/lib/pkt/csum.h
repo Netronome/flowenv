@@ -41,6 +41,8 @@
  *
  * @NFP_MAC_RX_CSUM_L4_SUM_of   Summary of L4 checksum
  * @NFP_MAC_RX_CSUM_L3_of       L3 (checksum) summary
+ * @NFP_MAC_RX_CSUM_MPLS_of     Number of MPLS labels (3 = 3 or more)
+ * @NFP_MAC_RX_CSUM_VLANS_of    Number of VLANs present (3 = 3 or more)
  * @NFP_MAC_RX_CSUM_CSUM_of     16-bit L4 TCP/UDP checksum if TCP/UDP is
  *                              parsable. If not 16-bit checksum for
  *                              received packet excluding CRC.
@@ -64,6 +66,8 @@
 #define   NFP_MAC_RX_CSUM_L3_IPV4_FAIL          (2)
 #define   NFP_MAC_RX_CSUM_L3_IPV4_OK            (3)
 
+#define NFP_MAC_RX_CSUM_MPLS_of(_x)             (((_x) >> 18) & 0x3)
+#define NFP_MAC_RX_CSUM_VLANS_of(_x)            (((_x) >> 16) & 0x3)
 #define NFP_MAC_RX_CSUM_CSUM_of(_x)             ((_x) & 0xffff)
 
 #endif /* _PKT_CSUM_H_ */
