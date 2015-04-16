@@ -60,7 +60,7 @@ void main(void)
         local_csr_write(local_csr_mailbox_0, nrecv);
 
         pbuf = pkt_ctm_ptr40(pi->isl, pi->pnum, 0);
-        msi = pkt_msd_noop_write(pbuf, PKT_NBI_OFFSET);
+        msi = pkt_msd_write(pbuf, PKT_NBI_OFFSET);
         pkt_nbi_send(0, pi->pnum, &msi, pi->len, MY_NBI ^ 1, OUT_TXQ,
                      nbi_meta.seqr, nbi_meta.seq);
 
