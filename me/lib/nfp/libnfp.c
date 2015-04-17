@@ -37,6 +37,7 @@
 #include "_c/mem_atomic.c"
 #include "_c/pcie.c"
 #include "_c/xpb.c"
+#include "_c/macstats.c"
 
 /*
  * The following code implements all the functionality in <nfp.h>.  It

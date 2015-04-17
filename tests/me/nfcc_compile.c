@@ -47,6 +47,7 @@
 #include <nfp/mem_ring.h>
 #include <nfp/pcie.h>
 #include <nfp/xpb.h>
+#include <nfp/macstats.h>
 
 /* libstd related header files */
 #include <std/cntrs.h>
