@@ -80,14 +80,22 @@ mac_stats_add(__gpr unsigned int src_hi, __gpr unsigned int src_lo,
     __asm {
         nbi[read, stats[0], src_hi, <<8, src_lo, 4], ctx_swap[sig];
         alu[stats[0], --, B, stats[0]];
+        alu[stats[1], --, B, 0];
         alu[stats[2], --, B, stats[1]];
+        alu[stats[3], --, B, 0];
         alu[stats[4], --, B, stats[2]];
+        alu[stats[5], --, B, 0];
         alu[stats[6], --, B, stats[3]];
+        alu[stats[7], --, B, 0];
         mem[add64, stats[0], dst_hi, <<8, dst_lo, 4], ctx_swap[sig];
         alu[stats[0], --, B, stats[4]];
+        alu[stats[1], --, B, 0];
         alu[stats[2], --, B, stats[5]];
+        alu[stats[3], --, B, 0];
         alu[stats[4], --, B, stats[6]];
+        alu[stats[5], --, B, 0];
         alu[stats[6], --, B, stats[7]];
+        alu[stats[7], --, B, 0];
         mem[add64, stats[0], dst_hi, <<8, dst_lo2, 4], ctx_swap[sig];
     }
 }
