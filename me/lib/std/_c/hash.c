@@ -28,6 +28,7 @@
 #include <nfp6000/nfp_cls.h>
 
 #include <std/hash.h>
+#include <std/reg_utils.h>
 
 /* macro for hash_me_crc32 and hash_me_crc32c implementation */
 #define _HASH_SWITCH_CASE_IMPLEMENT(n, EXEC_MACRO)                          \
@@ -246,6 +247,148 @@ cls_hash(__xwrite void *key, __cls void *mask, uint32_t size, uint32_t idx)
     cls_read((void *)&data, hash_idx_csr, sizeof(uint64_t));
 
     return data;
+}
+
+#define _HASH_TOEPLITZ_COPY(n)                  \
+    {                                           \
+        switch (n) {                            \
+        case 1:                                 \
+            sk[1] = sk[2];                      \
+            break;                              \
+        case 2:                                 \
+            sk[1] = sk[2];                      \
+            sk[2] = sk[3];                      \
+            break;                              \
+        case 3:                                 \
+            sk[1] = sk[2];                      \
+            sk[2] = sk[3];                      \
+            sk[3] = sk[4];                      \
+            break;                              \
+        case 4:                                 \
+            sk[1] = sk[2];                      \
+            sk[2] = sk[3];                      \
+            sk[3] = sk[4];                      \
+            sk[4] = sk[5];                      \
+            break;                              \
+        case 5:                                 \
+            sk[1] = sk[2];                      \
+            sk[2] = sk[3];                      \
+            sk[3] = sk[4];                      \
+            sk[4] = sk[5];                      \
+            sk[5] = sk[6];                      \
+            break;                              \
+        case 6:                                 \
+            sk[1] = sk[2];                      \
+            sk[2] = sk[3];                      \
+            sk[3] = sk[4];                      \
+            sk[4] = sk[5];                      \
+            sk[5] = sk[6];                      \
+            sk[6] = sk[7];                      \
+            break;                              \
+        case 7:                                 \
+            sk[1] = sk[2];                      \
+            sk[2] = sk[3];                      \
+            sk[3] = sk[4];                      \
+            sk[4] = sk[5];                      \
+            sk[5] = sk[6];                      \
+            sk[6] = sk[7];                      \
+            sk[7] = sk[8];                      \
+            break;                              \
+        case 8:                                 \
+            sk[1] = sk[2];                      \
+            sk[2] = sk[3];                      \
+            sk[3] = sk[4];                      \
+            sk[4] = sk[5];                      \
+            sk[5] = sk[6];                      \
+            sk[6] = sk[7];                      \
+            sk[7] = sk[8];                      \
+            sk[8] = sk[9];                      \
+            break;                              \
+        }                                       \
+    }
+
+#define _HASH_TOEPLITZ_BLOCK(IDX, EXEC_MACRO)           \
+    for (j = 31; j >= 0; j--) {                         \
+        if ((EXEC_MACRO(IDX) >> j) & 1)                 \
+            result ^= (sk[0]);                          \
+        sk[0] = (sk[0] << 1) | ((sk[1] >> 31) & 1);     \
+        sk[1] = (sk[1] << 1);                           \
+    }                                                   \
+    _HASH_TOEPLITZ_COPY(8-IDX);                         \
+
+/* macro for hash_toeplitz */
+#define _HASH_TOEPLITZ_IMPLEMENT(EXEC_MACRO)    \
+    {                                           \
+        _HASH_TOEPLITZ_BLOCK(0, EXEC_MACRO);    \
+        _HASH_TOEPLITZ_BLOCK(1, EXEC_MACRO);    \
+                                                \
+        if (n == 8)                             \
+            goto out;                           \
+                                                \
+        _HASH_TOEPLITZ_BLOCK(2, EXEC_MACRO);    \
+                                                \
+        if (n == 12)                            \
+            goto out;                           \
+                                                \
+        _HASH_TOEPLITZ_BLOCK(3, EXEC_MACRO);    \
+        _HASH_TOEPLITZ_BLOCK(4, EXEC_MACRO);    \
+        _HASH_TOEPLITZ_BLOCK(5, EXEC_MACRO);    \
+        _HASH_TOEPLITZ_BLOCK(6, EXEC_MACRO);    \
+        _HASH_TOEPLITZ_BLOCK(7, EXEC_MACRO);    \
+                                                \
+        if (n == 32)                            \
+            goto out;                           \
+                                                \
+        _HASH_TOEPLITZ_BLOCK(8, EXEC_MACRO);    \
+    }
+
+/*
+ * Toeplitz hash implementation for RSS. Sources:
+http://msdn.microsoft.com/en-us/library/windows/hardware/ff570725%28v=vs.85%29.aspx
+and
+http://download.microsoft.com/download/5/D/6/5D6EAF2B-7DDF-476B-93DC-7CF0072878E6/NDIS_RSS.doc
+ */
+__intrinsic uint32_t
+hash_toeplitz(void *s, size_t n, void *k, size_t nk)
+{
+    uint32_t sk[HASH_TOEPLITZ_SECRET_KEY_SZ/sizeof(uint32_t)];
+    int result = 0;
+    int i, j, sk_idx;
+
+    /* Make sure the parameters are as we expect */
+    ctassert(__is_in_reg_or_lmem(s));
+    ctassert(!__is_xfer_reg(s));
+    /* support IPv4 only, 4-tuple IPv4, IPv6 only or 4-tuple IPv6 */
+    try_ctassert(n == 8 || n == 12 || n == 32 || n == 36);
+    ctassert(__is_in_reg_or_lmem(k));
+    ctassert(__is_ct_const(nk));
+    ctassert(nk == HASH_TOEPLITZ_SECRET_KEY_SZ);
+
+    /* create local copy of the secret key */
+    reg_cp((void *)sk, k, nk);
+
+#ifdef __HASH_TOEPLITZ
+    #error "Attempting to redefine __HASH_TOEPLITZ"
+#endif
+
+    /* every type has to be explicitly cast */
+    if (__is_in_lmem(s)) {
+#define __HASH_TOEPLITZ(_x) ((__lmem uint32_t *)s)[_x]
+
+        _HASH_TOEPLITZ_IMPLEMENT(__HASH_TOEPLITZ)
+
+#undef __HASH_TOEPLITZ
+    } else {
+        /* normal register type */
+#define __HASH_TOEPLITZ(_x) ((__gpr uint32_t *)s)[_x]
+
+        _HASH_TOEPLITZ_IMPLEMENT(__HASH_TOEPLITZ)
+
+#undef __HASH_TOEPLITZ
+    }
+
+out:
+    return result;
 }
 
 #endif /* !_STD__HASH_C_ */

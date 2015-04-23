@@ -83,6 +83,29 @@ void cls_hash_init(__cls void *mask, uint32_t size);
 uint64_t cls_hash(__xwrite void *key, __cls void *mask, uint32_t size,
                   uint32_t idx);
 
+/*
+ * The Toeplitz hash secret key maximum size is 40 bytes. It is 4
+ * bytes longer than the maximum region size to perform the hash over.
+ * (e.g. 36 for a IPv6 4-tuple)
+ */
+#define HASH_TOEPLITZ_SECRET_KEY_SZ    40
+
+/**
+ * Compute the Toeplitz hash over a region located in registers
+ *
+ * @param s     Pointer to a region
+ * @param n     Size of region (in bytes)
+ * @param k     Secret hash key (not the input region 's')
+ * @param kn    Key size (in bytes)
+ * @return      Toeplitz hash
+ *
+ * @s can be located in GPRs, NN or LMEM.
+ * @n must be 8, 12, 32, or 36. This accommodates hash computation
+ * over IPv4 only, IPv4+TCP/UDP, IPv6 only and IPv6+TCP/UDP headers
+ * respectively.
+ */
+__intrinsic uint32_t hash_toeplitz(void *s, size_t n, void *k, size_t kn);
+
 #endif /* !_STD__HASH_H_ */
 
 /* -*-  Mode:C; c-basic-offset:4; tab-width:4 -*- */
