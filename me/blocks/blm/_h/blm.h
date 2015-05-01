@@ -92,7 +92,7 @@
 .alloc_resource BLM_STATS_NUM_TM_EVNTS_RCVD           BLQ_STATS_OFFSETS           island 8 /* Offset-8  */
 .alloc_resource BLM_STATS_DMA_NULL_RECYCLE            BLQ_STATS_OFFSETS           island 8 /* Offset-9  */
 .alloc_resource BLM_STATS_TM_NULL_RECYCLE             BLQ_STATS_OFFSETS           island 8 /* Offset-10 */
-.alloc_resource BLM_STATS_OFFSET_RFU0                 BLQ_STATS_OFFSETS           island 8 /* Offset-11 */
+.alloc_resource BLM_STATS_NUM_ALARMS                  BLQ_STATS_OFFSETS           island 8 /* Offset-11 */
 .alloc_resource BLM_STATS_OFFSET_RFU1                 BLQ_STATS_OFFSETS           island 8 /* Offset-12 */
 .alloc_resource BLM_STATS_OFFSET_RFU2                 BLQ_STATS_OFFSETS           island 8 /* Offset-13 */
 .alloc_resource BLM_STATS_OFFSET_RFU3                 BLQ_STATS_OFFSETS           island 8 /* Offset-14 */

@@ -29,6 +29,11 @@
 #include "libblm.h"
 #include "blm.h"
 
+
+#ifndef ALARM_TICKS
+#define ALARM_TICKS 32
+#endif
+
 /*
  * Pre-Load Error checks
  */
@@ -148,6 +153,24 @@
         .alloc_mem id lmem me 32 4 addr32
 #endloop
 
+
+/*
+ *
+ */
+#macro alarm(in_ticks, alarm_sig)
+.begin
+
+    .reg next
+
+    local_csr_wr[ACTIVE_FUTURE_COUNT_SIGNAL, &alarm_sig]
+    local_csr_rd[TIMESTAMP_LOW]
+    immed[next, 0]
+    alu[next, next, +, in_ticks]
+    local_csr_wr[ACTIVE_CTX_FUTURE_COUNT, next]
+
+.end
+#endm
+
 /*
  *
  */
@@ -161,7 +184,7 @@
         .reg zero
         immed[zero, 0]
         local_csr_wr[Mailbox0, zero]
-        local_csr_wr[Mailbox1, zero]
+        local_csr_wr[Mailbox1, ALARM_TICKS]
         local_csr_wr[Mailbox2, zero]
         local_csr_wr[Mailbox3, zero]
         .end
@@ -1005,7 +1028,9 @@ end_cache_fill#:
     immed[blq_cnt_cur, 0]
     immed[blq_cnt_prev, 0]
     immed[blq_evnt_cnt, 0]
+    immed[alarm_cnt, 0]
     immed[island, __ISLAND]
+    immed[to_ticks, ALARM_TICKS]
 
     br=ctx[0, ctx0#]
     br=ctx[1, ctx1#]
@@ -1349,6 +1374,7 @@ blm_ctx_init_end#:
     .reg blq_cnt_prev
     .reg blq_cnt_cur
     .reg blq_evnt_cnt
+    .reg alarm_cnt
     .reg deficit
     .reg island
     .reg NbiNum
@@ -1356,6 +1382,9 @@ blm_ctx_init_end#:
     .reg count
     .reg addr
     .reg blq
+    .reg event_data
+    .reg is_aps
+    .reg to_ticks
 
     /* Transfer Registers */
     .reg volatile $event_data[1]
@@ -1363,11 +1392,17 @@ blm_ctx_init_end#:
     .xfer_order $event_data
     .xfer_order $xfer
     .set $event_data[0]
+    .reg $nbidmabuf[16]
+    .xfer_order $nbidmabuf
+    aggregate_directive(.set, $nbidmabuf, 16)
 
     /* Signals */
     .sig volatile auto_push_event_sig
     .sig volatile evtsig
+    .sig sig_bufpush sig_memget0 sig_memget1
     .set_sig auto_push_event_sig
+    .sig alarm_sig
+    .set_sig alarm_sig
 
     blm_ctx_init()
 
@@ -1468,10 +1503,6 @@ blm_egress_blq_processing#:
 /* -------------------------------- NBI INGRESS EVENT PROCESSING - DMA BLQ EVENTS (EVEN Contexts) -----------------------------*/
 
 blm_ingress_blq_processing#:
-    .reg $nbidmabuf[16]
-    .xfer_order $nbidmabuf
-    aggregate_directive(.set, $nbidmabuf, 16)
-    .sig sig_bufpush sig_memget0 sig_memget1
 
     /* Setup DMA Evnt Auto push */
     evntm_cls_event_filter_config(cls_ap_filter_number, AUTOPUSH_FILTER_MASK, \
@@ -1485,20 +1516,42 @@ blm_ingress_blq_processing#:
     .endw
     init_cache_fill_complete#:
 
+    move(event_data, 0xffffffff)
+
+    evntm_cls_autopush_monitor_engage(cls_ap_filter_number, $xfer[0], evtsig, NONE)
+    ctx_arb[evtsig]
+    ctx_arb[auto_push_event_sig], any
+    alarm(to_ticks,alarm_sig)
+
     .while (1)
+        br_signal[auto_push_event_sig, process_dma_evnet#]
         evntm_cls_autopush_monitor_engage(cls_ap_filter_number, $xfer[0], evtsig, NONE)
-        ctx_arb[evtsig, auto_push_event_sig]
-        alu[$event_data[0], --, b, $event_data[0]]
-        //alu[sub_id, 0x3, AND, $event_data[0], >>16]
-        alu[blq, 0x3, AND, $event_data[0], >>14]
-        alu[blq_cnt_cur, blq_cnt_mask, AND, $event_data[0], >>4]
-        alu[NbiNum, 0x3, AND, $event_data[0], >>18]
+        ctx_arb[evtsig]
+        alarm(to_ticks,alarm_sig)
+        ctx_arb[alarm_sig, auto_push_event_sig], any
+        br_signal[auto_push_event_sig, process_dma_evnet#]
+        immed[is_aps, 0]
+        alu[alarm_cnt, alarm_cnt, +, 1]
+        br_signal[alarm_sig, service_check#]
+process_dma_evnet#:
+        alu[blq_evnt_cnt, blq_evnt_cnt, +, 1]
+        immed[is_aps, 1]
+        alu[event_data, --, b, $event_data[0]]
+service_check#:
+        //alu[sub_id, 0x3, AND, event_data, >>16]
+        alu[blq, 0x3, AND, event_data, >>14]
+        alu[NbiNum, 0x3, AND, event_data, >>18]
+        alu[blq_cnt_cur, blq_cnt_mask, AND, event_data, >>4]
         alu[deficit, blq_cnt_cur, -, blq_cnt_prev]
         alu[deficit, deficit, AND, blq_cnt_mask]
-        alu[blq_evnt_cnt, blq_evnt_cnt, +, 1]
 
         D(MAILBOX1, 0x1111)
-        blm_stats(BLM_STATS_NUM_DMA_EVNTS_RCVD)
+        .if (is_aps)
+            blm_stats(BLM_STATS_NUM_DMA_EVNTS_RCVD)
+        .else
+            blm_stats(BLM_STATS_NUM_ALARMS)
+        .endif
+
         .if (BLM_BLQ_LM_REF[BLM_LM_BLQ_NULL_RECYCLE_OFFSET] & 1)
             D(MAILBOX2, 0x2222)
             .while (deficit >= NBI_BLQ_EVENT_THRESHOLD)
@@ -1529,10 +1582,12 @@ blm_ingress_blq_processing#:
                 .endif
             .endw
 
+            alu[--, is_aps, XOR, 1]
+            beq[cache_fill_complete#]
             blm_cache_acquire_lock()
             alu[cache_cnt, --, b, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET]]
             blm_cache_release_lock()
-            .while (cache_cnt < BLM_BLQ_CACHE_LWM)
+            .while (cache_cnt < BLM_BLQ_CACHE_HWM)
                 D(MAILBOX3, 0x3333)
                 blm_cache_fill(addr, ringid, sig_memget0, cache_fill_complete#)
                 blm_cache_acquire_lock()
@@ -1560,11 +1615,13 @@ blm_ingress_blq_processing#:
             alu[$debugdma[4], --, b, blq_cnt_prev]
             alu[$debugdma[5], --, b, deficit]
             alu[$debugdma[6], --, b, blq_evnt_cnt]
-            alu[$debugdma[7], --, b, 0]
+            alu[$debugdma[7], --, b, alarm_cnt]
         #endif
 
         /* update deficit pointers */
         alu[blq_cnt_prev, --, b, blq_cnt_cur]
+        local_csr_rd[MAILBOX1]
+        immed[to_ticks, 0]
     .endw
 .end
 
