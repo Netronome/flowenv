@@ -230,7 +230,6 @@ __pkt_msd_write(__addr40 void *pbuf, unsigned char off,
     /* Check if a no-op modification script is possible */
     if (off <= 64 && off % 8 == 0) {
         /* Write a no-op modification script right before the packet start */
-        msi.len_adj = off;
         msi.off_enc = (off >> 3) - 2;
 
         xms[0] = (NBI_PM_TYPE(NBI_PM_TYPE_DIRECT) |
@@ -251,7 +250,6 @@ __pkt_msd_write(__addr40 void *pbuf, unsigned char off,
             ms_off = (off & ~0x7) - 8;
 
         /* write a delete modification script to remove any excess bytes */
-        msi.len_adj = ms_off + 8;
         msi.off_enc = (ms_off >> 3) - 1;
 
         xms[0] = (NBI_PM_TYPE(NBI_PM_TYPE_DIRECT) |
@@ -262,6 +260,10 @@ __pkt_msd_write(__addr40 void *pbuf, unsigned char off,
         __mem_write64(xms, (__addr40 unsigned char *) pbuf + ms_off, size,
                       size, sync, sig);
     }
+
+    /* Set the length adjustment to point to the start of packet. */
+    msi.len_adj = off;
+
     return msi;
 }
 
