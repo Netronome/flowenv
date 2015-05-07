@@ -68,6 +68,33 @@ __intrinsic void mem_read8(__xread void *data, __mem void *addr,
                            const size_t size);
 
 /**
+ * Read multiple of 8B (read64) or 4B (read32) from a memory unit with byte-swap
+ *
+ * These functions are the same as the above except that they perform
+ * byte-level endian swapping.  They may be useful for reading
+ * byte-arrays written to by a host with little endian byte order
+ * (such as x86).
+ *
+ * Note, there are no read8_le() variants as those would perform a
+ * read32_le() in any case and the caller would have to mask off the
+ * relevant bits in any case.
+ */
+__intrinsic void __mem_read64_le(__xread void *data, __mem void *addr,
+                                 size_t size, const size_t max_size,
+                                 sync_t sync, SIGNAL *sig);
+
+__intrinsic void mem_read64_le(__xread void *data, __mem void *addr,
+                               const size_t size);
+
+__intrinsic void __mem_read32_le(__xread void *data, __mem void *addr,
+                                 size_t size, const size_t max_size,
+                                 sync_t sync, SIGNAL *sig);
+
+__intrinsic void mem_read32_le(__xread void *data, __mem void *addr,
+                               const size_t size);
+
+
+/**
  * Write a multiple of 8B (write64), 4B (write32), 1B (write8) to a memory unit
  * (EMEM, IMEM, or CTM)
  * @param data      pointer to sufficient write transfer registers for the op
@@ -109,5 +136,36 @@ __intrinsic void __mem_write8(__xwrite void *data, __mem void *addr,
 
 __intrinsic void mem_write8(__xwrite void *data, __mem void *addr,
                             const size_t size);
+
+/**
+ * Write a multiple of 8B (write64), 4B (write32), 1B (write8) to a
+ * memory unit with byte-swap
+ *
+ * These functions are the same as the above except that they perform
+ * byte-level endian swapping.  They may be useful for writing
+ * byte-arrays to memory which are subsequently read by a host with
+ * little endian byte order (such as x86).
+ */
+__intrinsic void __mem_write64_le(__xwrite void *data, __mem void *addr,
+                                  size_t size, const size_t max_size,
+                                  sync_t sync, SIGNAL *sig);
+
+__intrinsic void mem_write64_le(__xwrite void *data, __mem void *addr,
+                                const size_t size);
+
+__intrinsic void __mem_write32_le(__xwrite void *data, __mem void *addr,
+                                  size_t size, const size_t max_size,
+                                  sync_t sync, SIGNAL *sig);
+
+__intrinsic void mem_write32_le(__xwrite void *data, __mem void *addr,
+                                const size_t size);
+
+__intrinsic void __mem_write8_le(__xwrite void *data, __mem void *addr,
+                                 size_t size, const size_t max_size,
+                                 sync_t sync, SIGNAL *sig);
+
+__intrinsic void mem_write8_le(__xwrite void *data, __mem void *addr,
+                               const size_t size);
+
 
 #endif /* !_NFP__MEM_BULK_H_ */
