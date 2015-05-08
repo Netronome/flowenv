@@ -26,7 +26,8 @@ flowenv_tests_me_nfcc_compile_NFCCSRCS_common += \
 	$(flowenv-me-lib_absdir)/nfp/libnfp.c \
 	$(flowenv-me-lib_absdir)/net/libnet.c \
 	$(flowenv-me-lib_absdir)/std/libstd.c \
-	$(flowenv-me-lib_absdir)/pkt/libpkt.c
+	$(flowenv-me-lib_absdir)/pkt/libpkt.c \
+	$(flowenv-me-lib_absdir)/lu/liblu.c
 flowenv_tests_me_nfcc_compile.fw_DESCRIPTION = "FlowEnv nfcc compile test"
 $(eval $(call mefw_template,flowenv_tests_me_nfcc_compile,$(flowenv-tests-me_reldir)))
 

@@ -59,6 +59,9 @@
 /* libpkt related header files */
 #include <pkt/pkt.h>
 
+/* liblu related header files */
+#include <lu/cam_hash.h>
+
 /* Dummy main entry point */
 int
 main(void)
