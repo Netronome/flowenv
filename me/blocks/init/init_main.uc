@@ -23,9 +23,7 @@
  *
  */
 #include "_uc/init_nbi.uc"
-#include "_uc/init_pcie.uc"
 
 .begin
     nbi_init()
-    pcie_init()
 .end

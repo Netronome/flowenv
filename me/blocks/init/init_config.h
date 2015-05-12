@@ -38,11 +38,6 @@
 #ifndef NBI_COUNT
     #define NBI_COUNT 1
 #endif
-/* Determines how many PCIe islands are available to conifigure
- * Whether they are physically present is not checked */
-#ifndef PCIE_COUNT
-    #define PCIE_COUNT 1
-#endif
 
 /*************************************************************************
  * NBI DMA Configuration
