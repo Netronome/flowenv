@@ -203,4 +203,32 @@ __intrinsic void __mem_test_clr(__xrw void *data, __mem void *addr,
 __intrinsic void mem_test_clr(__xrw void *data, __mem void *addr,
                               size_t size);
 
+/**
+ * Atomic test and add/sub in multiple of 4B values (EMEM, IMEM, or CTM)
+ * @param data      pointer to sufficient RW transfer registers for the op
+ * @param addr      40-bit pointer to the first value in memory
+ * @param size      size of the op, must be a multiple of 4
+ * @param max_size  used to determine largest op, if size is not a constant
+ * @param sync      type of synchronization (must be sig_done)
+ * @param sig_pair  signal pair to use
+ *
+ * Note: Maximum for @max_size is 16.
+ *
+ * These functions will add or subtract data in NFP EMEM, IMEM or CTM memory
+ * types, and return the contents of memory before the operation.
+ */
+__intrinsic void __mem_test_add(__xrw void *data, __mem void *addr,
+                                size_t size, const size_t max_size,
+                                sync_t sync, SIGNAL_PAIR *sig);
+
+__intrinsic void mem_test_add(__xrw void *data, __mem void *addr,
+                              size_t size);
+
+__intrinsic void __mem_test_sub(__xrw void *data, __mem void *addr,
+                                size_t size, const size_t max_size,
+                                sync_t sync, SIGNAL_PAIR *sig);
+
+__intrinsic void mem_test_sub(__xrw void *data, __mem void *addr,
+                              size_t size);
+
 #endif /* !_NFP__MEM_ATOMIC_H_ */
