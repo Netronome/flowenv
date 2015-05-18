@@ -230,6 +230,56 @@ __intrinsic void cls_test_set(__xrw void *data, __cls void *addr,
                               size_t size);
 
 /**
+ * Test and add in multiples of 4B from CLS.
+ * @param data     pointer to sufficient RW transfer registers for the op
+ * @param addr     32-bit pointer to the memory start address in local CLS
+ * @param size     size of the write, must be a multiple of 4
+ * @param max_size used to determine largest write, if size is not a constant
+ * @param sync     type of synchronization (sig_done or ctx_swap)
+ * @param sig      signal to use
+ *
+ * This function provides atomic add of words at the specified
+ * address according to the data provided in the write transfer register(s)
+ * and returns the premodified memory contents in the read transfer
+ * register(s).
+ * There is currently limited support for size to be a runtime value,
+ * and for test and adds >64B. cls_test_add() provides a simplified interface
+ * where size is assumed to be compile time constant, and the context swaps on
+ * an internal signal while waiting for the write to complete.
+ */
+__intrinsic void __cls_test_add(__xrw void *data, __cls void *addr,
+                                size_t size, const size_t max_size,
+                                sync_t sync, SIGNAL *sig);
+
+__intrinsic void cls_test_add(__xrw void *data, __cls void *addr,
+                              size_t size);
+
+/**
+ * Test and sub in multiples of 4B from CLS.
+ * @param data     pointer to sufficient RW transfer registers for the op
+ * @param addr     32-bit pointer to the memory start address in local CLS
+ * @param size     size of the write, must be a multiple of 4
+ * @param max_size used to determine largest write, if size is not a constant
+ * @param sync     type of synchronization (sig_done or ctx_swap)
+ * @param sig      signal to use
+ *
+ * This function provides atomic sub of words at the specified
+ * address according to the data provided in the write transfer register(s)
+ * and returns the premodified memory contents in the read transfer
+ * register(s).
+ * There is currently limited support for size to be a runtime value,
+ * and for test and subs >64B. cls_test_sub() provides a simplified interface
+ * where size is assumed to be compile time constant, and the context swaps on
+ * an internal signal while waiting for the write to complete.
+ */
+__intrinsic void __cls_test_sub(__xrw void *data, __cls void *addr,
+                                size_t size, const size_t max_size,
+                                sync_t sync, SIGNAL *sig);
+
+__intrinsic void cls_test_sub(__xrw void *data, __cls void *addr,
+                              size_t size);
+
+/**
  * Single instruction to increment by 1 a value in CLS.
  * @param addr     pointer to the memory address in CLS.
  *

@@ -314,6 +314,38 @@ cls_test_set(__xrw void *data, __cls void *addr, size_t size)
     __cls_test_set(data, addr, size, size, ctx_swap, &sig);
 }
 
+
+__intrinsic void
+__cls_test_add(__xrw void *data, __cls void *addr, size_t size,
+               const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    try_ctassert(size <= 64);
+    _CLS_CMD(test_add, data, addr, size, size, sync, sig, 1, 8);
+}
+
+__intrinsic void
+cls_test_add(__xrw void *data, __cls void *addr, size_t size)
+{
+    SIGNAL sig;
+    __cls_test_add(data, addr, size, size, ctx_swap, &sig);
+}
+
+
+__intrinsic void
+__cls_test_sub(__xrw void *data, __cls void *addr, size_t size,
+               const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    try_ctassert(size <= 64);
+    _CLS_CMD(test_sub, data, addr, size, size, sync, sig, 1, 8);
+}
+
+__intrinsic void
+cls_test_sub(__xrw void *data, __cls void *addr, size_t size)
+{
+    SIGNAL sig;
+    __cls_test_sub(data, addr, size, size, ctx_swap, &sig);
+}
+
 /* cls arithmetic functions */
 __intrinsic void
 cls_incr(__cls void *addr)
