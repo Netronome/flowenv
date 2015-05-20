@@ -23,6 +23,7 @@
 #include <nfp.h>
 #include <stdint.h>
 
+#include <nfp/cls.h>
 #include <nfp/mem_atomic.h>
 
 #include <std/synch.h>
@@ -53,6 +54,36 @@ __intrinsic void
 synch_cnt_dram_wait(__dram struct synch_cnt *s)
 {
     while (synch_cnt_dram_poll(s)) {}
+}
+
+__intrinsic void
+sem_cls_wait(__cls struct sem *s, const uint32_t max_credits, uint32_t poll_interval)
+{
+    __xrw struct sem xrw;
+    __gpr int32_t my_credit;
+
+    xrw.next_credit = 1;    /* Take a credit */
+    xrw.last_complete = 0;  /* Zero lets us read without changing the value */
+
+    /* test_add will read the current credit number, then increment */
+    cls_test_add(&xrw, s, sizeof(struct sem));
+    my_credit = xrw.next_credit;
+
+    for (;;) {
+        /* If the credits in flight are more than the total, wait */
+        if (my_credit - xrw.last_complete >= max_credits) {
+            sleep(poll_interval);
+            cls_read(&xrw.last_complete, &s->last_complete, sizeof(int32_t));
+        } else {
+            break;
+        }
+    }
+}
+
+__intrinsic void
+sem_cls_post(__cls struct sem *s)
+{
+    cls_incr(&s->last_complete);
 }
 
 #endif /* !_STD__SYNCH_C_ */
