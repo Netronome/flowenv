@@ -106,7 +106,7 @@ camht_lookup_idx(__mem void *hash_tbl, int32_t entries,
     /* Make sure the parameters are as we expect */
     ctassert(__is_in_mem(hash_tbl));
 
-    ctassert(__is_in_reg(key));
+    ctassert(__is_in_reg_or_lmem(key));
 
     ctassert(__is_ct_const(entries));
     ctassert((entries % CAMHT_BUCKET_ENTRIES) == 0);
