@@ -44,7 +44,7 @@
  * should not have any external dependencies (including dependencies
  * on <nfp/*.h> include files).
  */
-__noinline void
+__intrinsic void
 ___rt_assert(void *addr)
 {
     local_csr_write(local_csr_mailbox_1, (unsigned int) addr);
