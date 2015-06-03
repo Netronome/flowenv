@@ -56,8 +56,8 @@
  * buffer, more or less efficient code is generated.
  */
 
-#ifndef _HDR_EXT2_H_
-#define _HDR_EXT2_H_
+#ifndef _HDR_EXT_H_
+#define _HDR_EXT_H_
 
 #include <nfp.h>
 #include <assert.h>
@@ -132,6 +132,7 @@ enum he_proto {
     HE_IP6,              /**  4: IPv6 header */
     HE_TCP,              /**  5: TCP header */
     HE_UDP,              /**  6: UDP header */
+    HE_GRE,              /**  7: GRE header */
 
     HE_IP6_EXT =  0x100, /** IPv6 Extension header */
     HE_IP6_HBH =  0x101, /** IPv6 Hop-by-Hop Options header */
@@ -297,4 +298,39 @@ __intrinsic int he_udp_fit(sz, off);
  */
 __intrinsic unsigned int he_udp(void *src_buf, int off, void *dst);
 
-#endif /* _HDR_EXT2_H_ */
+/**
+ * Check if a buffer of size @sz with current offset @off has
+ * enough space to contain a full GRE header with all optional fields.
+ */
+__intrinsic int he_gre_fit(sz, off);
+
+/**
+ * Extract a GRE header starting from an offset in the buffer.
+ *
+ * @src_buf     Source buffer
+ * @off         Byte offset within @src_buf where the GRE header starts
+ * @dst         Pointer to buffer in to which to return the extracted header
+ * @return      Length and next protocol header indication.
+ *
+ * @dst must point to a struct gre_hdr or larger.
+ * The next protocol encoded in the return value is one of HE_ETHER or
+ * HE_IP4, HE_IP6, or HE_UNKNOWN.
+ * The length encoded in the return value is the complete GRE header.
+ * Note this function only extracts the mandatory struct gre_hdr. Those
+ * interested in the optional header fields should either use one of the
+ * functions provided or extract it manually.
+ */
+__intrinsic unsigned int he_gre(void *src_buf, int off, void *dst);
+
+/**
+ * Extract a NVGRE extension header starting from an offset in the buffer
+ *
+ * @src_buf     Source buffer
+ * @off         Byte offset within @src_buf where the GRE header starts
+ * @dst         Pointer to buffer in to which to return the extracted header
+ *
+ * @dst must point to a struct nvgre_ext_hdr or larger.
+ */
+__intrinsic void he_gre_nvgre(void *src_buf, int off, void *dst);
+
+#endif /* _HDR_EXT_H_ */

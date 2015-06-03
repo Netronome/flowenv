@@ -16,11 +16,18 @@
  * @file          lib/net/gre.h
  * @brief         Definitions for GRE header parsing
  *
- * Incomplete, new definitions will be added as/when needed
  */
 
 #ifndef _NET_GRE_H_
 #define _NET_GRE_H_
+
+/**
+ * GRE has several forms depending on the RFC (1701, 2784, DRAFT NVGRE
+ * or 2890. Here we focus on DRAFT NVGRE and 2890.
+ * NVGRE has flags C=0, S=0 and K=1. Proto=0x6558 (ethernet bridging)
+ * NVGRE is a particular case of of 2890
+ */
+
 
 /**
  * GRE Flags
@@ -28,6 +35,16 @@
 #define NET_GRE_FLAGS_SEQ_PRESENT      0x1
 #define NET_GRE_FLAGS_KEY_PRESENT      0x2
 #define NET_GRE_FLAGS_CSUM_PRESENT     0x8
+
+/**
+ * Convenience macro to determine if a GRE header is NVGRE
+ * (assumming proto is NET_ETH_TYPE_TEB)
+ */
+#define NET_GRE_IS_NVGRE(flags)                   \
+    ((!(flags & NET_GRE_FLAGS_CSUM_PRESENT) &&          \
+      !(flags & NET_GRE_FLAGS_SEQ_PRESENT) &&           \
+      (flags & NET_GRE_FLAGS_KEY_PRESENT))              \
+     ? 1 : 0)
 
 #if defined(__NFP_LANG_MICROC)
 #include <nfp.h>
@@ -37,10 +54,15 @@
  * GRE header structure
  */
 __packed struct gre_hdr {
-    uint8_t  flags;                     /** Flags */
-    uint8_t  misc;                      /** Misc bits */
+    unsigned int flags:4;               /** Flags */
+    unsigned int reserved0:9;           /** Reserved bits */
+    unsigned int version:3;             /** Version */
     uint16_t proto;                     /** Protocol */
-    /* Potentially followed by 32bit words depending on flags */
+};
+
+__packed struct nvgre_ext_hdr {
+    unsigned int vsid:24;              /** Virtual subnet ID */
+    unsigned int flowID:8;             /** Flow ID */
 };
 #endif /* __NFP_LANG_MICROC */
 

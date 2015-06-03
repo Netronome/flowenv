@@ -167,10 +167,10 @@ he_ip4_fit(sz, off)
 #define HE_IP4_FUNC(dst)                                                \
     *dst = *(__lmem struct ip4_hdr *)(((__lmem char *)src_buf) + off);  \
                                                                         \
-    /* TODO: Detect GRE as well */                                      \
     switch(dst->proto) {                                                \
     case NET_IP_PROTO_TCP: next_proto = HE_TCP; break;                  \
     case NET_IP_PROTO_UDP: next_proto = HE_UDP; break;                  \
+    case NET_IP_PROTO_GRE: next_proto = HE_GRE; break;                  \
     default: next_proto = HE_UNKNOWN;                                   \
     }                                                                   \
                                                                         \
@@ -215,11 +215,11 @@ he_ip6_fit(sz, off)
 
 /* We use this portion of the switch statement in several places for
  * parsing IPv6 and extension header. Define it as a macro to avoid
- * code duplication.
- * TODO: Detect GRE as well */
+ * code duplication.*/
 #define _IP6_PROTO_SWITCH \
     case NET_IP_PROTO_TCP: next_proto = HE_TCP; break;              \
     case NET_IP_PROTO_UDP: next_proto = HE_UDP; break;              \
+    case NET_IP_PROTO_GRE: next_proto = HE_GRE; break;              \
     case NET_IP_PROTO_HOPOPT: next_proto = HE_IP6_HBH; break;       \
     case NET_IP_PROTO_ROUTING: next_proto = HE_IP6_RT; break;       \
     case NET_IP_PROTO_FRAG: next_proto = HE_IP6_FRAG; break;        \
@@ -371,4 +371,81 @@ he_udp(void *src_buf, int off, void *dst)
     next_proto = HE_NONE;
 
     return HE_RES(next_proto, sizeof(struct udp_hdr));
+}
+
+__intrinsic int
+he_gre_fit(sz, off)
+{
+    /* biggest GRE hdr has the optional checksum , key and sequence
+     * number: total of 12B
+     */
+    ctassert(__is_ct_const(sz));
+    ctassert(sz >= sizeof(struct gre_hdr) + 12);
+    return (off + sizeof(struct gre_hdr) + 12) <= sz;
+}
+
+#define HE_GRE_FUNC(dst)                                                \
+    *dst = *(__lmem struct gre_hdr *)(((__lmem char *)src_buf) + off);  \
+                                                                        \
+    flags = dst->flags;                                                 \
+                                                                        \
+    switch(dst->proto) {                                                \
+    case NET_ETH_TYPE_TEB: next_proto = HE_ETHER; break;                \
+    case NET_ETH_TYPE_IPV4: next_proto = HE_IP4; break ;                \
+    case NET_ETH_TYPE_IPV6: next_proto = HE_IP6; break ;                \
+    default: next_proto = HE_UNKNOWN;                                   \
+    }
+
+__intrinsic unsigned int
+he_gre(void *src_buf, int off, void *dst)
+{
+    __gpr unsigned int next_proto;
+    __gpr uint32_t flags;
+    __gpr uint32_t len;
+
+
+    ctassert(__is_in_lmem(src_buf));
+    ctassert(__is_in_reg_or_lmem(dst));
+
+    if (__is_in_lmem(dst)) {
+#define __HE_GRE ((__lmem struct gre_hdr *)dst)
+        HE_GRE_FUNC(__HE_GRE);
+#undef __HE_GRE
+    } else {
+#define __HE_GRE ((__gpr struct gre_hdr *)dst)
+        HE_GRE_FUNC(__HE_GRE);
+#undef __HE_GRE
+    }
+
+    /* Work out the length of the whole GRE header */
+    len = 4;
+    if (flags & NET_GRE_FLAGS_CSUM_PRESENT)
+        len += 4;
+    if (flags & NET_GRE_FLAGS_KEY_PRESENT)
+        len += 4;
+    if (flags & NET_GRE_FLAGS_SEQ_PRESENT)
+        len += 4;
+
+    return HE_RES(next_proto, len);
+}
+
+__intrinsic void
+he_gre_nvgre(void *src_buf, int off, void *dst)
+{
+    __gpr unsigned int next_proto = 0;
+    __gpr uint32_t len = 4;
+
+    ctassert(__is_in_lmem(src_buf));
+    ctassert(__is_in_reg_or_lmem(dst));
+
+    /* move offset to point to the start of the optional fields */
+    off += sizeof(struct gre_hdr);
+
+    if (__is_in_lmem(dst)) {
+        *((__lmem struct nvgre_ext_hdr *)dst) =
+            *(__lmem struct nvgre_ext_hdr *)(((__lmem char *)src_buf) + off);
+    } else {
+        *((__gpr struct nvgre_ext_hdr *)dst) =
+            *(__lmem struct nvgre_ext_hdr *)(((__lmem char *)src_buf) + off);
+    }
 }
