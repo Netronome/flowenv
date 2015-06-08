@@ -26,6 +26,7 @@
 #include "ip.h"
 #include "tcp.h"
 #include "udp.h"
+#include "vxlan.h"
 
 /*
  * Some implementation notes, and notes on possible improvements:
@@ -352,6 +353,13 @@ he_udp_fit(sz, off)
     return (off + sizeof(struct udp_hdr)) <= sz;
 }
 
+#define HE_UDP_FUNC(dst)                                                \
+    *dst = *(__lmem struct udp_hdr *)(((__lmem char *)src_buf) + off);  \
+    switch(dst->dport) {                                                \
+    case NET_VXLAN_PORT: next_proto = HE_VXLAN; break;                  \
+    default: next_proto = HE_NONE;                                      \
+    }
+
 __intrinsic unsigned int
 he_udp(void *src_buf, int off, void *dst)
 {
@@ -360,15 +368,19 @@ he_udp(void *src_buf, int off, void *dst)
     ctassert(__is_in_lmem(src_buf));
     ctassert(__is_in_reg_or_lmem(dst));
 
-    if (__is_in_lmem(dst))
-        *(__lmem struct udp_hdr *)dst =
-            *(__lmem struct udp_hdr *)(((__lmem char *)src_buf) + off);
-    else
-        *(__gpr struct udp_hdr *)dst =
-            *(__lmem struct udp_hdr *)(((__lmem char *)src_buf) + off);
+#ifdef __HE_UDP
+    #error "Attempting to redefine __HE_UDP"
+#endif
 
-    /* TODO: add detection of VXLAN */
-    next_proto = HE_NONE;
+    if (__is_in_lmem(dst)) {
+#define __HE_UDP ((__lmem struct udp_hdr *)dst)
+        HE_UDP_FUNC(__HE_UDP);
+#undef __HE_UDP
+    } else {
+#define __HE_UDP ((__gpr struct udp_hdr *)dst)
+        HE_UDP_FUNC(__HE_UDP);
+#undef __HE_UDP
+    }
 
     return HE_RES(next_proto, sizeof(struct udp_hdr));
 }
@@ -448,4 +460,40 @@ he_gre_nvgre(void *src_buf, int off, void *dst)
         *((__gpr struct nvgre_ext_hdr *)dst) =
             *(__lmem struct nvgre_ext_hdr *)(((__lmem char *)src_buf) + off);
     }
+}
+
+__intrinsic int
+he_vxlan_fit(sz, off)
+{
+    ctassert(__is_ct_const(sz));
+    ctassert(sz >= sizeof(struct vxlan_hdr));
+    return (off + sizeof(struct vxlan_hdr)) <= sz;
+}
+
+#define HE_VXLAN_FUNC(dst)                                                \
+    *dst = *(__lmem struct vxlan_hdr *)(((__lmem char *)src_buf) + off);
+
+__intrinsic unsigned int
+he_vxlan(void *src_buf, int off, void *dst)
+{
+    __gpr unsigned int next_proto;
+    __gpr uint32_t len;
+
+    ctassert(__is_in_lmem(src_buf));
+    ctassert(__is_in_reg_or_lmem(dst));
+
+    if (__is_in_lmem(dst)) {
+#define __HE_VXLAN ((__lmem struct vxlan_hdr *)dst)
+        HE_VXLAN_FUNC(__HE_VXLAN);
+#undef __HE_VXLAN
+    } else {
+#define __HE_VXLAN ((__gpr struct vxlan_hdr *)dst)
+        HE_VXLAN_FUNC(__HE_VXLAN);
+#undef __HE_VXLAN
+    }
+
+    next_proto = HE_ETHER;
+    len = sizeof(struct vxlan_hdr);
+
+    return HE_RES(next_proto, len);
 }

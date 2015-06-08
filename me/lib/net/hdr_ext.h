@@ -133,6 +133,7 @@ enum he_proto {
     HE_TCP,              /**  5: TCP header */
     HE_UDP,              /**  6: UDP header */
     HE_GRE,              /**  7: GRE header */
+    HE_VXLAN,            /**  8: VXLAN header */
 
     HE_IP6_EXT =  0x100, /** IPv6 Extension header */
     HE_IP6_HBH =  0x101, /** IPv6 Hop-by-Hop Options header */
@@ -294,7 +295,8 @@ __intrinsic int he_udp_fit(sz, off);
  *
  * @dst must point to a struct udp_hdr or larger.
  * The length encoded in the return value is: sizeof(struct udp_hdr).
- * The next protocol encoded in the return value is one of HE_NONE, HE_UNKNOWN.
+ * The next protocol encoded in the return value is one of HE_VXLAN or HE_NONE.
+ * (depending on the dst port being the default VXLAN port)
  */
 __intrinsic unsigned int he_udp(void *src_buf, int off, void *dst);
 
@@ -332,5 +334,26 @@ __intrinsic unsigned int he_gre(void *src_buf, int off, void *dst);
  * @dst must point to a struct nvgre_ext_hdr or larger.
  */
 __intrinsic void he_gre_nvgre(void *src_buf, int off, void *dst);
+
+/**
+ * Check if a buffer of size @sz with current offset @off has
+ * enough space to contain a VXLAN header.
+ */
+__intrinsic int he_vxlan_fit(sz, off);
+
+/**
+ * Extract a VXLAN header starting from an offset in the buffer.
+ *
+ * @src_buf     Source buffer
+ * @off         Byte offset within @src_buf where the VXLAN header starts
+ * @dst         Pointer to buffer in to which to return the extracted header
+ * @return      Length and next protocol header indication.
+ *
+ * @dst must point to a struct vxlan_hdr or larger.
+ * The next protocol encoded in the return value is HE_ETHER
+ * The length encoded in the return value is: sizeof(struct vxlan_hdr)
+ */
+__intrinsic unsigned int he_vxlan(void *src_buf, int off, void *dst);
+
 
 #endif /* _HDR_EXT_H_ */
