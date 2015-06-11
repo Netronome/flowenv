@@ -585,10 +585,8 @@ __intrinsic __addr32 void *pkt_ctm_ptr32(unsigned int pnum, unsigned int off);
 
 
 /* packet engine packet wait/read status response structure */
-typedef union pkt_status_t
-{
-    struct
-    {
+typedef union pkt_status_t {
+    struct {
         unsigned int error:1;                    /**< Error. */
         unsigned int last_seg_rcvd:1;            /**< Last segment received. */
         unsigned int first_seg_rcvd:1;           /**< First segment received. */
@@ -718,11 +716,9 @@ __intrinsic size_t pkt_emem_data_size(unsigned int pkt_len,
  *       the packet data becomes 'off' - 4, in order to include the MAC egress
  *       command word as part of the packet data.
  */
-__intrinsic void
-    __pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
-                               int l3_csum_ins, int l4_csum_ins,
-                               __xwrite uint32_t *xcmd, sync_t sync,
-                               SIGNAL *sig);
+__intrinsic void __pkt_mac_egress_cmd_write(
+    __addr40 void *pbuf, unsigned char off, int l3_csum_ins, int l4_csum_ins,
+    __xwrite uint32_t *xcmd, sync_t sync, SIGNAL *sig);
 
 __intrinsic void pkt_mac_egress_cmd_write(__addr40 void *pbuf,
                                           unsigned char off, int l3_csum_ins,

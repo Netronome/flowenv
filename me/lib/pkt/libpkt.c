@@ -29,13 +29,9 @@
 #include <pkt/pkt.h>
 
 
-/**
- * MAC Egress Command format
- */
-
+/* MAC Egress Command format */
 #define MAC_EGR_CMD_L3_CSUM_EN_shf 31
 #define MAC_EGR_CMD_L3_CSUM_EN     (1 << MAC_EGR_CMD_L3_CSUM_EN_shf)
-
 #define MAC_EGR_CMD_L4_CSUM_EN_shf 30
 #define MAC_EGR_CMD_L4_CSUM_EN     (1 << MAC_EGR_CMD_L4_CSUM_EN_shf)
 
@@ -63,8 +59,10 @@ pkt_ctm_ptr40(unsigned char isl, unsigned int pnum, unsigned int off)
 {
     __gpr unsigned int lo;
     __gpr unsigned int hi;
+
     hi = 0x80 | isl;
     lo = 0x80000000u | (pnum << 16) | off;
+
     return (__addr40 void *)
         (((unsigned long long)hi << 32) | (unsigned long long)lo);
 }
@@ -96,15 +94,15 @@ __intrinsic unsigned int
 pkt_csum_read(void *src_buf, int off)
 {
     unsigned int ret;
+
     /* This should probably also work for proper memory, but is not tested */
     ctassert(__is_in_reg_or_lmem(src_buf));
     ctassert(__is_ct_const(off));
 
-    if (__is_in_lmem(src_buf)) {
+    if (__is_in_lmem(src_buf))
         ret = *(__lmem unsigned int *)(((__lmem char *)src_buf) + off);
-    } else {
+    else
         ret = *(__gpr unsigned int *)(((__gpr char *)src_buf) + off);
-    }
 
     return ret;
 }
@@ -122,21 +120,11 @@ __pkt_status_read(unsigned int pnum, __xread pkt_status_t *pkt_status,
     addr = MAX_PKT_NUM_of(pnum);
 
     if (sync == sig_done)
-    {
-        __asm
-        {
-            mem[packet_wait_packet_status, *pkt_status, addr, 0, 1], \
-                sig_done[*sig_ptr]
-        }
-    }
+        __asm mem[packet_wait_packet_status, *pkt_status, addr, 0, 1], \
+            sig_done[*sig_ptr];
     else
-    {
-        __asm
-        {
-            mem[packet_wait_packet_status, *pkt_status, addr, 0, 1], \
-                ctx_swap[*sig_ptr]
-        }
-    }
+        __asm mem[packet_wait_packet_status, *pkt_status, addr, 0, 1], \
+            ctx_swap[*sig_ptr];
 }
 
 __intrinsic void
@@ -168,6 +156,7 @@ pkt_ctm_data_size(unsigned int pkt_len, unsigned int pkt_offset,
     return ret;
 }
 
+
 __intrinsic size_t
 pkt_emem_data_size(unsigned int pkt_len, unsigned int pkt_offset,
                    enum PKT_CTM_SIZE ctm_buf_size)
@@ -188,6 +177,7 @@ pkt_emem_data_size(unsigned int pkt_len, unsigned int pkt_offset,
     return ret;
 }
 
+
 __intrinsic void
 __pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
                            int l3_csum_ins, int l4_csum_ins,
@@ -205,6 +195,7 @@ __pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
 
     return;
 }
+
 
 __intrinsic void
 pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
@@ -239,11 +230,9 @@ __pkt_msd_write(__addr40 void *pbuf, unsigned char off,
         __mem_write64(xms, (__addr40 unsigned char *)pbuf + off - 8, size,
                       size, sync, sig);
     } else {
-        /*
-         * Determine a starting offset for the 8-byte modification script that
+        /* Determine a starting offset for the 8-byte modification script that
          * is closest to the start of packet, that is 8-byte aligned, and that
-         * is still within the 56-byte offset limit
-         */
+         * is still within the 56-byte offset limit */
         unsigned char ms_off = 56;
 
         if (off < 64)
@@ -273,6 +262,7 @@ pkt_msd_write(__addr40 void *pbuf, unsigned char off)
 {
     SIGNAL sig;
     __xwrite uint32_t ms[2];
+
     return __pkt_msd_write(pbuf, off, ms, sizeof(ms), ctx_swap, &sig);
 }
 
@@ -292,15 +282,10 @@ __pkt_nbi_recv(__xread void *meta, size_t msize, sync_t sync, SIGNAL *sig)
     ctassert(msize >= 24);
     ctassert(msize <= 64);
 
-    if (sync == ctx_swap) {
-        __asm {
-            mem[packet_add_thread, *meta, zero, 0, count], ctx_swap[*sig]
-        }
-    } else {
-        __asm {
-            mem[packet_add_thread, *meta, zero, 0, count], sig_done[*sig]
-        }
-    }
+    if (sync == ctx_swap)
+        __asm mem[packet_add_thread, *meta, zero, 0, count], ctx_swap[*sig];
+    else
+        __asm mem[packet_add_thread, *meta, zero, 0, count], sig_done[*sig];
 }
 
 
@@ -308,6 +293,7 @@ __intrinsic void
 pkt_nbi_recv(__xread void *meta, size_t msize)
 {
     SIGNAL add_thread_sig;
+
     __pkt_nbi_recv(meta, msize, ctx_swap, &add_thread_sig);
 }
 
@@ -357,15 +343,13 @@ pkt_nbi_send(unsigned char isl, unsigned int pnum,
             mem[packet_complete_unicast, --, addr_lo, 0], indirect_ref;
         }
     } else {
-        /*
-         * When sending to a non-local island requires using a full 40-bit
+        /* When sending to a non-local island requires using a full 40-bit
          * address.  The top 8 bits of this address must be as follows:
          *   [2;38] -- Must be 0b10 to represent "direct access" locality.
          *   [6;32] -- The island of the CTM holding the packet.
          *
          * We put these 8 bits in the top 8 bits of addr_hi, and then use
-         * the <<8 to put them into place in the 40-bit address.
-         */
+         * the <<8 to put them into place in the 40-bit address. */
         __gpr unsigned int addr_hi = (isl | 0x80) << 24;
         __asm {
             alu[--, --, B, palu.__raw];
@@ -421,15 +405,13 @@ pkt_nbi_send_dont_free(unsigned char isl, unsigned int pnum,
             mem[packet_complete_multicast, --, addr_lo, 0], indirect_ref;
         }
     } else {
-        /*
-         * When sending to a non-local island requires using a full 40-bit
+        /* When sending to a non-local island requires using a full 40-bit
          * address.  The top 8 bits of this address must be as follows:
          *   [2;38] -- Must be 0b10 to represent "direct access" locality.
          *   [6;32] -- The island of the CTM holding the packet.
          *
          * We put these 8 bits in the top 8 bits of addr_hi, and then use
-         * the <<8 to put them into place in the 40-bit address.
-         */
+         * the <<8 to put them into place in the 40-bit address. */
         __gpr unsigned int addr_hi = (isl | 0x80) << 24;
         __asm {
             alu[--, --, B, palu.__raw];
@@ -500,7 +482,7 @@ pkt_ctm_free(unsigned char isl, unsigned int pnum)
     if (isl != 0)
         addr_hi = (0x80 | isl) << 24;
 
-    __asm mem[packet_free, --, addr_hi, <<8, pnum]
+    __asm mem[packet_free, --, addr_hi, <<8, pnum];
 }
 
 __intrinsic unsigned int
@@ -532,27 +514,25 @@ pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
     }
 
     /* An all 1s response indicates failure to allocate */
-    if (pe_res.__raw == 0xffffffff)
+    if (pe_res.__raw == 0xffffffff) {
         pnum = 0xffffffff;
-    else {
+    } else {
         pnum = pe_res.pnum;
         if((pe_res.pkt_credit > 0) || (pe_res.buf_credit > 0)) {
             /* credits where returned add them back to the buckets */
             credits_update.pkts = pe_res.pkt_credit;
             credits_update.bufs = pe_res.buf_credit;
-            __asm {
-                cls[test_add, credits_update, credits, 0, 2],\
-                    ctx_swap[sig_cls];
-            }
+            __asm cls[test_add, credits_update, credits, 0, 2], \
+                ctx_swap[sig_cls];
         }
     }
+
     return pnum;
 }
 
 __intrinsic void
 pkt_ctm_init_credits(__cls struct ctm_pkt_credits *credits,
-                     unsigned int pkt_credits,
-                     unsigned int buf_credits)
+                     unsigned int pkt_credits, unsigned int buf_credits)
 {
     credits->pkts = pkt_credits;
     credits->bufs = buf_credits;
@@ -567,18 +547,15 @@ pkt_ctm_poll_pe_credit(__cls struct ctm_pkt_credits *credits)
     SIGNAL sig_cls;
     __gpr unsigned int master = 0;
 
-    __asm {
-        /* poll for returned credits */
-        mem[packet_credit_get, pe_res, 0, <<8, master, 1], ctx_swap[sig_pe];
-    }
+    /* poll for returned credits */
+    __asm mem[packet_credit_get, pe_res, 0, <<8, master, 1], ctx_swap[sig_pe];
 
     /* If needed, update the credits management structure */
     if((pe_res.pkt_credit > 0) || (pe_res.buf_credit > 0)) {
         credits_update.pkts = pe_res.pkt_credit;
         credits_update.bufs = pe_res.buf_credit;
-        __asm {
-            cls[test_add, credits_update, credits, 0, 2], ctx_swap[sig_cls];
-        }
+
+        __asm cls[test_add, credits_update, credits, 0, 2], ctx_swap[sig_cls];
     }
 }
 
@@ -591,42 +568,32 @@ pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
 
     credits_update.pkts = pkt_credits;
     credits_update.bufs = buf_credits;
-    __asm {
-        cls[test_subsat, credits_update, credits, 0, 2], ctx_swap[sig_cls];
-    }
+    __asm cls[test_subsat, credits_update, credits, 0, 2], ctx_swap[sig_cls];
 
     /* Check the returned number of credits (the value before the sub) */
     while ((credits_update.pkts < pkt_credits) ||
            (credits_update.bufs < buf_credits)) {
-        /* Either the packet or the buffer credits have run out */
-        /* return the credit(s) acquired, and wait for both     */
-        if (credits_update.pkts >= pkt_credits) {
+        /* Either the packet or the buffer credits have run out
+         * return the credit(s) acquired, and wait for both */
+        if (credits_update.pkts >= pkt_credits)
             /* Add back what we asked for */
             credits_update.pkts = pkt_credits;
-        } else {
+        else
             /* Since the value in the management struct saturated
-               to 0 we should add back the value before the sub */
-            /* wr               = rd */
+             * to 0 we should add back the value before the sub */
             credits_update.pkts = credits_update.pkts;
-        }
 
-        if (credits_update.bufs >= buf_credits) {
+        if (credits_update.bufs >= buf_credits)
             credits_update.bufs = buf_credits;
-        } else {
-            /* wr               = rd */
+        else
             credits_update.bufs = credits_update.bufs;
-        }
 
-        __asm {
-            cls[add, credits_update, credits, 0, 2], ctx_swap[sig_cls];
-        }
+        __asm cls[add, credits_update, credits, 0, 2], ctx_swap[sig_cls];
 
         /* Try again */
         credits_update.pkts = pkt_credits;
         credits_update.bufs = buf_credits;
-        __asm {
-            cls[test_subsat, credits_update, credits, 0, 2],\
-                ctx_swap[sig_cls];
-        }
+        __asm cls[test_subsat, credits_update, credits, 0, 2],  \
+            ctx_swap[sig_cls];
     }
 }
