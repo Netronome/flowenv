@@ -28,17 +28,15 @@ struct _pcie_dma_cfg_word_access {
     };
 };
 
-
 __intrinsic void
-__pcie_c2p_barcfg(unsigned int pcie_isl, unsigned char bar_idx,
-                  unsigned int addr_hi, unsigned int addr_lo,
-                  unsigned char req_id, sync_t sync, SIGNAL *sig)
+pcie_c2p_barcfg_set(unsigned int pcie_isl, unsigned char bar_idx,
+                    unsigned int addr_hi, unsigned int addr_lo,
+                    unsigned char req_id)
 {
-    unsigned int isl, bar_addr, tmp;
-    __xwrite unsigned int bar_val;
-
-    ctassert(__is_ct_const(sync));
-    ctassert(sync == sig_done || sync == ctx_swap);
+    unsigned int isl, bar_addr, tmp = 0;
+    __xwrite unsigned int wr_val;
+    __xread unsigned int rd_val;
+    SIGNAL wr_sig, rd_sig;
 
     isl = pcie_isl << 30;
     bar_addr = NFP_PCIE_BARCFG_C2P(bar_idx);
@@ -52,23 +50,14 @@ __pcie_c2p_barcfg(unsigned int pcie_isl, unsigned char bar_idx,
         tmp |= NFP_PCIE_BARCFG_C2P_ARI(req_id);
     }
 
-    bar_val = tmp;
+    wr_val = tmp;
 
-    if (sync == sig_done)
-        __asm pcie[write_pci, bar_val, isl, <<8, bar_addr, 1], sig_done[*sig];
-    else
-        __asm pcie[write_pci, bar_val, isl, <<8, bar_addr, 1], ctx_swap[*sig];
-}
-
-
-__intrinsic void
-pcie_c2p_barcfg(unsigned int pcie_isl, unsigned char bar_idx,
-                unsigned int addr_hi, unsigned int addr_lo,
-                unsigned char req_id)
-{
-    SIGNAL sig;
-    __pcie_c2p_barcfg(pcie_isl, bar_idx, addr_hi, addr_lo, req_id,
-                      ctx_swap, &sig);
+    __asm {
+        pcie[write_pci, wr_val, isl, <<8, bar_addr, 1], sig_done[wr_sig]; 
+        pcie[read_pci, rd_val, isl, <<8, bar_addr, 1], sig_done[rd_sig];
+    }
+    wait_for_all(&wr_sig, &rd_sig);
+    
 }
 
 

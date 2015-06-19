@@ -15,28 +15,27 @@
  */
 
 /**
- * Configure a CPP2PCIe BAR
+ * Set a CPP2PCIe BAR
  * @param pcie_isl  PCIe Island to access
  * @param bar_idx   CPP2PCIe BAR to configure
- * @param addr_hi   high 32bit of target address
- * @param addr_lo   low 32 bit of the target address
- * @param req_id    requester ID to use
+ * @param addr_hi   High 32bit of host DMA address
+ * @param addr_lo   Low 32 bit of host DMA address
+ * @param req_id    Requester ID to use
+ *
+ * This functions programs the CPP2PCIe BAR corresponding to @bar_idx
+ * based on the host address composed of @addr_hi and @addr_lo. It
+ * also performs a read-back of the CSR in order to ensure that the
+ * write completed.
  *
  * Only the top 5 bits of addr_lo are used for the bar base.
  *
  * If @req_id is constant and 0, don't configure the Requester ID and
  * use the device default instead.
  */
-__intrinsic void __pcie_c2p_barcfg(unsigned int pcie_isl,
-                                   unsigned char bar_idx,
-                                   unsigned int addr_hi,
-                                   unsigned int addr_lo,
-                                   unsigned char req_id, sync_t sync,
-                                   SIGNAL *sig);
-
-__intrinsic void pcie_c2p_barcfg(unsigned int pcie_isl, unsigned char bar_idx,
-                                 unsigned int addr_hi, unsigned int addr_lo,
-                                 unsigned char req_id);
+__intrinsic void pcie_c2p_barcfg_set(unsigned int pcie_isl,
+                                     unsigned char bar_idx,
+                                     unsigned int addr_hi, unsigned int addr_lo,
+                                     unsigned char req_id);
 
 /**
  * Read data from the host through a CPP2PCIe BAR
