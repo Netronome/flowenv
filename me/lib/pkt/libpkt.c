@@ -35,6 +35,12 @@
 #define MAC_EGR_CMD_L4_CSUM_EN_shf 30
 #define MAC_EGR_CMD_L4_CSUM_EN     (1 << MAC_EGR_CMD_L4_CSUM_EN_shf)
 
+/* B0 and later allow the modification script at an offset up to 128B */
+#if (__CHIP_REV < __REVISION_B0)
+#define MS_MAX_OFF  64
+#else
+#define MS_MAX_OFF  128
+#endif
 
 /*
  * This operation is supplied as a function and not a macro because
@@ -216,10 +222,10 @@ __pkt_msd_write(__addr40 void *pbuf, unsigned char off,
     __gpr struct pkt_ms_info msi;
 
     /* Check for an illegal packet offset for direct modification script */
-    __RT_ASSERT((off >= 16) && (off <= 80));
+    __RT_ASSERT((off >= 16) && (off <= (MS_MAX_OFF + 16)));
 
     /* Check if a no-op modification script is possible */
-    if (off <= 64 && off % 8 == 0) {
+    if (off <= MS_MAX_OFF && off % 8 == 0) {
         /* Write a no-op modification script right before the packet start */
         msi.off_enc = (off >> 3) - 2;
 
@@ -232,10 +238,10 @@ __pkt_msd_write(__addr40 void *pbuf, unsigned char off,
     } else {
         /* Determine a starting offset for the 8-byte modification script that
          * is closest to the start of packet, that is 8-byte aligned, and that
-         * is still within the 56-byte offset limit */
-        unsigned char ms_off = 56;
+         * is still within the 120-byte (56-byte for A0) offset limit */
+        unsigned char ms_off = MS_MAX_OFF - 8;
 
-        if (off < 64)
+        if (off < MS_MAX_OFF)
             ms_off = (off & ~0x7) - 8;
 
         /* write a delete modification script to remove any excess bytes */
