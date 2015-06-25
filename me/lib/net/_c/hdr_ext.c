@@ -384,15 +384,15 @@ he_udp_fit(sz, off)
     return (off + sizeof(struct udp_hdr)) <= sz;
 }
 
-#define HE_UDP_FUNC(dst)                                                \
+#define HE_UDP_FUNC(dst, prt)                                           \
     *dst = *(__lmem struct udp_hdr *)(((__lmem char *)src_buf) + off);  \
-    switch(dst->dport) {                                                \
-    case NET_VXLAN_PORT: next_proto = HE_VXLAN; break;                  \
-    default: next_proto = HE_NONE;                                      \
-    }
+    if (prt && dst->dport == prt)                                       \
+        next_proto = HE_VXLAN;                                          \
+    else                                                                \
+        next_proto = HE_NONE;
 
 __intrinsic unsigned int
-he_udp(void *src_buf, int off, void *dst)
+he_udp(void *src_buf, int off, void *dst, unsigned int vxln_prt)
 {
     __gpr unsigned int next_proto;
 
@@ -405,11 +405,11 @@ he_udp(void *src_buf, int off, void *dst)
 
     if (__is_in_lmem(dst)) {
 #define __HE_UDP ((__lmem struct udp_hdr *)dst)
-        HE_UDP_FUNC(__HE_UDP);
+        HE_UDP_FUNC(__HE_UDP, vxln_prt);
 #undef __HE_UDP
     } else {
 #define __HE_UDP ((__gpr struct udp_hdr *)dst)
-        HE_UDP_FUNC(__HE_UDP);
+        HE_UDP_FUNC(__HE_UDP, vxln_prt);
 #undef __HE_UDP
     }
 

@@ -315,14 +315,19 @@ __intrinsic int he_udp_fit(sz, off);
  * @src_buf     Source buffer
  * @off         Byte offset within @src_buf where the UDP header starts
  * @dst         Pointer to buffer in to which to return the extracted header
+ * @vxln_prt    UDP port that VXLAN uses, 0 for no VXLAN checking
  * @return      Length and next protocol header indication.
  *
  * @dst must point to a struct udp_hdr or larger.
  * The length encoded in the return value is: sizeof(struct udp_hdr).
  * The next protocol encoded in the return value is one of HE_VXLAN or HE_NONE.
- * (depending on the dst port being the default VXLAN port)
+ * (depending on the dst port being passed in the VXLAN port)
+ *
+ * Note: the VXLAN RFC defines UDP dst port 4789 while Linux uses 8472 by
+ * default. This library call is configurable to accommodate any port.
  */
-__intrinsic unsigned int he_udp(void *src_buf, int off, void *dst);
+__intrinsic unsigned int he_udp(void *src_buf, int off,
+                                void *dst, unsigned int vxln_prt);
 
 /**
  * Check if a buffer of size @sz with current offset @off has
