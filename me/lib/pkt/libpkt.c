@@ -36,7 +36,7 @@
 #define MAC_EGR_CMD_L4_CSUM_EN     (1 << MAC_EGR_CMD_L4_CSUM_EN_shf)
 
 /* B0 and later allow the modification script at an offset up to 128B */
-#if (__CHIP_REV < __REVISION_B0)
+#if (__REVISION_MIN < __REVISION_B0)
 #define MS_MAX_OFF  64
 #else
 #define MS_MAX_OFF  128
