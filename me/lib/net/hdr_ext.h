@@ -128,12 +128,13 @@ enum he_proto {
     HE_NONE    = 0,      /**  0: No more headers, just data */
     HE_ETHER,            /**  1: Ethernet header */
     HE_8021Q,            /**  2: 802.1Q (VLAN) header */
-    HE_IP4,              /**  3: IPv4 header */
-    HE_IP6,              /**  4: IPv6 header */
-    HE_TCP,              /**  5: TCP header */
-    HE_UDP,              /**  6: UDP header */
-    HE_GRE,              /**  7: GRE header */
-    HE_VXLAN,            /**  8: VXLAN header */
+    HE_ARP,              /**  3: ARP header */
+    HE_IP4,              /**  4: IPv4 header */
+    HE_IP6,              /**  5: IPv6 header */
+    HE_TCP,              /**  6: TCP header */
+    HE_UDP,              /**  7: UDP header */
+    HE_GRE,              /**  8: GRE header */
+    HE_VXLAN,            /**  9: VXLAN header */
 
     HE_IP6_EXT =  0x100, /** IPv6 Extension header */
     HE_IP6_HBH =  0x101, /** IPv6 Hop-by-Hop Options header */
@@ -187,6 +188,28 @@ __intrinsic int he_vlan_fit(sz, off);
  * HE_IP6, or HE_UNKNOWN.
  */
 __intrinsic unsigned int he_vlan(void *src_buf, int off, void *dst);
+
+/**
+ * Check if a buffer of size @sz with current offset @off has
+ * enough space to contain an ARP header.
+ */
+__intrinsic int he_arp_fit(sz, off);
+
+/**
+ * Extract a ARP header starting from an offset in the buffer.
+ *
+ * @src_buf     Source buffer
+ * @off         Byte offset within @src_buf where the ARP header starts
+ * @dst         Pointer to buffer in to which to return the extracted header
+ * @return      Length and next protocol header indication.
+ *
+ * @dst must point to a struct arp_hdr or larger.
+ * The next protocol encoded in the return value is HE_NONE
+ * The length encoded in the return value is sizeof(struct arp_hdr).
+ */
+__intrinsic unsigned int he_arp(void *src_buf, int off, void *dst);
+
+
 
 /**
  * Check if the a buffer of size @sz with current offset @off has

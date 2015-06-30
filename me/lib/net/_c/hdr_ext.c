@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <nfp.h>
 
-
+#include "arp.h"
 #include "eth.h"
 #include "hdr_ext.h"
 #include "ip.h"
@@ -89,6 +89,7 @@ he_eth_fit(sz, off)
     case NET_ETH_TYPE_IPV4: next_proto = HE_IP4; break;                 \
     case NET_ETH_TYPE_TPID: next_proto = HE_8021Q; break;               \
     case NET_ETH_TYPE_IPV6: next_proto = HE_IP6; break;                 \
+    case NET_ETH_TYPE_ARP: next_proto = HE_ARP; break;                  \
     default: next_proto = HE_UNKNOWN;                                   \
     }
 
@@ -155,6 +156,34 @@ he_vlan(void *src_buf, int off, void *dst)
     }
 
     return HE_RES(next_proto, sizeof(struct vlan_hdr));
+}
+
+__intrinsic int
+he_arp_fit(sz, off)
+{
+    ctassert(__is_ct_const(sz));
+    ctassert(sz >= sizeof(struct arp_hdr));
+    return (off + sizeof(struct arp_hdr)) <= sz;
+}
+
+__intrinsic unsigned int
+he_arp(void *src_buf, int off, void *dst)
+{
+    __gpr unsigned int next_proto;
+    __gpr int ret;
+
+    ctassert(__is_in_lmem(src_buf));
+    ctassert(__is_in_reg_or_lmem(dst));
+
+    if (__is_in_lmem(dst)) {
+        *((__lmem struct arp_hdr *)dst) =
+            *(__lmem struct arp_hdr *)(((__lmem char *)src_buf) + off);
+    } else {
+        *((__gpr struct arp_hdr *)dst) =
+            *(__lmem struct arp_hdr *)(((__lmem char *)src_buf) + off);
+    }
+
+    return HE_RES(HE_NONE, sizeof(struct arp_hdr));
 }
 
 __intrinsic int
