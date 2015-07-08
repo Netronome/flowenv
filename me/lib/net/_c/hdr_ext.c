@@ -201,6 +201,7 @@ he_ip4_fit(sz, off)
     case NET_IP_PROTO_TCP: next_proto = HE_TCP; break;                  \
     case NET_IP_PROTO_UDP: next_proto = HE_UDP; break;                  \
     case NET_IP_PROTO_GRE: next_proto = HE_GRE; break;                  \
+    case NET_IP_PROTO_ESP: next_proto = HE_ESP; break;                  \
     default: next_proto = HE_UNKNOWN;                                   \
     }                                                                   \
                                                                         \
@@ -250,6 +251,7 @@ he_ip6_fit(sz, off)
     case NET_IP_PROTO_TCP: next_proto = HE_TCP; break;              \
     case NET_IP_PROTO_UDP: next_proto = HE_UDP; break;              \
     case NET_IP_PROTO_GRE: next_proto = HE_GRE; break;              \
+    case NET_IP_PROTO_ESP: next_proto = HE_ESP; break;              \
     case NET_IP_PROTO_HOPOPT: next_proto = HE_IP6_HBH; break;       \
     case NET_IP_PROTO_ROUTING: next_proto = HE_IP6_RT; break;       \
     case NET_IP_PROTO_FRAG: next_proto = HE_IP6_FRAG; break;        \

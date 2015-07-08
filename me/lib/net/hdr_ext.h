@@ -135,6 +135,7 @@ enum he_proto {
     HE_UDP,              /**  7: UDP header */
     HE_GRE,              /**  8: GRE header */
     HE_VXLAN,            /**  9: VXLAN header */
+    HE_ESP,              /** 10: ESP header */
 
     HE_IP6_EXT =  0x100, /** IPv6 Extension header */
     HE_IP6_HBH =  0x101, /** IPv6 Hop-by-Hop Options header */
@@ -228,7 +229,7 @@ __intrinsic int he_ip4_fit(sz, off);
  * @dst must point to a struct ip4_hdr or larger.
  * The length encoded in the return value is: sizeof(struct ip4_hdr) + options.
  * The next protocol encoded in the return value is one of HE_TCP,
- * HE_UDP, or HE_UNKNOWN.
+ * HE_UDP, HE_GRE, HE_ESP or HE_UNKNOWN.
  *
  * If the IP packet is fragmented and is from the middle of a packet,
  * ie the MF bit is set, this function returns HE_UNKNOWN as the IP
@@ -253,8 +254,8 @@ __intrinsic int he_ip6_fit(sz, off);
  * @dst must point to a struct ip6_hdr or larger.
  * The length encoded in the return value is: sizeof(struct ip6_hdr).
  * The next protocol encoded in the return value is one of HE_TCP,
- * HE_UDP, HE_IP6_HBH, HE_IP6_RT, HE_IP6_FRAG, HE_IP6_NONE,
- * HE_IP6_DST, or HE_UNKNOWN.
+ * HE_UDP, HE_GRE, HE_ESP, HE_IP6_HBH, HE_IP6_RT, HE_IP6_FRAG,
+ * HE_IP6_NONE, HE_IP6_DST, or HE_UNKNOWN.
  */
 __intrinsic unsigned int he_ip6(void *src_buf, int off, void *dst);
 

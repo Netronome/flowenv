@@ -48,6 +48,7 @@
 #define NET_IP_PROTO_ROUTING    0x2b    /** Routing Header for IPv6 */
 #define NET_IP_PROTO_FRAG       0x2c    /** Fragment Header for IPv6 */
 #define NET_IP_PROTO_GRE        0x2f    /** Generic Routing Encapsulation */
+#define NET_IP_PROTO_ESP        0x32    /** Encapsulating Security Payload */
 #define NET_IP_PROTO_ICMPV6     0x3a    /** ICMP for IPv6 */
 #define NET_IP_PROTO_NONE       0x3b    /** No Next Header for IPv6 */
 #define NET_IP_PROTO_DSTOPTS    0x3c    /** Destination Options for IPv6 */
