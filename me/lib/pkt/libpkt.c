@@ -126,10 +126,10 @@ __pkt_status_read(unsigned int pnum, __xread pkt_status_t *pkt_status,
     addr = MAX_PKT_NUM_of(pnum);
 
     if (sync == sig_done)
-        __asm mem[packet_wait_packet_status, *pkt_status, addr, 0, 1], \
+        __asm mem[packet_read_packet_status, *pkt_status, addr, 0, 1], \
             sig_done[*sig_ptr];
     else
-        __asm mem[packet_wait_packet_status, *pkt_status, addr, 0, 1], \
+        __asm mem[packet_read_packet_status, *pkt_status, addr, 0, 1], \
             ctx_swap[*sig_ptr];
 }
 
