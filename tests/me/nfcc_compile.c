@@ -44,6 +44,7 @@
 #include <nfp/cls.h>
 #include <nfp/me.h>
 #include <nfp/mem_bulk.h>
+#include <nfp/mem_pe.h>
 #include <nfp/mem_ring.h>
 #include <nfp/pcie.h>
 #include <nfp/xpb.h>
