@@ -225,7 +225,7 @@ __pkt_msd_write(__addr40 void *pbuf, unsigned char off,
     __RT_ASSERT((off >= 16) && (off <= (MS_MAX_OFF + 16)));
 
     /* Check if a no-op modification script is possible */
-    if (off <= MS_MAX_OFF && off % 8 == 0) {
+    if (off <= MS_MAX_OFF && (off & 7) == 0) {
         /* Write a no-op modification script right before the packet start */
         msi.off_enc = (off >> 3) - 2;
 
