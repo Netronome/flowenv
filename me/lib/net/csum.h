@@ -38,6 +38,65 @@
  */
 
 /**
+ * Adds, with carry, two 1s compliment sums
+ *
+ * @param sum1  The first sum
+ * @param sum2  The second sum
+ *
+ * @return The sum of both values + the carry
+ */
+__intrinsic uint32_t ones_sum_add(uint32_t sum1, uint32_t sum2);
+
+/**
+ * Fold a 32-bit checksum into a 16 bit value
+ *
+ * @param sum  The 32 bits sum to fold
+ *
+ * @return The 16 bits sum after folding
+ */
+__intrinsic uint16_t ones_sum_fold16(uint32_t sum);
+
+/**
+ * Computes the TCP/UDP pseudo header checksum
+ *
+ * @param ip_type   NET_ETH_TYPE_IPV4 or NET_ETH_TYPE_IPV6
+ * @param protocol  NET_IP_PROTO_TCP or NET_IP_PROTO_UDP
+ * @param ip        Pointer to the IP header
+ * @param l4_hdr    Pointer to the L4 header
+ * @param l4_len    The length of the L4 payload
+ *
+ * @return A 32 bits sum of the pseudo header
+ *
+ * @ip and @l4_hdr must be located in LMEM or GPRs.
+ *
+ */
+__intrinsic uint32_t ones_sum_pseudo(uint32_t ip_type, uint32_t protocol,
+                                     void *ip, void *l4_hdr, uint32_t l4_len);
+
+/**
+ * Computes checksum over a word array
+ *
+ * @param buf   The buffer
+ * @param len   The length (in bytes) of the array, must be <= 64. Does not
+ *              have to be a mult of 4. If not, then the 4 - (len % 4)
+ *              least significant bytes of the last word are omitted
+ *              from the sum.
+ *
+ * @return A 32 bits sum of the entire array
+ */
+__intrinsic uint32_t ones_sum_warr(__xread uint32_t *buf, uint32_t len);
+
+/**
+ * Computes checksum over a memory region
+ *
+ * @param buf   The buffer of 32 bits words
+ * @param len   The length (in bytes) of the memory region, can be arbitrary
+ *
+ * @return A 32 bits sum of the entire array
+ */
+__intrinsic uint32_t ones_sum_mem(__addr40 void *mem, int32_t len);
+
+/**
  * Recalculate the checksum based on a single 16 bit value change
  *
  * @param orig_csum Original header checksum

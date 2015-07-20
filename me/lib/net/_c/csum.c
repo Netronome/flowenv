@@ -29,37 +29,158 @@
 #define UINT32_REG(_a) ((__is_in_lmem(_a)) ? ((__lmem uint32_t *)_a)        \
                                            : ((__gpr  uint32_t *)_a))
 
-#define SUM32(_x) (((_x) >> 16) + (uint16_t)(_x))
+__intrinsic uint32_t
+ones_sum_add(uint32_t sum1, uint32_t sum2)
+{
+    __gpr uint32_t ret;
+    __asm alu[ret , sum1, +, sum2];
+    __asm alu[ret, ret, +carry, 0];
+    return ret;
+}
 
-#define SUM_64BYTES_T(_sum, _buf, _len)                                     \
-    do {                                                                    \
-        __gpr uint32_t i;                                                   \
-        __gpr uint32_t t_val;                                               \
-        __gpr uint32_t val;                                                 \
-        __gpr uint32_t rem;                                                 \
-        t_val = ((__ctx() << 5) | __xfer_reg_number(_buf)) << 2;            \
-        __asm { local_csr_wr[t_index, t_val] }                              \
-        __asm { nop }                                                       \
-        __asm { nop }                                                       \
-        __asm { nop }                                                       \
-        for (i = 0; i < _len/sizeof(uint32_t); i++) {                       \
-            __asm { alu[val, --, B, *$index++] }                            \
-            _sum += SUM32(val);                                             \
-        }                                                                   \
-        rem = _len & 3;                                                     \
-        if (rem > 0) {                                                      \
-            __asm { alu[val, --, B, *$index] }                              \
-            if (rem == 1) {                                                 \
-                val = val & 0xFF000000;                                     \
-            } else if (rem == 2) {                                          \
-                val = val & 0xFFFF0000;                                     \
-            } else if (rem == 3) {                                          \
-                val = val & 0xFFFFFF00;                                     \
-            }                                                               \
-            _sum += SUM32(val);                                             \
-        }                                                                   \
-    } while (0)
+__intrinsic uint16_t
+ones_sum_fold16(uint32_t sum)
+{
+    uint32_t ret;
+    ret = (sum >> 16) + (uint16_t)(sum);
+    ret = (ret >> 16) + (uint16_t)(ret);
+    return ret;
+}
 
+/* computes the pseudo header checksum */
+__intrinsic uint32_t
+ones_sum_pseudo(uint32_t ip_type, uint32_t protocol, void *ip, void *l4_hdr,
+                uint32_t l4_len)
+{
+    __gpr uint32_t sum = 0;
+    __gpr uint32_t tmp;
+
+    ctassert(__is_in_reg_or_lmem(ip));
+    ctassert(__is_in_reg_or_lmem(l4_hdr));
+
+    /* Shared part of pseudo header for UDP and TCP */
+    sum = ones_sum_add(sum, UINT32_REG(ip)[3]);
+    sum = ones_sum_add(sum, UINT32_REG(ip)[4]);
+
+    if (ip_type == NET_ETH_TYPE_IPV6) {
+        sum = ones_sum_add(sum, UINT32_REG(ip)[2]);
+        sum = ones_sum_add(sum, UINT32_REG(ip)[5]);
+        sum = ones_sum_add(sum, UINT32_REG(ip)[6]);
+        sum = ones_sum_add(sum, UINT32_REG(ip)[7]);
+        sum = ones_sum_add(sum, UINT32_REG(ip)[8]);
+        sum = ones_sum_add(sum, UINT32_REG(ip)[9]);
+    }
+
+    sum = ones_sum_add(sum, UINT32_REG(l4_hdr)[0]);
+    sum = ones_sum_add(sum, UINT32_REG(l4_hdr)[1]);
+
+    if (ip_type == NET_ETH_TYPE_IPV6) {
+        sum = ones_sum_add(sum, protocol);
+    } else {
+        tmp = protocol << 16;
+    }
+
+    if (protocol == NET_IP_PROTO_TCP) {
+        sum = ones_sum_add(sum, UINT32_REG(l4_hdr)[2]);
+        sum = ones_sum_add(sum, UINT32_REG(l4_hdr)[3]);
+        sum = ones_sum_add(sum, UINT32_REG(l4_hdr)[4]);
+    }
+
+    if (ip_type == NET_ETH_TYPE_IPV6) {
+        sum = ones_sum_add(sum, l4_len);
+    } else {
+        tmp |= l4_len;
+        sum = ones_sum_add(sum, tmp);
+    }
+
+    return sum;
+}
+
+/* computes checksum over a word array: len must be <= 64 */
+__intrinsic uint32_t
+ones_sum_warr(__xread uint32_t *buf, uint32_t len)
+{
+    __gpr uint32_t sum = 0;
+    __gpr uint32_t t_val;
+    __gpr uint32_t val;
+    __gpr uint32_t rem;
+    __gpr uint32_t nwords;
+    __gpr uint32_t nskip;
+    t_val = ((__ctx() << 5) | __xfer_reg_number(buf)) << 2;
+    __asm __attribute(ASM_HAS_JUMP)
+    {
+        local_csr_wr[t_index, t_val]
+        alu[nwords, --, B, len, >>2]
+        alu[nskip, 16, -, nwords]
+        jump[nskip, sum16w], targets[sum16w, sum15w, sum14w, sum13w,\
+                                     sum12w, sum11w, sum10w, sum09w,\
+                                     sum08w, sum07w, sum06w, sum05w,\
+                                     sum04w, sum03w, sum02w, sum01w,\
+                                     sum00w] , defer[1]
+            alu[--, --, B, 0]
+
+        sum16w:  alu[sum, sum, +, *$index++]
+        sum15w:  alu[sum, sum, +carry, *$index++]
+        sum14w:  alu[sum, sum, +carry, *$index++]
+        sum13w:  alu[sum, sum, +carry, *$index++]
+        sum12w:  alu[sum, sum, +carry, *$index++]
+        sum11w:  alu[sum, sum, +carry, *$index++]
+        sum10w:  alu[sum, sum, +carry, *$index++]
+        sum09w:  alu[sum, sum, +carry, *$index++]
+        sum08w:  alu[sum, sum, +carry, *$index++]
+        sum07w:  alu[sum, sum, +carry, *$index++]
+        sum06w:  alu[sum, sum, +carry, *$index++]
+        sum05w:  alu[sum, sum, +carry, *$index++]
+        sum04w:  alu[sum, sum, +carry, *$index++]
+        sum03w:  alu[sum, sum, +carry, *$index++]
+        sum02w:  alu[sum, sum, +carry, *$index++]
+        sum01w:  alu[sum, sum, +carry, *$index++]
+        sum00w:  alu[sum, sum, +carry, 0]
+    }
+    rem = len & 3;
+    if (rem > 0) {
+        __asm alu[val, --, B, *$index]
+        if (rem == 1) {
+            val = val & 0xFF000000;
+        } else if (rem == 2) {
+            val = val & 0xFFFF0000;
+        } else if (rem == 3) {
+            val = val & 0xFFFFFF00;
+        }
+        sum = ones_sum_add(sum, val);
+    }
+    return sum;
+}
+
+/* computes the checksum over a memory region */
+/* len can be arbitrary */
+__intrinsic uint32_t
+ones_sum_mem(__addr40 void *mem, int32_t len)
+{
+    __xread uint32_t pkt_cache[16];
+    __gpr int curr_len;
+    __addr40 void* pkt_ptr;
+    SIGNAL read_sig;
+    __gpr uint32_t sum = 0;
+
+    if (len > 0) {
+        pkt_ptr = mem;
+        while (len > 0) {
+            if (len > sizeof(pkt_cache))
+                curr_len = sizeof(pkt_cache);
+            else
+                curr_len = len;
+            /* The read size must be a mult of 8 bytes */
+            __mem_read64(pkt_cache, pkt_ptr, ((curr_len + 7) & 0x78),
+                         sizeof(pkt_cache), ctx_swap, &read_sig);
+            sum = ones_sum_add(sum, ones_sum_warr(pkt_cache, curr_len));
+            __implicit_read(pkt_cache);
+            ((__addr40 uint8_t*)pkt_ptr) += curr_len;
+            len -= curr_len;
+        }
+    }
+    return sum;
+}
 
 __intrinsic uint16_t
 net_csum_mod(uint32_t orig_csum, uint32_t orig_val, uint32_t new_val)
@@ -67,10 +188,8 @@ net_csum_mod(uint32_t orig_csum, uint32_t orig_val, uint32_t new_val)
     __gpr uint32_t new_csum;
 
     new_csum = (~orig_csum & 0xFFFF) + (~orig_val & 0xFFFF) + new_val;
-    new_csum = SUM32(new_csum);
-    new_csum = SUM32(new_csum);
 
-    return (~new_csum) & 0xFFFF;
+    return ~ones_sum_fold16(new_csum);
 }
 
 __intrinsic uint16_t
@@ -85,11 +204,11 @@ net_csum_ipv4(void *ip, __addr40 void *pkt_ptr)
     ctassert(__is_in_reg_or_lmem(ip));
 
     /* Sum up the standard IP header */
-    sum += SUM32(UINT32_REG(ip)[0]);
-    sum += SUM32(UINT32_REG(ip)[1]);
-    sum += SUM32(UINT32_REG(ip)[2]);
-    sum += SUM32(UINT32_REG(ip)[3]);
-    sum += SUM32(UINT32_REG(ip)[4]);
+    sum = ones_sum_add(sum, UINT32_REG(ip)[0]);
+    sum = ones_sum_add(sum, UINT32_REG(ip)[1]);
+    sum = ones_sum_add(sum, UINT32_REG(ip)[2]);
+    sum = ones_sum_add(sum, UINT32_REG(ip)[3]);
+    sum = ones_sum_add(sum, UINT32_REG(ip)[4]);
 
     /* Handle IP Options if exist */
     if (__is_in_lmem(ip)) {
@@ -104,14 +223,10 @@ net_csum_ipv4(void *ip, __addr40 void *pkt_ptr)
         /* The read size must be a mult of 8 bytes */
         __mem_read64(ip_opts, pkt_ptr, ((opt_size + 7) & 0x78),
                      sizeof(ip_opts), ctx_swap, &read_sig);
-        SUM_64BYTES_T(sum, ip_opts, opt_size);
+        sum = ones_sum_add(sum, ones_sum_warr(ip_opts, opt_size));
     }
 
-    /* Fold twice, avoid branches */
-    sum = SUM32(sum);
-    sum = SUM32(sum);
-
-    return (~sum) & 0xFFFF;
+    return ~ones_sum_fold16(sum);
 }
 
 static __intrinsic uint16_t
@@ -121,39 +236,11 @@ net_csum_l4_ip(uint32_t ip_type, uint32_t protocol,
                __addr40 void* pkt_mem, uint32_t mem_len)
 {
     __gpr uint32_t sum = 0;
-    __xread uint32_t pkt_cache[16];
-    __gpr int len;
-    __gpr int curr_len;
-    __addr40 void* pkt_ptr;
-    SIGNAL read_sig;
     __gpr uint32_t tmp;
     __gpr uint32_t l4_len;
-    __gpr uint32_t csum_mu = 0;
 
     ctassert(__is_in_reg_or_lmem(ip));
     ctassert(__is_in_reg_or_lmem(l4_hdr));
-
-    /* Shared part of pseudo header for UDP and TCP */
-    sum += SUM32(UINT32_REG(ip)[3]);
-    sum += SUM32(UINT32_REG(ip)[4]);
-
-    if (ip_type == NET_ETH_TYPE_IPV6) {
-        sum += SUM32(UINT32_REG(ip)[2]);
-        sum += SUM32(UINT32_REG(ip)[5]);
-        sum += SUM32(UINT32_REG(ip)[6]);
-        sum += SUM32(UINT32_REG(ip)[7]);
-        sum += SUM32(UINT32_REG(ip)[8]);
-        sum += SUM32(UINT32_REG(ip)[9]);
-    }
-
-    sum += SUM32(UINT32_REG(l4_hdr)[0]);
-    sum += SUM32(UINT32_REG(l4_hdr)[1]);
-
-    if (ip_type == NET_ETH_TYPE_IPV6) {
-        sum += SUM32(protocol);
-    } else {
-        tmp = protocol << 16;
-    }
 
     if (protocol == NET_IP_PROTO_UDP) {
         if (__is_in_lmem(l4_hdr)) {
@@ -180,66 +267,16 @@ net_csum_l4_ip(uint32_t ip_type, uint32_t protocol,
             mem_len -= sizeof(struct tcp_hdr);
             ((__addr40 uint8_t*)pkt_mem) += sizeof(struct tcp_hdr);
         }
-
-        sum += SUM32(UINT32_REG(l4_hdr)[2]);
-        sum += SUM32(UINT32_REG(l4_hdr)[3]);
-        sum += SUM32(UINT32_REG(l4_hdr)[4]);
     }
 
-    if (ip_type == NET_ETH_TYPE_IPV6) {
-        sum += SUM32(l4_len);
-    } else {
-        tmp |= l4_len;
-        sum += SUM32(tmp);
-    }
-    /* No payload */
-    if (ctm_len + mem_len == 0) {
-        goto csum_fold;
+    sum = ones_sum_pseudo(ip_type, protocol, ip, l4_hdr, l4_len);
+
+    if (ctm_len + mem_len  > 0) {
+        sum = ones_sum_add(sum, ones_sum_mem(pkt_ctm, ctm_len));
+        sum = ones_sum_add(sum, ones_sum_mem(pkt_mem, mem_len));
     }
 
-    /* Handle CTM */
-    if (ctm_len > 0) {
-        len = ctm_len;
-        pkt_ptr = pkt_ctm;
-
-        while (len > 0) {
-            if (len > sizeof(pkt_cache))
-                curr_len = sizeof(pkt_cache);
-            else
-                curr_len = len;
-            /* The read size must be a mult of 8 bytes */
-            __mem_read64(pkt_cache, pkt_ptr, ((curr_len + 7) & 0x78),
-                         sizeof(pkt_cache), ctx_swap, &read_sig);
-            SUM_64BYTES_T(sum, pkt_cache, curr_len);
-            __implicit_read(pkt_cache);
-            ((__addr40 uint8_t*)pkt_ptr) += curr_len;
-            len -= curr_len;
-        }
-    }
-
-    /* Handle external MEM */
-    if (mem_len > 0) {
-        len = mem_len;
-        pkt_ptr = pkt_mem;
-
-        while (len > 0) {
-            if (len > sizeof(pkt_cache))
-                curr_len = sizeof(pkt_cache);
-            else
-                curr_len = len;
-            /* The read size must be a mult of 8 bytes */
-            __mem_read64(pkt_cache, pkt_ptr, ((curr_len + 7) & 0x78),
-                         sizeof(pkt_cache), ctx_swap, &read_sig);
-            SUM_64BYTES_T(sum, pkt_cache, curr_len);
-            __implicit_read(pkt_cache);
-            ((__addr40 uint8_t*)pkt_ptr) += curr_len;
-            len -= curr_len;
-        }
-    }
-csum_fold:
-    sum = SUM32(sum);
-    sum = SUM32(sum);
-    return (~sum) & 0xFFFF;
+    return ~ones_sum_fold16(sum);
 }
 
 __intrinsic uint16_t
