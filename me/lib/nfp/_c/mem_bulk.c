@@ -110,44 +110,6 @@ mem_read64(__xread void *data, __mem void *addr, const size_t size)
 }
 
 __intrinsic void
-__mem_read32(__xread void *data, __mem void *addr,
-             size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
-{
-    ctassert(__is_read_reg(data));
-    try_ctassert(__is_aligned(size, 4));
-    try_ctassert(size <= 128);
-
-    _MEM_CMD(read32, data, addr, size, max_size, sync, sig, 2);
-}
-
-__intrinsic void
-mem_read32(__xread void *data, __mem void *addr, const size_t size)
-{
-    SIGNAL sig;
-
-    __mem_read32(data, addr, size, size, ctx_swap, &sig);
-}
-
-__intrinsic void
-__mem_read8(__xread void *data, __mem void *addr,
-            size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
-{
-    ctassert(__is_read_reg(data));
-    try_ctassert(size <= 32);
-
-    _MEM_CMD(read8, data, addr, size, max_size, sync, sig, 0);
-}
-
-__intrinsic void
-mem_read8(__xread void *data, __mem void *addr, const size_t size)
-{
-    SIGNAL sig;
-
-    __mem_read8(data, addr, size, size, ctx_swap, &sig);
-}
-
-
-__intrinsic void
 __mem_read64_le(__xread void *data, __mem void *addr,
                 size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
@@ -164,6 +126,25 @@ mem_read64_le(__xread void *data, __mem void *addr, const size_t size)
     SIGNAL sig;
 
     __mem_read64_le(data, addr, size, size, ctx_swap, &sig);
+}
+
+__intrinsic void
+__mem_read32(__xread void *data, __mem void *addr,
+             size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_read_reg(data));
+    try_ctassert(__is_aligned(size, 4));
+    try_ctassert(size <= 128);
+
+    _MEM_CMD(read32, data, addr, size, max_size, sync, sig, 2);
+}
+
+__intrinsic void
+mem_read32(__xread void *data, __mem void *addr, const size_t size)
+{
+    SIGNAL sig;
+
+    __mem_read32(data, addr, size, size, ctx_swap, &sig);
 }
 
 __intrinsic void
@@ -184,6 +165,25 @@ mem_read32_le(__xread void *data, __mem void *addr, const size_t size)
 
     __mem_read32_le(data, addr, size, size, ctx_swap, &sig);
 }
+
+__intrinsic void
+__mem_read8(__xread void *data, __mem void *addr,
+            size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_read_reg(data));
+    try_ctassert(size <= 32);
+
+    _MEM_CMD(read8, data, addr, size, max_size, sync, sig, 0);
+}
+
+__intrinsic void
+mem_read8(__xread void *data, __mem void *addr, const size_t size)
+{
+    SIGNAL sig;
+
+    __mem_read8(data, addr, size, size, ctx_swap, &sig);
+}
+
 
 
 __intrinsic void
@@ -206,44 +206,6 @@ mem_write64(__xwrite void *data, __mem void *addr, const size_t size)
 }
 
 __intrinsic void
-__mem_write32(__xwrite void *data, __mem void *addr,
-              size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
-{
-    ctassert(__is_write_reg(data));
-    try_ctassert(__is_aligned(size, 4));
-    try_ctassert(size <= 128);
-
-    _MEM_CMD(write32, data, addr, size, max_size, sync, sig, 2);
-}
-
-__intrinsic void
-mem_write32(__xwrite void *data, __mem void *addr, const size_t size)
-{
-    SIGNAL sig;
-
-    __mem_write32(data, addr, size, size, ctx_swap, &sig);
-}
-
-__intrinsic void
-__mem_write8(__xwrite void *data, __mem void *addr,
-             size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
-{
-    ctassert(__is_write_reg(data));
-    try_ctassert(size <= 32);
-
-    _MEM_CMD(write8, data, addr, size, max_size, sync, sig, 0);
-}
-
-__intrinsic void
-mem_write8(__xwrite void *data, __mem void *addr, const size_t size)
-{
-    SIGNAL sig;
-
-    __mem_write8(data, addr, size, size, ctx_swap, &sig);
-}
-
-
-__intrinsic void
 __mem_write64_le(__xwrite void *data, __mem void *addr,
                  size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
@@ -263,6 +225,25 @@ mem_write64_le(__xwrite void *data, __mem void *addr, const size_t size)
 }
 
 __intrinsic void
+__mem_write32(__xwrite void *data, __mem void *addr,
+              size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_write_reg(data));
+    try_ctassert(__is_aligned(size, 4));
+    try_ctassert(size <= 128);
+
+    _MEM_CMD(write32, data, addr, size, max_size, sync, sig, 2);
+}
+
+__intrinsic void
+mem_write32(__xwrite void *data, __mem void *addr, const size_t size)
+{
+    SIGNAL sig;
+
+    __mem_write32(data, addr, size, size, ctx_swap, &sig);
+}
+
+__intrinsic void
 __mem_write32_le(__xwrite void *data, __mem void *addr,
                  size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
@@ -279,6 +260,24 @@ mem_write32_le(__xwrite void *data, __mem void *addr, const size_t size)
     SIGNAL sig;
 
     __mem_write32_le(data, addr, size, size, ctx_swap, &sig);
+}
+
+__intrinsic void
+__mem_write8(__xwrite void *data, __mem void *addr,
+             size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_write_reg(data));
+    try_ctassert(size <= 32);
+
+    _MEM_CMD(write8, data, addr, size, max_size, sync, sig, 0);
+}
+
+__intrinsic void
+mem_write8(__xwrite void *data, __mem void *addr, const size_t size)
+{
+    SIGNAL sig;
+
+    __mem_write8(data, addr, size, size, ctx_swap, &sig);
 }
 
 __intrinsic void
