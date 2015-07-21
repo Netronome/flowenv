@@ -592,6 +592,60 @@
 
 
 /*
+ * Register: DMADbgReg0
+ *   [31]      DmaByteMaskSwapEna
+ *   [25:24]   InvLWrPar
+ *   [23:22]   InvMWrPar
+ *   [21:20]   InvHWrPar
+ *   [19:16]   DataHi
+ *   [11]      Direction
+ *   [10]      RAMSel
+ *   [9:0]     RAMAddr
+ *
+ * Name(s):
+ * <base>.DMAController.DMADbgReg0
+ */
+#define NFP_PCIE_DMA_DBG_REG0                              0x400f0
+#define   NFP_PCIE_DMA_DBG_REG0_DMA_BYTE_MASK_SWAP_ENA       (1 << 31)
+#define     NFP_PCIE_DMA_DBG_REG0_DMA_BYTE_MASK_SWAP_ENA_bf  0, 31, 31
+#define     NFP_PCIE_DMA_DBG_REG0_DMA_BYTE_MASK_SWAP_ENA_msk (0x1)
+#define     NFP_PCIE_DMA_DBG_REG0_DMA_BYTE_MASK_SWAP_ENA_bit (31)
+#define   NFP_PCIE_DMA_DBG_REG0_INV_L_WR_PAR(x)              (((x) & 3) << 24)
+#define   NFP_PCIE_DMA_DBG_REG0_INV_L_WR_PAR_of(x)           (((x) >> 24) & 3)
+#define     NFP_PCIE_DMA_DBG_REG0_INV_L_WR_PAR_bf            0, 25, 24
+#define     NFP_PCIE_DMA_DBG_REG0_INV_L_WR_PAR_msk           (0x3)
+#define     NFP_PCIE_DMA_DBG_REG0_INV_L_WR_PAR_shf           (24)
+#define   NFP_PCIE_DMA_DBG_REG0_INV_M_WR_PAR(x)              (((x) & 3) << 22)
+#define   NFP_PCIE_DMA_DBG_REG0_INV_M_WR_PAR_of(x)           (((x) >> 22) & 3)
+#define     NFP_PCIE_DMA_DBG_REG0_INV_M_WR_PAR_bf            0, 23, 22
+#define     NFP_PCIE_DMA_DBG_REG0_INV_M_WR_PAR_msk           (0x3)
+#define     NFP_PCIE_DMA_DBG_REG0_INV_M_WR_PAR_shf           (22)
+#define   NFP_PCIE_DMA_DBG_REG0_INV_H_WR_PAR(x)              (((x) & 3) << 20)
+#define   NFP_PCIE_DMA_DBG_REG0_INV_H_WR_PAR_of(x)           (((x) >> 20) & 3)
+#define     NFP_PCIE_DMA_DBG_REG0_INV_H_WR_PAR_bf            0, 21, 20
+#define     NFP_PCIE_DMA_DBG_REG0_INV_H_WR_PAR_msk           (0x3)
+#define     NFP_PCIE_DMA_DBG_REG0_INV_H_WR_PAR_shf           (20)
+#define   NFP_PCIE_DMA_DBG_REG0_DATA_HI(x)                   (((x) & 0xf) << 16)
+#define   NFP_PCIE_DMA_DBG_REG0_DATA_HI_of(x)                (((x) >> 16) & 0xf)
+#define     NFP_PCIE_DMA_DBG_REG0_DATA_HI_bf                 0, 19, 16
+#define     NFP_PCIE_DMA_DBG_REG0_DATA_HI_msk                (0xf)
+#define     NFP_PCIE_DMA_DBG_REG0_DATA_HI_shf                (16)
+#define   NFP_PCIE_DMA_DBG_REG0_DIRECTION                    (1 << 11)
+#define     NFP_PCIE_DMA_DBG_REG0_DIRECTION_bf               0, 11, 11
+#define     NFP_PCIE_DMA_DBG_REG0_DIRECTION_msk              (0x1)
+#define     NFP_PCIE_DMA_DBG_REG0_DIRECTION_bit              (11)
+#define   NFP_PCIE_DMA_DBG_REG0_RAM_SEL                      (1 << 10)
+#define     NFP_PCIE_DMA_DBG_REG0_RAM_SEL_bf                 0, 10, 10
+#define     NFP_PCIE_DMA_DBG_REG0_RAM_SEL_msk                (0x1)
+#define     NFP_PCIE_DMA_DBG_REG0_RAM_SEL_bit                (10)
+#define   NFP_PCIE_DMA_DBG_REG0_RAM_ADDR(x)                  (((x) & 0x3ff) << 0)
+#define   NFP_PCIE_DMA_DBG_REG0_RAM_ADDR_of(x)               (((x) >> 0) & 0x3ff)
+#define     NFP_PCIE_DMA_DBG_REG0_RAM_ADDR_bf                0, 9, 0
+#define     NFP_PCIE_DMA_DBG_REG0_RAM_ADDR_msk               (0x3ff)
+#define     NFP_PCIE_DMA_DBG_REG0_RAM_ADDR_shf               (0)
+
+
+/*
  * Register: DMACntrlCfg1
  *   [31:28]   DmaFrmCppRate
  *   [27:24]   DmaToPcieRate
@@ -918,6 +972,37 @@ struct nfp_pcie_dma_qsts1 {
             unsigned int dma_med_avail:8;
             unsigned int dma_hi_wrptr:8;
             unsigned int dma_hi_avail:8;
+#           endif
+        };
+        unsigned int __raw;
+    };
+};
+
+struct nfp_pcie_dma_dbg_reg0 {
+    union {
+        struct {
+#           ifdef BIGENDIAN
+            unsigned int dma_byte_mask_swap_ena:1;
+            unsigned int __reserved_26:5;
+            unsigned int inv_l_wr_par:2;
+            unsigned int inv_m_wr_par:2;
+            unsigned int inv_h_wr_par:2;
+            unsigned int data_hi:4;
+            unsigned int __reserved_12:4;
+            unsigned int direction:1;
+            unsigned int ram_sel:1;
+            unsigned int ram_addr:10;
+#           else
+            unsigned int ram_addr:10;
+            unsigned int ram_sel:1;
+            unsigned int direction:1;
+            unsigned int __reserved_12:4;
+            unsigned int data_hi:4;
+            unsigned int inv_h_wr_par:2;
+            unsigned int inv_m_wr_par:2;
+            unsigned int inv_l_wr_par:2;
+            unsigned int __reserved_26:5;
+            unsigned int dma_byte_mask_swap_ena:1;
 #           endif
         };
         unsigned int __raw;

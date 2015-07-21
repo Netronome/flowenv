@@ -69,8 +69,6 @@
 #define     NFP_CLS_RINGS_RING_BASE_SIZE_256                 (3)
 #define     NFP_CLS_RINGS_RING_BASE_SIZE_512                 (4)
 #define     NFP_CLS_RINGS_RING_BASE_SIZE_1024                (5)
-#define     NFP_CLS_RINGS_RING_BASE_SIZE_2048                (6)
-#define     NFP_CLS_RINGS_RING_BASE_SIZE_4096                (7)
 #define     NFP_CLS_RINGS_RING_BASE_SIZE_bf                  0, 18, 16
 #define     NFP_CLS_RINGS_RING_BASE_SIZE_msk                 (0x7)
 #define     NFP_CLS_RINGS_RING_BASE_SIZE_shf                 (16)
