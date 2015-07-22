@@ -22,6 +22,7 @@
 #include <nfp6000/nfp_cls.h>
 #include <nfp6000/nfp_ctm.h>
 #include <nfp6000/nfp_event.h>
+#include <nfp6000/nfp_mac.h>
 #include <nfp6000/nfp_me.h>
 #include <nfp6000/nfp_pcie.h>
 #include <nfp6000/nfp_qc.h>
