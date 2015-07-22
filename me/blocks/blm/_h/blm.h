@@ -22,14 +22,6 @@
 
 #include "libblm.h"
 
-#ifdef BLM_0_ISLAND_48
-#define BLM_0_ISLAND_ILA48 1
-#endif
-
-#ifdef BLM_1_ISLAND_49
-#define BLM_1_ISLAND_ILA49 1
-#endif
-
 /* Internal use constants */
 #define BLM_BLQ_NON_SPLIT_MODE  1
 #define BLM_BLQ_SPLIT_MODE      2
@@ -158,20 +150,28 @@
 .alloc_mem BLM_/**/BLM_INSTANCE_ID/**/_ISLAND_ID   i0.ctm  global  8
 /* BLM Instance-0 must run on Island-33: adjacent to NBI-8 */
 #if BLM_INSTANCE_ID == 0
-    #ifdef BLM_0_ISLAND_ILA48
+#ifdef BLM_FORCE_EVENT_ROUTING
+    #ifdef BLM_0_ISLAND_48
         .assert((__ISLAND == 48)) "BLM Instance-0 should run on Island-48!"
     #else
         .assert((__ISLAND == 33)) "BLM Instance-0 should run on Island-33!"
     #endif
+#else
+    .assert((__ISLAND == 48)) "BLM Instance-0 should run on Island-48!"
+#endif /* BLM_FORCE_EVENT_ROUTING */
 #endif
 
 /* BLM Instance-1 must run on Island-37: adjacent to NBI-9 */
 #if BLM_INSTANCE_ID == 1
-    #ifdef BLM_1_ISLAND_ILA49
+#ifdef BLM_FORCE_EVENT_ROUTING
+    #ifdef BLM_1_ISLAND_49
         .assert((__ISLAND == 49)) "BLM Instance-1 should run on Island-49!"
     #else
         .assert((__ISLAND == 37)) "BLM Instance-1 should run on Island-37!"
     #endif
+#else
+    .assert((__ISLAND == 49)) "BLM Instance-1 should run on Island-49!"
+#endif /* BLM_FORCE_EVENT_ROUTING */
 #endif
 #endm /* blm_linker_check */
 
@@ -191,34 +191,29 @@
 #ifdef BLM_INIT_EMU_RINGS
     .alloc_resource BLM_EMU_RING_INIT_CHK_0               BLM_EMU_RING_INIT_CNT           global 1
 #endif
+#ifdef BLM_FORCE_EVENT_ROUTING
     /*
      * The following event routing configuration via init_csr supports running BLM_0 on 33 or 48
-     * The commands are equivalent to:
-     *     xpb_write(global,island,slave,dev,reg,data);
-     *     xpb_write(1, 8,0,4,0x4040,0x00001000); //0x48044040
-     *     xpb_write(1,33,0,4,0x4040,0x00010040); //0x61044040
-     *     xpb_write(1,48,0,4,0x4040,0x00030200); //0x70044040
      */
     .init_csr xpbm:Nbi0IsldXpbmMap.Overlay.IslandControl.EventRouteConfig 0x00001000 const
-    .init_csr xpbm:Me1IsldXpbmMap.Overlay.IslandControl.EventRouteConfig 0x00010040 const
+    .init_csr xpbm:Me1IsldXpbmMap.Overlay.IslandControl.EventRouteConfig  0x00010040 const
     .init_csr xpbm:Ila0IsldXpbmMap.Overlay.IslandControl.EventRouteConfig 0x00030200 const
-#endif
+#endif /* BLM_FORCE_EVENT_ROUTING */
+#endif /* BLM_INSTANCE_ID */
 
 #if BLM_INSTANCE_ID == 1
 #ifdef BLM_INIT_EMU_RINGS
     .alloc_resource BLM_EMU_RING_INIT_CHK_1              BLM_EMU_RING_INIT_CNT           global 1
 #endif
+#ifdef BLM_FORCE_EVENT_ROUTING
     /*
      * The following event routing configuration via init_csr supports running BLM_1 on 37 or 49
-     * The commands are equivalent to:
-     *     xpb_write(1, 9,0,4,0x4040,0x00001000); //0x49044040
-     *     xpb_write(1,37,0,4,0x4040,0x00031000); //0x65044040
-     *     xpb_write(1,49,0,4,0x4040,0x00030200); //0x71044040
      */
     .init_csr xpbm:Nbi1IsldXpbmMap.Overlay.IslandControl.EventRouteConfig 0x00001000 const
-    .init_csr xpbm:Me5IsldXpbmMap.Overlay.IslandControl.EventRouteConfig 0x00031000 const
+    .init_csr xpbm:Me5IsldXpbmMap.Overlay.IslandControl.EventRouteConfig  0x00031000 const
     .init_csr xpbm:Ila1IsldXpbmMap.Overlay.IslandControl.EventRouteConfig 0x00030200 const
-#endif
+#endif /* BLM_FORCE_EVENT_ROUTING */
+#endif /* BLM_INSTANCE_ID */
 
 #endm /* blm_loader_check */
 
