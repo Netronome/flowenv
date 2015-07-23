@@ -369,10 +369,44 @@ struct pkt_iref_csr0 {
 
 
 /**
+ * Packet Ready address fields for directly sending the Packet Ready to the NBI
+ *  must overide:
+ *  * Total length                              (len)
+ *
+ *  * Packet number                             (pnum << 16)
+ *
+ *  * Data master (based on ME ID)              ((meid & 0x1 | 0x2) << 28)
+ *
+ *  * Data master island (island ID)            (iid << 32)
+ *
+ *  * NBI ID                                    (nbi << 38)
+ *
+ *
+ * Packet Ready address upper fields for directly sending the Packet Ready to
+ *  the NBI is shifted before being sent:
+ *  * Packet Ready address left shift amount    8
+ */
+#define PKT_READY_ADDR_LO_PNUM_shf        16
+
+#define PKT_READY_ADDR_HI_LSHIFT          8
+#define PKT_READY_ADDR_HI_DMASTER_shf     (28 - PKT_READY_ADDR_HI_LSHIFT)
+#define PKT_READY_ADDR_HI_DMASTER_ISL_shf (32 - PKT_READY_ADDR_HI_LSHIFT)
+#define PKT_READY_ADDR_HI_NBI_shf         (38 - PKT_READY_ADDR_HI_LSHIFT)
+
+#define PKT_READY_ADDR_LO_FIELDS(_pnum, _len)      \
+    ((_pnum << PKT_READY_ADDR_LO_PNUM_shf) | (_len))
+
+#define PKT_READY_ADDR_HI_DMASTER(_meid)  ((_meid & 0x1) | 0x2)
+#define PKT_READY_ADDR_HI_FIELDS(_nbi, _iid, _meid)                         \
+    ((_nbi << PKT_READY_ADDR_HI_NBI_shf)                                    \
+     | (_iid << PKT_READY_ADDR_HI_DMASTER_ISL_shf)                          \
+     | (PKT_READY_ADDR_HI_DMASTER(_meid) << PKT_READY_ADDR_HI_DMASTER_shf))
+
+/**
  * Bitfield format of the previous ALU instruction result for the
  * indirect reference required to send or drop a CTM packet.  This
- * structure defines the fields as the CTM packet engine understands
- * them rather than how the ME and DSF CPP bus sees them.
+ * structure defines the fields as the CTM packet engine or NBI TM
+ * understands them rather than how the ME and DSF CPP bus sees them.
  */
 struct pkt_iref_palu {
     union {
@@ -633,19 +667,19 @@ typedef union pkt_status_t {
 __intrinsic unsigned int pkt_csum_read(void *src_buf, int off);
 
 /**
- * Get the status response of a CTM packet buffer. Can only refer to a packet
- * in the local island.
+ * Get the status response of a CTM packet buffer.
  *
+ * @param isl         The CTM buffer island
  * @param pnum        The CTM packet number
  * @param pkt_status  The packet status response structure pkt_status_t
  * @param sync        The type of synchronization (sig_done or ctx_swap)
  * @param sig         The signal to use.
  */
-__intrinsic void __pkt_status_read(unsigned int pnum,
+__intrinsic void __pkt_status_read(unsigned char isl, unsigned int pnum,
                                    __xread pkt_status_t *pkt_status,
                                    sync_t sync, SIGNAL *sig_ptr);
 
-__intrinsic void pkt_status_read(unsigned int pnum,
+__intrinsic void pkt_status_read(unsigned char isl, unsigned int pnum,
                                  __xread pkt_status_t *pkt_status);
 
 
@@ -752,67 +786,70 @@ __intrinsic struct pkt_ms_info pkt_msd_write(__addr40 void *pbuf,
 /**
  * Send a packet to an NBI port. Notifies sequencer and frees the packet.
  *
- * @param isl   The island of the CTM packet
- * @param pnum  The packet number of the CTM packet
- * @param msi   The modification script info required for transmission
- * @param len   The length of the packet from the start of the
- *              packet data (which immediately follows the rewrite
- *              script plus padding)
- * @param nbi   The NBI TM to send the packet to
- * @param txq   The NBI TM TX queue to send the packet to
- * @param seqr  The NBI TM sequencer to send the packet to
- * @param seq   The NBI TM sequence number of the packet
- *
+ * @param isl           The island of the CTM packet
+ * @param pnum          The packet number of the CTM packet
+ * @param msi           The modification script info required for transmission
+ * @param len           The length of the packet from the start of the
+ *                      packet data (which immediately follows the rewrite
+ *                      script plus padding)
+ * @param nbi           The NBI TM to send the packet to
+ * @param txq           The NBI TM TX queue to send the packet to
+ * @param seqr          The NBI TM sequencer to send the packet to
+ * @param seq           The NBI TM sequence number of the packet
+ * @param ctm_buf_size  The encoded CTM buffer size
  */
 __intrinsic void pkt_nbi_send(unsigned char isl, unsigned int pnum,
                               __gpr const struct pkt_ms_info *msi,
                               unsigned int len, unsigned int nbi,
                               unsigned int txq, unsigned int seqr,
-                              unsigned int seq);
+                              unsigned int seq,
+                              enum PKT_CTM_SIZE ctm_buf_size);
 
 
 /**
  * Send a packet to an NBI port without freeing it. Does not notify sequencer.
  *
- * @param isl   The island of the CTM packet
- * @param pnum  The packet number of the CTM packet
- * @param msi   The modification script info required for transmission
- * @param len   The length of the packet from the start of the
- *              packet data (which immediately follows the rewrite
- *              script plus padding)
- * @param nbi   The NBI TM to send the packet to
- * @param txq   The NBI TM TX queue to send the packet to
- * @param seqr  The NBI TM sequencer to send the packet to
- * @param seq   The NBI TM sequence number of the packet
- *
+ * @param isl           The island of the CTM packet
+ * @param pnum          The packet number of the CTM packet
+ * @param msi           The modification script info required for transmission
+ * @param len           The length of the packet from the start of the
+ *                      packet data (which immediately follows the rewrite
+ *                      script plus padding)
+ * @param nbi           The NBI TM to send the packet to
+ * @param txq           The NBI TM TX queue to send the packet to
+ * @param seqr          The NBI TM sequencer to send the packet to
+ * @param seq           The NBI TM sequence number of the packet
+ * @param ctm_buf_size  The encoded CTM buffer size
  */
 __intrinsic void pkt_nbi_send_dont_free(unsigned char isl, unsigned int pnum,
                                         __gpr const struct pkt_ms_info *msi,
                                         unsigned int len, unsigned int nbi,
                                         unsigned int txq, unsigned int seqr,
-                                        unsigned int seq);
+                                        unsigned int seq,
+                                        enum PKT_CTM_SIZE ctm_buf_size);
 
 
 /**
  * Drop a packet sequence from an NBI port. Needed to keep sequencer happy.
  *
- * @param isl   The island of the CTM packet
- * @param pnum  The packet number of the CTM packet
- * @param msi   The modification script info required for transmission
- * @param len   The length of the packet from the start of the
- *              packet data (which immediately follows the rewrite
- *              script plus padding)
- * @param nbi   The NBI TM to send the packet to
- * @param txq   The NBI TM TX queue to send the packet to
- * @param seqr  The NBI TM sequencer to send the packet to
- * @param seq   The NBI TM sequence number of the packet
- *
+ * @param isl           The island of the CTM packet
+ * @param pnum          The packet number of the CTM packet
+ * @param msi           The modification script info required for transmission
+ * @param len           The length of the packet from the start of the
+ *                      packet data (which immediately follows the rewrite
+ *                      script plus padding)
+ * @param nbi           The NBI TM to send the packet to
+ * @param txq           The NBI TM TX queue to send the packet to
+ * @param seqr          The NBI TM sequencer to send the packet to
+ * @param seq           The NBI TM sequence number of the packet
+ * @param ctm_buf_size  The encoded CTM buffer size
  */
 __intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
                                   __gpr const struct pkt_ms_info *msi,
                                   unsigned int len, unsigned int nbi,
                                   unsigned int txq, unsigned int seqr,
-                                  unsigned int seq);
+                                  unsigned int seq,
+                                  enum PKT_CTM_SIZE ctm_buf_size);
 
 
 /*

@@ -114,8 +114,9 @@ pkt_csum_read(void *src_buf, int off)
 }
 
 __intrinsic void
-__pkt_status_read(unsigned int pnum, __xread pkt_status_t *pkt_status,
-                  sync_t sync, SIGNAL *sig_ptr)
+__pkt_status_read(unsigned char isl, unsigned int pnum,
+                  __xread pkt_status_t *pkt_status, sync_t sync,
+                  SIGNAL *sig_ptr)
 {
     __gpr unsigned int addr;
 
@@ -125,20 +126,38 @@ __pkt_status_read(unsigned int pnum, __xread pkt_status_t *pkt_status,
 
     addr = MAX_PKT_NUM_of(pnum);
 
-    if (sync == sig_done)
-        __asm mem[packet_read_packet_status, *pkt_status, addr, 0, 1], \
-            sig_done[*sig_ptr];
-    else
-        __asm mem[packet_read_packet_status, *pkt_status, addr, 0, 1], \
-            ctx_swap[*sig_ptr];
+    if (isl == 0) {
+        if (sync == sig_done)
+            __asm mem[packet_read_packet_status, *pkt_status, addr, 0, 1], \
+                sig_done[*sig_ptr];
+        else
+            __asm mem[packet_read_packet_status, *pkt_status, addr, 0, 1], \
+               ctx_swap[*sig_ptr];
+    } else {
+        /* When sending to a non-local island requires using a full 40-bit
+         * address.  The top 8 bits of this address must be as follows:
+         *   [2;38] -- Must be 0b10 to represent "direct access" locality.
+         *   [6;32] -- The island of the CTM holding the packet.
+         *
+         * We put these 8 bits in the top 8 bits of addr_hi, and then use
+         * the <<8 to put them into place in the 40-bit address. */
+        __gpr unsigned int addr_hi = (isl | 0x80) << 24;
+        if (sync == sig_done)
+          __asm mem[packet_read_packet_status, *pkt_status, addr_hi, <<8, \
+                    addr, 1], sig_done[*sig_ptr];
+        else
+          __asm mem[packet_read_packet_status, *pkt_status, addr_hi, <<8, \
+                    addr, 1], ctx_swap[*sig_ptr];
+    }
 }
 
 __intrinsic void
-pkt_status_read(unsigned int pnum, __xread pkt_status_t *pkt_status)
+pkt_status_read(unsigned char isl, unsigned int pnum,
+                __xread pkt_status_t *pkt_status)
 {
     SIGNAL add_thread_sig;
 
-    __pkt_status_read(pnum, pkt_status, ctx_swap, &add_thread_sig);
+    __pkt_status_read(isl, pnum, pkt_status, ctx_swap, &add_thread_sig);
 }
 
 
@@ -306,27 +325,28 @@ pkt_nbi_recv(__xread void *meta, size_t msize)
 
 __intrinsic void
 pkt_nbi_send(unsigned char isl, unsigned int pnum,
-             __gpr const struct pkt_ms_info *msi, unsigned int len,
-             unsigned int nbi, unsigned int txq, unsigned int seqr,
-             unsigned int seq)
+             __gpr const struct pkt_ms_info *msi,
+             unsigned int len, unsigned int nbi, unsigned int txq,
+             unsigned int seqr, unsigned int seq,
+             enum PKT_CTM_SIZE ctm_buf_size)
 {
+    __gpr unsigned int addr_hi;
     __gpr unsigned int addr_lo;
     __gpr struct pkt_iref_csr0 csr0;
     __gpr struct pkt_iref_palu palu;
 
     /*
-     * The "packet processing complete" commands require a special encoding
-     * in the address field.  The packet number goes in bits [25:16] and
-     * the _ending_offset_ of the packet goes in bits [13:0] of the address.
-     * To get the ending offset, we add the packet length to a value
-     * calculated based on the starting offset of the modification script,
-     * the modification script's length, and any padding between it and
-     * the start of the packet.
+     * The "packet ready" commands require a special encoding in the address
+     * field, which include the length, or _ending_offset_, of the packet.
+     * To get the ending offset, we add the packet length to the starting
+     * offset of the packet, including any MAC egress command word.  The
+     * starting offset is encoded in the 'msi->len_adj' field.
      *
      * See NFP 6xxx Databook Section 9.2.2.7.9 "Packet Processing Complete
      * Target Command and Packet Ready Master Command"
      */
-    addr_lo = (pnum << 16) | (len + msi->len_adj);
+    addr_hi = PKT_READY_ADDR_HI_FIELDS(nbi, isl, __ME());
+    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, len + msi->len_adj);
 
     csr0.__raw = 0;
     csr0.seqr = seqr;
@@ -339,56 +359,41 @@ pkt_nbi_send(unsigned char isl, unsigned int pnum,
      * This constant starts at bit 0 of the structure anyways.
      */
     palu.__raw = PKT_IREF_PALU_MAGIC;
-    palu.nbi = nbi;
+    palu.nbi = (unsigned int)ctm_buf_size;
     palu.txq = txq;
     palu.ms_off = msi->off_enc;
 
-    if (isl == 0) {
-        __asm {
-            alu[--, --, B, palu.__raw];
-            mem[packet_complete_unicast, --, addr_lo, 0], indirect_ref;
-        }
-    } else {
-        /* When sending to a non-local island requires using a full 40-bit
-         * address.  The top 8 bits of this address must be as follows:
-         *   [2;38] -- Must be 0b10 to represent "direct access" locality.
-         *   [6;32] -- The island of the CTM holding the packet.
-         *
-         * We put these 8 bits in the top 8 bits of addr_hi, and then use
-         * the <<8 to put them into place in the 40-bit address. */
-        __gpr unsigned int addr_hi = (isl | 0x80) << 24;
-        __asm {
-            alu[--, --, B, palu.__raw];
-            mem[packet_complete_unicast, --, addr_hi, <<8, addr_lo], \
-                indirect_ref;
-        }
+    __asm {
+        alu[--, --, B, palu.__raw];
+        nbi[packet_ready_unicast, --, addr_hi, <<8, addr_lo], indirect_ref;
     }
 }
 
 
 __intrinsic void
 pkt_nbi_send_dont_free(unsigned char isl, unsigned int pnum,
-                       __gpr const struct pkt_ms_info *msi, unsigned int len,
-                       unsigned int nbi, unsigned int txq, unsigned int seqr,
-                       unsigned int seq)
+                       __gpr const struct pkt_ms_info *msi,
+                       unsigned int len, unsigned int nbi, unsigned int txq,
+                       unsigned int seqr, unsigned int seq,
+                       enum PKT_CTM_SIZE ctm_buf_size)
 {
+    __gpr unsigned int addr_hi;
     __gpr unsigned int addr_lo;
     __gpr struct pkt_iref_csr0 csr0;
     __gpr struct pkt_iref_palu palu;
 
     /*
-     * The "packet processing complete" commands require a special encoding
-     * in the address field.  The packet number goes in bits [25:16] and
-     * the _ending_offset_ of the packet goes in bits [13:0] of the address.
-     * To get the ending offset, we add the packet length to a value
-     * calculated based on the starting offset of the modification script,
-     * the modification script's length, and any padding between it and
-     * the start of the packet.
+     * The "packet ready" commands require a special encoding in the address
+     * field, which include the length, or _ending_offset_, of the packet.
+     * To get the ending offset, we add the packet length to the starting
+     * offset of the packet, including any MAC egress command word.  The
+     * starting offset is encoded in the 'msi->len_adj' field.
      *
      * See NFP 6xxx Databook Section 9.2.2.7.9 "Packet Processing Complete
      * Target Command and Packet Ready Master Command"
      */
-    addr_lo = (pnum << 16) | (len + msi->len_adj);
+    addr_hi = PKT_READY_ADDR_HI_FIELDS(nbi, isl, __ME());
+    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, len + msi->len_adj);
 
     csr0.__raw = 0;
     csr0.seqr = seqr;
@@ -401,56 +406,42 @@ pkt_nbi_send_dont_free(unsigned char isl, unsigned int pnum,
      * This constant starts at bit 0 of the structure anyways.
      */
     palu.__raw = PKT_IREF_PALU_MAGIC;
-    palu.nbi = nbi;
+    palu.nbi = (unsigned int)ctm_buf_size;
     palu.txq = txq;
     palu.ms_off = msi->off_enc;
 
-    if (isl == 0) {
-        __asm {
-            alu[--, --, B, palu.__raw];
-            mem[packet_complete_multicast, --, addr_lo, 0], indirect_ref;
-        }
-    } else {
-        /* When sending to a non-local island requires using a full 40-bit
-         * address.  The top 8 bits of this address must be as follows:
-         *   [2;38] -- Must be 0b10 to represent "direct access" locality.
-         *   [6;32] -- The island of the CTM holding the packet.
-         *
-         * We put these 8 bits in the top 8 bits of addr_hi, and then use
-         * the <<8 to put them into place in the 40-bit address. */
-        __gpr unsigned int addr_hi = (isl | 0x80) << 24;
-        __asm {
-            alu[--, --, B, palu.__raw];
-            mem[ packet_complete_multicast, --, addr_hi, <<8, addr_lo], \
-                indirect_ref;
-        }
+    __asm {
+        alu[--, --, B, palu.__raw];
+        nbi[packet_ready_multicast_dont_free, --, addr_hi, <<8, addr_lo], \
+            indirect_ref;
     }
 }
 
 
 __intrinsic void
 pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
-                 __gpr const struct pkt_ms_info *msi, unsigned int len,
-                 unsigned int nbi, unsigned int txq, unsigned int seqr,
-                 unsigned int seq)
+                 __gpr const struct pkt_ms_info *msi,
+                 unsigned int len, unsigned int nbi, unsigned int txq,
+                 unsigned int seqr, unsigned int seq,
+                 enum PKT_CTM_SIZE ctm_buf_size)
 {
+    __gpr unsigned int addr_hi;
     __gpr unsigned int addr_lo;
     __gpr struct pkt_iref_csr0 csr0;
     __gpr struct pkt_iref_palu palu;
 
     /*
-     * The "packet processing complete" commands require a special encoding
-     * in the address field.  The packet number goes in bits [25:16] and
-     * the _ending_offset_ of the packet goes in bits [13:0] of the address.
-     * To get the ending offset, we add the packet length to a value
-     * calculated based on the starting offset of the modification script,
-     * the modification script's length, and any padding between it and
-     * the start of the packet.
+     * The "packet ready" commands require a special encoding in the address
+     * field, which include the length, or _ending_offset_, of the packet.
+     * To get the ending offset, we add the packet length to the starting
+     * offset of the packet, including any MAC egress command word.  The
+     * starting offset is encoded in the 'msi->len_adj' field.
      *
      * See NFP 6xxx Databook Section 9.2.2.7.9 "Packet Processing Complete
      * Target Command and Packet Ready Master Command"
      */
-    addr_lo = (pnum << 16) | (len + msi->len_adj);
+    addr_hi = PKT_READY_ADDR_HI_FIELDS(nbi, isl, __ME());
+    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, len + msi->len_adj);
 
     /* XXX cheat and initialize the structure to 0 by assigning the
      * sequencer to the whole value. */
@@ -461,22 +452,13 @@ pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
     /* XXX cheat by knowing that the least significant byte is the 'magic' */
     /* byte saves an extra initialization step. */
     palu.__raw = PKT_IREF_PALU_MAGIC;
-    palu.nbi = nbi;
+    palu.nbi = (unsigned int)ctm_buf_size;
     palu.txq = txq;
     palu.ms_off = msi->off_enc;
 
-    if (isl == 0) {
-        __asm {
-            alu[--, --, B, palu.__raw];
-            mem[packet_complete_drop, --, addr_lo, 0], indirect_ref;
-        }
-    } else {
-        __gpr unsigned int addr_hi = (isl | 0x80) << 24;
-        __asm {
-            alu[--, --, B, palu.__raw];
-            mem[packet_complete_drop, --, addr_hi, <<8, addr_lo], \
-                indirect_ref;
-        }
+    __asm {
+        alu[--, --, B, palu.__raw];
+        nbi[packet_ready_drop, --, addr_hi, <<8, addr_lo], indirect_ref;
     }
 }
 
