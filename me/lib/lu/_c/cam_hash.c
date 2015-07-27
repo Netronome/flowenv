@@ -136,6 +136,57 @@ out:
     return ret;
 }
 
+__intrinsic int32_t
+camht_lookup_idx_add(__mem void *hash_tbl, int32_t entries,
+                     void *key, size_t key_sz, int32_t* added)
+{
+    __gpr uint32_t crc32;
+    __gpr uint32_t crc32c;
+    __gpr uint32_t b_idx;
+    __gpr uint32_t b_entry;
+    __xrw struct mem_cam_24bit cam;
+    int32_t ret;
+
+    __mem uint32_t *ht;
+
+    /* Make sure the parameters are as we expect */
+    ctassert(__is_in_mem(hash_tbl));
+
+    ctassert(__is_in_reg_or_lmem(key));
+
+    ctassert(__is_ct_const(entries));
+    ctassert((entries % CAMHT_BUCKET_ENTRIES) == 0);
+
+    ctassert(__is_ct_const(key_sz));
+    ctassert(key_sz <= CAMHT_MAX_KEY_SZ);
+    ctassert((key_sz % 4) == 0);
+
+    /* Compute the CRC-32 and CRC-32C hash from the key */
+    crc32  = hash_me_crc32(key, key_sz, 0);
+    crc32c = hash_me_crc32c(key, key_sz, 0);
+
+    /* Calculate bucket index and do a CAM lookup in the bucket */
+    ht = hash_tbl;
+    b_idx = CAMHT_BUCKET_IDX(crc32, entries);
+    ht += b_idx * CAMHT_BUCKET_ENTRIES;
+
+    cam.search.value = CAMHT_BUCKET_HASH(crc32c);
+    mem_cam256_lookup24_add(&cam, ht);
+
+    if (mem_cam_lookup_add_fail(cam)) {
+        ret = -1;
+    } else {
+        ret = (b_idx * CAMHT_BUCKET_ENTRIES) + (cam.result.match & 0x7F);
+
+        if (mem_cam_lookup_add_added(cam))
+            *added = 1;
+        else
+            *added = 0;
+    }
+
+    return ret;
+}
+
 #endif /* !_CAM_HASH_C_ */
 
 /* -*-  Mode:C; c-basic-offset:4; tab-width:4 -*- */

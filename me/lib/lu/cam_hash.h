@@ -158,6 +158,32 @@ __intrinsic int32_t camht_lookup(__mem void *hash_tbl, __mem void *key_tbl,
 __intrinsic int32_t camht_lookup_idx(__mem void *hash_tbl, int32_t entries,
                                      void *key, size_t key_sz);
 
+
+/**
+ * Lookup and add a key in the hash table
+ * @param hash_tbl     Address of the hash table
+ * @param entries      Total number of entries in the hash table
+ * @param key          Pointer to the key to lookup
+ * @param key_sz       Size of the key
+ * @param added        A return flag that indicates that an add (1) was done
+ *                     Only valid if the return value is not -1
+ * @return             The index of the found or added hash value.
+ *                     -1 if the entry was not found and the CAM is full.
+ *
+ * This function performs a cam lookup add operation.  It computes
+ * hash values and performs a lookup add in the hash table.  It will *not*
+ * compare the key in case of a hit.
+ * If the entry was found (hit) the return value is the index of the found
+ * entry and the @add flag is set to 0.
+ * If an add was performed the return value is the index of the CAM entry
+ * where the hash value was inserted to and the @add flag will be set to 1.
+ * If the entry was not found but the add has failed (CAM was full) -1 will
+ * be returned.
+ */
+__intrinsic int32_t camht_lookup_idx_add(__mem void *hash_tbl, int32_t entries,
+                                         void *key, size_t key_sz,
+                                         int32_t* added);
+
 #endif /* _LU__CAM_HASH_H_ */
 
 /* -*-  Mode:C; c-basic-offset:4; tab-width:4 -*- */
