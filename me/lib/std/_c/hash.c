@@ -253,6 +253,136 @@ cls_hash(__xwrite void *key, __cls void *mask, uint32_t size, uint32_t idx)
 }
 
 /*
+ * NOTE: This function assumes the caller has set the INDIRECT_PREDICATE_CC
+ *       register for N condition code.
+ */
+__intrinsic static uint32_t
+hash_toeplitz_block(uint32_t input, __gpr uint32_t prev_result,
+                    __gpr uint32_t*sk0, __gpr uint32_t *sk1)
+{
+    __gpr uint32_t bit_val;
+    __gpr uint32_t iter;
+    __gpr uint32_t result = 0;
+    __gpr uint32_t inputa;
+
+    __asm __attribute(LITERAL_ASM) {
+        alu[result, --, B, prev_result]
+
+        /*
+         * We make the decision on whether to store the result of XOR in the
+         * code below on whether the most significant bit of the input we are
+         * looking at is 1 or not using the N condition code of the previous
+         * instruction.
+         */
+
+        /*
+         * Need to take care of the most significant bit of input outside the
+         * loop as the loop starts by shifting left the input for predicate_cc.
+         */
+        alu[bit_val, --, B, input]
+        alu[result, result, XOR, *sk0], predicate_cc
+        dbl_shf[*sk0, *sk0, *sk1, >> 31]
+        alu_shf[*sk1, --, B, *sk1, << 1]
+
+        /*
+         * Go through the rest of the bits in bitval, looking at the
+         * most significant bit and XOR'ing it with the corresponding
+         * secret key if that bit is 1. Do two bits each round in the loop
+         * covering 30 bits, the least significant bit is handled outside
+         * the loop.
+         */
+        immed[iter, 14]
+
+do_repeat_loop:
+
+        alu_shf[bit_val, --, B, bit_val, << 1]
+        alu[result, result, XOR, *sk0], predicate_cc
+        dbl_shf[*sk0, *sk0, *sk1, >> 31]
+        alu_shf[*sk1, --, B, *sk1, << 1]
+
+        alu_shf[bit_val, --, B, bit_val, << 1]
+        alu[result, result, XOR, *sk0], predicate_cc
+
+        alu[iter, iter, -, 1]
+        bge[do_repeat_loop], defer[2]
+        dbl_shf[*sk0, *sk0, *sk1, >> 31]
+        alu_shf[*sk1, --, B, *sk1, << 1]
+
+        /* Take care of the last bit. */
+        alu_shf[bit_val, --, B, bit_val, << 1]
+        alu[result, result, XOR, *sk0], predicate_cc
+        dbl_shf[*sk0, *sk0, *sk1, >> 31]
+        alu_shf[*sk1, --, B, *sk1, << 1]
+    }
+
+    return result;
+}
+
+__intrinsic static void
+__hash_toeplitz_copy(void *s, int n)
+{
+    REGPTR src = s;
+    REGPTR dst = s;
+
+    switch (n) {
+    case 1:
+        dst[1] = src[2];
+        break;
+    case 2:
+        dst[1] = src[2];
+        dst[2] = src[3];
+        break;
+    case 3:
+        dst[1] = src[2];
+        dst[2] = src[3];
+        dst[3] = src[4];
+        break;
+    case 4:
+        dst[1] = src[2];
+        dst[2] = src[3];
+        dst[3] = src[4];
+        dst[4] = src[5];
+        break;
+    case 5:
+        dst[1] = src[2];
+        dst[2] = src[3];
+        dst[3] = src[4];
+        dst[4] = src[5];
+        dst[5] = src[6];
+        break;
+    case 6:
+        dst[1] = src[2];
+        dst[2] = src[3];
+        dst[3] = src[4];
+        dst[4] = src[5];
+        dst[5] = src[6];
+        dst[6] = src[7];
+        break;
+    case 7:
+        dst[1] = src[2];
+        dst[2] = src[3];
+        dst[3] = src[4];
+        dst[4] = src[5];
+        dst[5] = src[6];
+        dst[6] = src[7];
+        dst[7] = src[8];
+        break;
+    case 8:
+        dst[1] = src[2];
+        dst[2] = src[3];
+        dst[3] = src[4];
+        dst[4] = src[5];
+        dst[5] = src[6];
+        dst[6] = src[7];
+        dst[7] = src[8];
+        dst[8] = src[9];
+        break;
+    }
+}
+
+
+
+/*
  * Toeplitz hash implementation for RSS. Sources:
 http://msdn.microsoft.com/en-us/library/windows/hardware/ff570725%28v=vs.85%29.aspx
 and
@@ -261,10 +391,12 @@ http://download.microsoft.com/download/5/D/6/5D6EAF2B-7DDF-476B-93DC-7CF0072878E
 __intrinsic uint32_t
 hash_toeplitz(void *s, size_t n, void *k, size_t nk)
 {
-    REGPTR t = s;
-    uint32_t sk[HASH_TOEPLITZ_SECRET_KEY_SZ/sizeof(uint32_t)];
+    __xrw unsigned *t = s;
+    __gpr uint32_t sk[HASH_TOEPLITZ_SECRET_KEY_SZ/sizeof(uint32_t)];
     __gpr int result = 0;
-    int i, j, sk_idx;
+    __gpr uint32_t tmp;
+    int i, j, sk_idx, num_words = n >> 2;
+    unsigned int current_ctx = ctx();
 
     /* Make sure the parameters are as we expect */
     ctassert(__is_in_reg_or_lmem(s));
@@ -278,113 +410,43 @@ hash_toeplitz(void *s, size_t n, void *k, size_t nk)
     /* create local copy of the secret key */
     reg_cp((void *)sk, k, nk);
 
-    for (j = 31; j >= 0; j--) {
-        if ((t[0] >> j) & 1)
-            result ^= (sk[0]);
-        sk[0] = (sk[0] << 1) | ((sk[1] >> 31) & 1);
-        sk[1] = (sk[1] << 1);
-    }
-    sk[1] = sk[2];
-    sk[2] = sk[3];
-    sk[3] = sk[4];
-    sk[4] = sk[5];
-    sk[5] = sk[6];
-    sk[6] = sk[7];
-    sk[7] = sk[8];
-    sk[8] = sk[9];
+    local_csr_write(local_csr_csr_ctx_pointer, current_ctx);
+    local_csr_write(local_csr_indirect_predicate_cc, 0x2);
 
-    for (j = 31; j >= 0; j--) {
-        if ((t[1] >> j) & 1)
-            result ^= (sk[0]);
-        sk[0] = (sk[0] << 1) | ((sk[1] >> 31) & 1);
-        sk[1] = (sk[1] << 1);
-    }
-    sk[1] = sk[2];
-    sk[2] = sk[3];
-    sk[3] = sk[4];
-    sk[4] = sk[5];
-    sk[5] = sk[6];
-    sk[6] = sk[7];
-    sk[7] = sk[8];
+    result = hash_toeplitz_block(t[0], result, &sk[0], &sk[1]);
+    __hash_toeplitz_copy(sk, num_words - 1);
 
+    result = hash_toeplitz_block(t[1], result, &sk[0], &sk[1]);
     if (n == 8)
         goto out;
 
-    for (j = 31; j >= 0; j--) {
-        if ((t[2] >> j) & 1)
-            result ^= (sk[0]);
-        sk[0] = (sk[0] << 1) | ((sk[1] >> 31) & 1);
-        sk[1] = (sk[1] << 1);
-    }
-    sk[1] = sk[2];
-    sk[2] = sk[3];
-    sk[3] = sk[4];
-    sk[4] = sk[5];
-    sk[5] = sk[6];
-    sk[6] = sk[7];
+    __hash_toeplitz_copy(sk, num_words - 2);
 
+    result = hash_toeplitz_block(t[2], result, &sk[0], &sk[1]);
     if (n == 12)
         goto out;
 
-    for (j = 31; j >= 0; j--) {
-        if ((t[3] >> j) & 1)
-            result ^= (sk[0]);
-        sk[0] = (sk[0] << 1) | ((sk[1] >> 31) & 1);
-        sk[1] = (sk[1] << 1);
-    }
-    sk[1] = sk[2];
-    sk[2] = sk[3];
-    sk[3] = sk[4];
-    sk[4] = sk[5];
-    sk[5] = sk[6];
+    __hash_toeplitz_copy(sk, num_words - 3);
 
-    for (j = 31; j >= 0; j--) {
-        if ((t[4] >> j) & 1)
-            result ^= (sk[0]);
-        sk[0] = (sk[0] << 1) | ((sk[1] >> 31) & 1);
-        sk[1] = (sk[1] << 1);
-    }
-    sk[1] = sk[2];
-    sk[2] = sk[3];
-    sk[3] = sk[4];
-    sk[4] = sk[5];
+    result = hash_toeplitz_block(t[3], result, &sk[0], &sk[1]);
+    __hash_toeplitz_copy(sk, num_words - 4);
 
-    for (j = 31; j >= 0; j--) {
-        if ((t[5] >> j) & 1)
-            result ^= (sk[0]);
-        sk[0] = (sk[0] << 1) | ((sk[1] >> 31) & 1);
-        sk[1] = (sk[1] << 1);
-    }
-    sk[1] = sk[2];
-    sk[2] = sk[3];
-    sk[3] = sk[4];
+    result = hash_toeplitz_block(t[4], result, &sk[0], &sk[1]);
+    __hash_toeplitz_copy(sk, num_words - 5);
 
-    for (j = 31; j >= 0; j--) {
-        if ((t[6] >> j) & 1)
-            result ^= (sk[0]);
-        sk[0] = (sk[0] << 1) | ((sk[1] >> 31) & 1);
-        sk[1] = (sk[1] << 1);
-    }
-    sk[1] = sk[2];
-    sk[2] = sk[3];
+    result = hash_toeplitz_block(t[5], result, &sk[0], &sk[1]);
+    __hash_toeplitz_copy(sk, num_words - 6);
 
-    for (j = 31; j >= 0; j--) {
-        if ((t[7] >> j) & 1)
-            result ^= (sk[0]);
-        sk[0] = (sk[0] << 1) | ((sk[1] >> 31) & 1);
-        sk[1] = (sk[1] << 1);
-    }
-    sk[1] = sk[2];
+    result = hash_toeplitz_block(t[6], result, &sk[0], &sk[1]);
+    __hash_toeplitz_copy(sk, num_words - 7);
 
+    result = hash_toeplitz_block(t[7], result, &sk[0], &sk[1]);
     if (n == 32)
         goto out;
 
-    for (j = 31; j >= 0; j--) {
-        if ((t[8] >> j) & 1)
-            result ^= (sk[0]);
-        sk[0] = (sk[0] << 1) | ((sk[1] >> 31) & 1);
-        sk[1] = (sk[1] << 1);
-    }
+    __hash_toeplitz_copy(sk, num_words - 8);
+
+    result = hash_toeplitz_block(t[8], result, &sk[0], &sk[1]);
 
 out:
     return result;
