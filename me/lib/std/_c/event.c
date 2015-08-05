@@ -17,7 +17,9 @@
  * @brief         Event filters, autopush, and event managers
  */
 
+#include <assert.h>
 #include <nfp.h>
+#include <types.h>
 
 #include <nfp/cls.h>
 #include <nfp/me.h>
@@ -123,17 +125,31 @@ event_cls_autopush_signal_setup(unsigned int apnum, unsigned int master,
 }
 
 __intrinsic void
-event_cls_autopush_filter_reset(unsigned int fnum, unsigned int type,
-                                unsigned int autopush)
+__event_cls_autopush_filter_reset(unsigned int fnum, unsigned int type,
+                                  unsigned int autopush, sync_t sync,
+                                  SIGNAL *sig)
 {
     __cls void *apfaddr = (__cls void *)NFP_CLS_AUTOPUSH_STATUS(fnum);
     __xwrite unsigned int apfval;
 
+    ctassert(__is_ct_const(sync));
+    ctassert(sync == sig_done || sync == ctx_swap);
+
     apfval = (NFP_CLS_AUTOPUSH_STATUS_MONITOR(type) |
               NFP_CLS_AUTOPUSH_STATUS_AUTOPUSH(autopush));
 
-    cls_write(&apfval, apfaddr, sizeof(apfval));
+    __cls_write(&apfval, apfaddr, sizeof(apfval), sizeof(apfval), sync, sig);
 }
+
+
+__intrinsic void
+event_cls_autopush_filter_reset(unsigned int fnum, unsigned int type,
+                                unsigned int autopush)
+{
+    SIGNAL sig;
+    __event_cls_autopush_filter_reset(fnum, type, autopush, ctx_swap, &sig);
+}
+
 
 __intrinsic void
 event_cls_autopush_filter_disable(unsigned int fnum)

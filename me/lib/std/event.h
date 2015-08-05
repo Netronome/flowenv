@@ -102,7 +102,15 @@ __intrinsic void event_cls_autopush_signal_setup(unsigned int apnum,
  * @param fnum          autopush filter number
  * @param type          autopush filter type
  * @param autopush      autopush signal to invoke
+ * @param sync          type of synchronization (sig_done or ctx_swap)
+ * @param sig           signal to use
  */
+__intrinsic void __event_cls_autopush_filter_reset(unsigned int fnum,
+                                                   unsigned int type,
+                                                   unsigned int autopush,
+                                                   sync_t sync,
+                                                   SIGNAL *sig);
+
 __intrinsic void event_cls_autopush_filter_reset(unsigned int fnum,
                                                  unsigned int type,
                                                  unsigned int autopush);
