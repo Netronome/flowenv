@@ -119,7 +119,7 @@ event_cls_autopush_signal_setup(unsigned int apnum, unsigned int master,
                  ((thd & 0x7) << 4) | (signum & 0xf)) |
              NFP_CLS_AUTOPUSH_SIGNAL_MASTER_ISL_HI(master>>8) |
              NFP_CLS_AUTOPUSH_SIGNAL_DATA_REF(
-                 ((thd & 0x7) << 7) | ((xfernum & 0x1f) << 2)));
+                 ((thd & 0x7) << 7) | ((xfernum & 0x3f) << 2)));
 
     cls_write(&apcfg, apaddr, sizeof(apcfg));
 }

@@ -87,8 +87,13 @@ __intrinsic void event_cls_user_event(unsigned int evdata);
  *
  * Set up an autopush entry to signal the indicated ME thread and push
  * a value to the indicated xfer register.  The @master parameter is
- * only four bbits wide, indicating the ME master within the current
- * cluster.
+ * only four bits wide, indicating the ME master within the current
+ * cluster. The xfernum is 6 bits wide and thd is 3 bits wide but they
+ * combine into signal data reference as 8 bits.  When in 8 CTX mode
+ * the CTX (thd) uses the MSB of the transfer register (CCCT TTTT). When in
+ * 4 CTX mode the xfernum uses the LSB of the CTX (thd) (CCTT TTTT). They do
+ * not interfere with each other because in 4 CTX mode CTX (thd) can
+ * only be (0, 2, 4, 6) and in 8 CTX mode xfernum can only be (0-31).
  */
 __intrinsic void event_cls_autopush_signal_setup(unsigned int apnum,
                                                  unsigned int master,
