@@ -107,9 +107,17 @@ ones_sum_warr(__xread uint32_t *buf, uint32_t len)
     __gpr uint32_t nwords;
     __gpr uint32_t nskip;
     t_val = ((__ctx() << 5) | __xfer_reg_number(buf)) << 2;
+
+    __asm local_csr_wr[t_index, t_val]
+
+    if (__is_ct_const(len)) {
+        __asm nop
+        __asm nop
+        __asm nop
+    }
+
     __asm __attribute(ASM_HAS_JUMP)
     {
-        local_csr_wr[t_index, t_val]
         alu[nwords, --, B, len, >>2]
         alu[nskip, 16, -, nwords]
         jump[nskip, sum16w], targets[sum16w, sum15w, sum14w, sum13w,\
