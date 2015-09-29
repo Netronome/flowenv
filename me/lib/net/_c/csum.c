@@ -111,9 +111,7 @@ ones_sum_warr(__xread uint32_t *buf, uint32_t len)
     __asm local_csr_wr[t_index, t_val]
 
     if (__is_ct_const(len)) {
-        __asm nop
-        __asm nop
-        __asm nop
+        __asm __attribute(LITERAL_ASM) { {nop} {nop} {nop} }
     }
 
     __asm __attribute(ASM_HAS_JUMP)
