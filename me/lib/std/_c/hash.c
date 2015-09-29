@@ -411,7 +411,9 @@ hash_toeplitz(void *s, size_t n, void *k, size_t nk)
     reg_cp((void *)sk, k, nk);
 
     local_csr_write(local_csr_csr_ctx_pointer, current_ctx);
+    __asm __attribute(LITERAL_ASM) { {nop} {nop} {nop} };
     local_csr_write(local_csr_indirect_predicate_cc, 0x2);
+    __asm __attribute(LITERAL_ASM) { {nop} {nop} {nop} {nop} {nop} }
 
     result = hash_toeplitz_block(t[0], result, &sk[0], &sk[1]);
     __hash_toeplitz_copy(sk, num_words - 1);
