@@ -33,6 +33,7 @@ __intrinsic void
 synch_cnt_dram_reset(__dram struct synch_cnt *s, uint32_t cnt)
 {
     __xwrite uint32_t wrval = cnt;
+
     mem_write_atomic(&wrval, s, sizeof(wrval));
 }
 
@@ -46,6 +47,7 @@ __intrinsic int
 synch_cnt_dram_poll(__dram struct synch_cnt *s)
 {
     __xread uint32_t rdval;
+
     mem_read_atomic(&rdval, s, sizeof(rdval));
     return rdval;
 }
@@ -57,7 +59,8 @@ synch_cnt_dram_wait(__dram struct synch_cnt *s)
 }
 
 __intrinsic void
-sem_cls_wait(__cls struct sem *s, const uint32_t max_credits, uint32_t poll_interval)
+sem_cls_wait(__cls struct sem *s, const uint32_t max_credits,
+             uint32_t poll_interval)
 {
     __xrw struct sem xrw;
     __gpr int32_t my_credit;

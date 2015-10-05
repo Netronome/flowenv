@@ -53,7 +53,6 @@ event_cls_filter_setup(__cls struct event_cls_filter *filter,
               NFP_EM_FILTER_MASK_EVENT(mask));
     evstatus = status.__raw;
 
-
     __cls_write(&evmatch, faddr + NFP_CLS_EM_CSR_SPACING * NFP_EM_FILTER_MATCH,
                 sizeof(evmatch), sizeof(evmatch), sig_done, &s1);
     __cls_write(&evmask, faddr + NFP_CLS_EM_CSR_SPACING * NFP_EM_FILTER_MASK,
@@ -102,6 +101,7 @@ __intrinsic void
 event_cls_user_event(unsigned int evdata)
 {
     __xwrite unsigned int out = evdata;
+
     cls_write(&out, (__cls void *)NFP_CLS_AUTOPUSH_USER_EVENT, sizeof(out));
 }
 
@@ -141,15 +141,14 @@ __event_cls_autopush_filter_reset(unsigned int fnum, unsigned int type,
     __cls_write(&apfval, apfaddr, sizeof(apfval), sizeof(apfval), sync, sig);
 }
 
-
 __intrinsic void
 event_cls_autopush_filter_reset(unsigned int fnum, unsigned int type,
                                 unsigned int autopush)
 {
     SIGNAL sig;
+
     __event_cls_autopush_filter_reset(fnum, type, autopush, ctx_swap, &sig);
 }
-
 
 __intrinsic void
 event_cls_autopush_filter_disable(unsigned int fnum)

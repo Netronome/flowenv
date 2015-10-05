@@ -81,15 +81,13 @@
  */
 
 /**
- * Setup a CLS write alert config
- *
- * @param addr_mask  write alert address mask (8 bits)
- * @param addr_match write_alert address match (8 bits)
- * @param region     region (0-7) Sets number of bytes per bit set
- * @param events     set to enable write_alert event generation.
- * @param data63     set to enable write alert on 63rd bit set in data.
- *
- **/
+ * Setup a CLS write alert config.
+ * @param addr_mask   Write alert address mask (8 bits)
+ * @param addr_match  Write_alert address match (8 bits)
+ * @param region      Region (0-7) Sets number of bytes per bit set
+ * @param events      Enable write_alert event generation
+ * @param data63      Enable write alert on 63rd bit set in data
+ */
 __intrinsic void cls_write_alert_setup(unsigned int addr_mask,
                                        unsigned int addr_match,
                                        unsigned int region,
@@ -103,11 +101,10 @@ __intrinsic void cls_write_alert_disable();
 
 /**
  * Read CLS write alert pending value.
- *
- * @param wa_pending each bit indicates the region a write alert occurred in.
- * @param size       size of bytes to read. Must be 8.
- * @param sync       type of synchronization (sig_done or ctx_swap)
- * @param sig        signal to use
+ * @param wa_pending  Each bit indicates the region a write alert occurred in
+ * @param size        Size of bytes to read (must be 8)
+ * @param sync        Type of synchronization (sig_done or ctx_swap)
+ * @param sig         Signal to use
  *
  * Reads the write alert pending and returns it in wa_pending.
  * Write alert pending is a 64 bit value.
@@ -123,15 +120,13 @@ __intrinsic void cls_read_write_alert_pending(__xread void *wa_pending,
 
 /**
  * Configures CLS write alert events.
- *
- * @param fnum      Event filter number.
- * @param apnum     Autopush signal number.
- * @parpm emeid     Event micro engine id.
- * @param ectx      Event context.
- * @param esig      Event signal.
- * @param exfer     Event read register.
- *
- * Return a filter handle to be used if a write alert is being disabled later.
+ * @param fnum      Event filter number
+ * @param apnum     Autopush signal number
+ * @parpm emeid     Event micro engine id
+ * @param ectx      Event context
+ * @param esig      Event signal
+ * @param exfer     Event read register
+ * @return Filter handle to be used if a write alert is being disabled later.
  *
  * The write alert feature only sends a NFP_EVENT_TYPE_VALUE_UPDATED event
  * type when write alerting has "events" enabled. This function does not need
@@ -143,16 +138,15 @@ __intrinsic void cls_read_write_alert_pending(__xread void *wa_pending,
  * NOTE: after an event is received cls_write_alert_event_reset() must be
  * called to re-arm the the event.
  */
-__intrinsic __cls struct event_cls_filter *
-    cls_write_alert_event_setup(unsigned int fnum, unsigned int apnum,
-                                unsigned int emeid, unsigned int ectx,
-                                unsigned int esig, unsigned int exfer);
+__intrinsic __cls struct event_cls_filter *cls_write_alert_event_setup(
+    unsigned int fnum, unsigned int apnum,
+    unsigned int emeid, unsigned int ectx,
+    unsigned int esig, unsigned int exfer);
 
 /**
  * Disable CLS write alert events.
- *
  * @param filter  Event filter handle
- * @param fnum    Event filter number.
+ * @param fnum    Event filter number
  *
  * This function tears down both the event filter and autopush using the filter
  * event handle obtained when the write alert event was setup.
@@ -164,9 +158,8 @@ __intrinsic void cls_write_alert_event_disable(__cls struct event_cls_filter
 
 /**
  * Resets (re-arms) a CLS write alert event.
- *
- * @param fnum      Event filter number.
- * @param apnum     Autopush signal number.
+ * @param fnum      Event filter number
+ * @param apnum     Autopush signal number
  *
  * Resets a CLS write alert autopush event. The write alert always uses a
  * NFP_CLS_AUTOPUSH_STATUS_MONITOR_ONE_SHOT_ACK monitor type.

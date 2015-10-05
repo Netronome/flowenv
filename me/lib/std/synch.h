@@ -45,7 +45,6 @@ struct sem {
 
 /**
  * Declare and initialize a CLS semaphore.
- *
  * @param _name     Name of the semaphore
  * @param _cnt      Max number of credits
  *
@@ -57,8 +56,7 @@ struct sem {
     static const uint32_t SYNCH_CRED_NAME(_name) = _cnt;
 
 /**
- * Wrapper to take a semaphore
- *
+ * Wrapper to take a semaphore.
  * @param _name             Name of the semaphore
  * @param _poll_interval    Cycles to wait if no credits are available
  *
@@ -71,43 +69,41 @@ struct sem {
                  _poll_interval);
 
 /**
- * Wrapper to give a semaphore
- *
+ * Wrapper to give a semaphore.
  * @param _name     Name of the semaphore
  */
 #define SEM_POST(_name)     \
     sem_cls_post(&SYNCH_SEM_NAME(_name));
 
 /**
- * Reset DRAM synch counter
- * @param s     synch counter
- * @param cnt   reset value
+ * Reset DRAM synch counter.
+ * @param s     Synch counter
+ * @param cnt   Reset value
  */
 __intrinsic void synch_cnt_dram_reset(__dram struct synch_cnt *s, uint32_t cnt);
 
 /**
- * Ack DRAM synch counter
- * @param s     synch counter
+ * Ack DRAM synch counter.
+ * @param s     Synch counter
  */
 __intrinsic void synch_cnt_dram_ack(__dram struct synch_cnt *s);
 
 /**
- * Poll DRAM synch counter
- * @param s     synch counter
+ * Poll DRAM synch counter.
+ * @param s     Synch counter
  *
  * Poll synch counter and return non-nil if not zero.
  */
 __intrinsic int synch_cnt_dram_poll(__dram struct synch_cnt *s);
 
 /**
- * Wait for DRAM synch counter to reach zero
- * @param s     synch counter
+ * Wait for DRAM synch counter to reach zero.
+ * @param s     Synch counter
  */
 __intrinsic void synch_cnt_dram_wait(__dram struct synch_cnt *s);
 
 /**
  * Take a semaphore.  Users should use the SEM_WAIT() macro.
- *
  * @param sem               Semaphore handle
  * @param max_credits       Max number of credits available
  * @param poll_interval     Cycles to wait if no credits are available
@@ -122,7 +118,6 @@ __intrinsic void sem_cls_wait(__cls struct sem *sem, const uint32_t max_credits,
 
 /**
  * Give a semaphore.  Users should use the SEM_POST() macro.
- *
  * @param sem   Semaphore handle
  *
  * @note Users must call sem_cls_wait() before sem_cls_post().

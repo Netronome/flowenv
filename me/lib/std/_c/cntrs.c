@@ -85,7 +85,6 @@ cntr64_add(unsigned int base, unsigned int offset, unsigned int count)
 }
 
 
-
 __intrinsic unsigned int
 cntr64_cls_get_addr(__cls void *base)
 {
@@ -146,7 +145,6 @@ cntr64_cls_add(unsigned int base, unsigned int offset, unsigned int count)
 }
 
 
-
 __intrinsic struct pkt_cntr_addr
 pkt_cntr_get_addr(__imem __addr40 void *base)
 {
@@ -154,6 +152,7 @@ pkt_cntr_get_addr(__imem __addr40 void *base)
 
     cntr_addr.hi = ((unsigned long long int)base >> 8) & 0xff000000;
     cntr_addr.lo = ((unsigned long long int)base >> 3) & 0x0007ffff;
+
     return cntr_addr;
 }
 

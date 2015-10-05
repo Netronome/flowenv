@@ -26,22 +26,19 @@
 struct event_cls_filter;
 
 /**
- * Get handler for CLS event filter
- *
- * @param fnum          event filter index
- *
- * Return a handle to use for other event_cls_filter functions.
+ * Get handler for CLS event filter.
+ * @param fnum          Event filter index
+ * @return Handle to use for other event_cls_filter functions
  */
 __intrinsic __cls struct event_cls_filter *event_cls_filter_handle(int fnum);
 
 /**
- * Setup CLS event filter
- *
- * @param filter        event filter handle
- * @param type          type of event filter
- * @param match         match value for filter
- * @param mask          mask value for filter
- * @param status        configuration for the event filter status field
+ * Setup CLS event filter.
+ * @param filter        Event filter handle
+ * @param type          Type of event filter
+ * @param match         Match value for filter
+ * @param mask          Mask value for filter
+ * @param status        Configuration for the event filter status field
  */
 __intrinsic void event_cls_filter_setup(__cls struct event_cls_filter *filter,
                                         int type,
@@ -49,26 +46,23 @@ __intrinsic void event_cls_filter_setup(__cls struct event_cls_filter *filter,
                                         struct nfp_em_filter_status status);
 
 /**
- * Disable CLS event filter
- *
- * @param filter        event filter handle
+ * Disable CLS event filter.
+ * @param filter        Event filter handle
  */
 __intrinsic void event_cls_filter_disable(
     __cls struct event_cls_filter *filter);
 
 /**
- * Acknowledge CLS event filter
- *
- * @param filter        event filter handle
+ * Acknowledge CLS event filter.
+ * @param filter        Event filter handle
  */
 __intrinsic unsigned int event_cls_filter_ack(
     __cls struct event_cls_filter *filter);
 
 
 /**
- * Trigger event on event bus
- *
- * @param evdata        event data
+ * Trigger event on event bus.
+ * @param evdata        Event data
  *
  * Trigger an event on the event bus.  The upper four bits of the
  * event data (i.e., the event provider bits in [19:16]) are hardcoded
@@ -77,12 +71,11 @@ __intrinsic unsigned int event_cls_filter_ack(
 __intrinsic void event_cls_user_event(unsigned int evdata);
 
 /**
- * Setup an event autopush signal
- *
- * @param apnum         autopush signal index number
- * @param master        master to push to
- * @param thd           thread number
- * @param signum        signal number
+ * Setup an event autopush signal.
+ * @param apnum         Autopush signal index number
+ * @param master        Master to push to
+ * @param thd           Thread number
+ * @param signum        Signal number
  * @param xfernum       xfer register number
  *
  * Set up an autopush entry to signal the indicated ME thread and push
@@ -103,12 +96,11 @@ __intrinsic void event_cls_autopush_signal_setup(unsigned int apnum,
 
 /**
  * Reset an event autopush filter
- *
- * @param fnum          autopush filter number
- * @param type          autopush filter type
- * @param autopush      autopush signal to invoke
- * @param sync          type of synchronization (sig_done or ctx_swap)
- * @param sig           signal to use
+ * @param fnum          Autopush filter number
+ * @param type          Autopush filter type
+ * @param autopush      Autopush signal to invoke
+ * @param sync          Type of synchronization (sig_done or ctx_swap)
+ * @param sig           Signal to use
  */
 __intrinsic void __event_cls_autopush_filter_reset(unsigned int fnum,
                                                    unsigned int type,
@@ -121,9 +113,8 @@ __intrinsic void event_cls_autopush_filter_reset(unsigned int fnum,
                                                  unsigned int autopush);
 
 /**
- * Disable an event autopush filter
- *
- * @param fnum          autopush filter number
+ * Disable an event autopush filter.
+ * @param fnum          Autopush filter number
  */
 __intrinsic void event_cls_autopush_filter_disable(unsigned int fnum);
 

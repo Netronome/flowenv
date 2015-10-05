@@ -29,8 +29,7 @@
 #include <types.h>
 
 /**
- * Compute the CRC32 over a region located in registers
- *
+ * Compute the CRC32 over a region located in registers.
  * @param s     Pointer to a region
  * @param n     Size of region (in bytes)
  * @param init  Initial seed value
@@ -42,8 +41,7 @@
 __intrinsic uint32_t hash_me_crc32(void *s, size_t n, uint32_t init);
 
 /**
- * Compute the CRC32-C (iSCSI)  over a region located in registers
- *
+ * Compute the CRC32-C (iSCSI) over a region located in registers.
  * @param s     Pointer to a region
  * @param n     Size of region (in bytes)
  * @param init  Initial seed value
@@ -67,12 +65,12 @@ __intrinsic uint32_t hash_me_crc32(void *s, size_t n, uint32_t init);
 void cls_hash_init(__cls void *mask, uint32_t size);
 
 /**
- * Create a 64-bit hash_index over the transfer registers
+ * Create a 64-bit hash_index over the transfer registers.
  * @param key       Pointer to sufficient write transfer registers for the hash
  * @param mask      Pointer to the start of the mask in CLS
  * @param size      Size of the key/mask, must be a multiple of 4. Valid [4-128]
  * @param idx       CLS hash index. Valid [0-7]
- * @return          a 64-bit hash of the key
+ * @return          64-bit hash of the key
  *
  * This function clears the hash index before creating the hash over the
  * transfer registers. User should call cls_hash_init() prior to this.
@@ -91,8 +89,7 @@ uint64_t cls_hash(__xwrite void *key, __cls void *mask, uint32_t size,
 #define HASH_TOEPLITZ_SECRET_KEY_SZ    40
 
 /**
- * Compute the Toeplitz hash over a region located in registers
- *
+ * Compute the Toeplitz hash over a region located in registers.
  * @param s     Pointer to a region
  * @param n     Size of region (in bytes)
  * @param k     Secret hash key (not the input region 's')

@@ -32,10 +32,8 @@
 #include <nfp.h>
 #include <types.h>
 
-
 /**
- * Set a region located in registers to set value
- *
+ * Set a region located in registers to set value.
  * @param d     Destination
  * @param s_val Set value
  * @param n     Size of region (in bytes)
@@ -46,10 +44,8 @@
  */
 __intrinsic void reg_set(void *d, unsigned int s_val, size_t n);
 
-
 /**
  * Zero a region located in registers.
- *
  * @param s     Pointer to the region
  * @param n     Size of region (in bytes)
  *
@@ -58,10 +54,8 @@ __intrinsic void reg_set(void *d, unsigned int s_val, size_t n);
  */
 __intrinsic void reg_zero(void *s, size_t n);
 
-
 /**
- * Copy a region located in registers to another region or memory
- *
+ * Copy a region located in registers to another region or memory.
  * @param d     Destination
  * @param s     Source
  * @param n     Size of region (in bytes)
@@ -72,10 +66,8 @@ __intrinsic void reg_zero(void *s, size_t n);
  */
 __intrinsic void reg_cp(void *d, void *s, size_t n);
 
-
 /**
- * Compare to memory regions located in registers for equality
- *
+ * Compare to memory regions located in registers for equality.
  * @param s1    Pointer to a region
  * @param s2    Pointer to a region
  * @param n     Size of region (in bytes)

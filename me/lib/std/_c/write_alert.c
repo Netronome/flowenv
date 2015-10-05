@@ -37,13 +37,11 @@ cls_write_alert_setup(unsigned int addr_mask, unsigned int addr_match,
     __gpr unsigned int wacfg_temp = 0;
     __xwrite unsigned int wacfg;
 
-    if (events) {
+    if (events)
        wacfg_temp |= NFP_CLS_AUTOPUSH_WRITE_ALERT_CFG_EVENTS;
-    }
 
-    if (data63) {
+    if (data63)
         wacfg_temp |= NFP_CLS_AUTOPUSH_WRITE_ALERT_CFG_DATA63;
-    }
 
     wacfg_temp |= (NFP_CLS_AUTOPUSH_WRITE_ALERT_CFG_ADDR_MASK(addr_mask) |
                   NFP_CLS_AUTOPUSH_WRITE_ALERT_CFG_ADDR_MATCH(addr_match) |
@@ -69,6 +67,7 @@ __cls_read_write_alert_pending(__xread void *wa_pending, size_t size,
 {
     ctassert(__is_read_reg(wa_pending));
     try_ctassert(size == 8);
+
     __cls_read((void *)&wa_pending,
                (__cls void *)NFP_CLS_AUTOPUSH_WRITE_ALERT_PEND,
                size, size, sync, sig);
@@ -78,6 +77,7 @@ __intrinsic void
 cls_read_write_alert_pending(__xread void *wa_pending, size_t size)
 {
     SIGNAL sig;
+
     __cls_read_write_alert_pending(wa_pending, size, ctx_swap, &sig);
 }
 
@@ -88,13 +88,14 @@ cls_write_alert_event_setup(unsigned int fnum, unsigned int apnum,
 {
     struct nfp_em_filter_status status;
     __cls struct event_cls_filter *filter;
-    unsigned int event_mask = NFP_EVENT_MATCH(0xFF, 0,
-                                              NFP_EVENT_TYPE_VALUE_UPDATED);
-    unsigned int event_match = NFP_EVENT_MATCH((NFP_EVENT_PROVIDER_NUM(
-                                               emeid >> 4,
-                                               NFP_EVENT_PROVIDER_INDEX_CLS)),
-                                               0,
-                                               NFP_EVENT_TYPE_VALUE_UPDATED);
+    unsigned int event_mask;
+    unsigned int event_match;
+
+    event_mask = NFP_EVENT_MATCH(0xFF, 0, NFP_EVENT_TYPE_VALUE_UPDATED);
+    event_match = NFP_EVENT_MATCH((NFP_EVENT_PROVIDER_NUM(
+                                       emeid >> 4,
+                                       NFP_EVENT_PROVIDER_INDEX_CLS)),
+                                  0, NFP_EVENT_TYPE_VALUE_UPDATED);
 
     status.__raw = 0;
     filter = event_cls_filter_handle(fnum);
@@ -117,7 +118,6 @@ cls_write_alert_event_disable(__cls struct event_cls_filter *filter,
 __intrinsic void
 cls_write_alert_event_reset(unsigned int fnum, unsigned int apnum)
 {
-    event_cls_autopush_filter_reset(fnum,
-                                 NFP_CLS_AUTOPUSH_STATUS_MONITOR_ONE_SHOT_ACK,
-                                 apnum);
+    event_cls_autopush_filter_reset(
+        fnum, NFP_CLS_AUTOPUSH_STATUS_MONITOR_ONE_SHOT_ACK, apnum);
 }

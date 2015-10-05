@@ -135,7 +135,7 @@ hash_me_crc32(void *s, size_t n, uint32_t init)
 
     /* every type has to be explicitly cast */
     if (__is_in_lmem(s)) {
-#define __HASH_ME_CRC32(_x)                                       \
+#define __HASH_ME_CRC32(_x) \
         crc_32_be(((__lmem unsigned int *)s)[_x], crc_bytes_0_3)
 
         _HASH_SWITCH_CASE_IMPLEMENT(n, __HASH_ME_CRC32)
@@ -143,7 +143,7 @@ hash_me_crc32(void *s, size_t n, uint32_t init)
 #undef __HASH_ME_CRC32
     } else {
         /* normal register type */
-#define __HASH_ME_CRC32(_x)                                       \
+#define __HASH_ME_CRC32(_x) \
         crc_32_be(((__gpr unsigned int *)s)[_x], crc_bytes_0_3)
 
         _HASH_SWITCH_CASE_IMPLEMENT(n, __HASH_ME_CRC32)
@@ -176,7 +176,7 @@ hash_me_crc32c(void *s, size_t n, uint32_t init)
 
     /* every type has to be explicitly cast */
     if (__is_in_lmem(s)) {
-#define __HASH_ME_CRC32C(_x)                                       \
+#define __HASH_ME_CRC32C(_x) \
         crc_iscsi_be(((__lmem unsigned int *)s)[_x], crc_bytes_0_3)
 
         _HASH_SWITCH_CASE_IMPLEMENT(n, __HASH_ME_CRC32C)
@@ -184,7 +184,7 @@ hash_me_crc32c(void *s, size_t n, uint32_t init)
 #undef __HASH_ME_CRC32C
     } else {
         /* normal register type */
-#define __HASH_ME_CRC32C(_x)                                       \
+#define __HASH_ME_CRC32C(_x) \
         crc_iscsi_be(((__gpr unsigned int *)s)[_x], crc_bytes_0_3)
 
         _HASH_SWITCH_CASE_IMPLEMENT(n, __HASH_ME_CRC32C)
@@ -379,7 +379,6 @@ __hash_toeplitz_copy(void *s, int n)
         break;
     }
 }
-
 
 
 /*

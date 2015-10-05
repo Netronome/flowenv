@@ -74,28 +74,28 @@
 
 /**
  * Declare the data structure for the 64 bits counters.
- * Using this macro ensures that the counters memory is allocated at the
- * needed alignment.
- *
  * @param _name         Name of the counters array
  * @param _entries      Number of counters
- * @param _mem_loc      The memory location the counters should be allocated in
+ * @param _mem_loc      Memory location the counters should be allocated in
  *                      __emem,__emem_n(#),__imem,__imem_n(#),
  *                      __ctm,__ctm_n(#),__cls
+ *
+ * Using this macro ensures that the counters memory is allocated at the
+ * needed alignment.
  */
 #define CNTRS64_DECLARE(_name, _entries, _mem_loc) \
     __export __shared _mem_loc __addr40 __align256 unsigned long long int _name[_entries]
 
 /**
  * Declare the data structure for the packets and bytes counters.
- * Using this macro ensures that the counters memory is allocated at the
- * needed alignment.
- *
  * @param _name         Name of the counters array
  * @param _entries      Number of counters
- * @param _imem_loc     The imem memory the packets counters shuold be
+ * @param _imem_loc     imem memory the packets counters shuold be
  *                      allocated in.
  *                      __imem, __imem_n(#)
+ *
+ * Using this macro ensures that the counters memory is allocated at the
+ * needed alignment.
  */
 #define PKTS_CNTRS_DECLARE(_name, _entries, _imem_loc) \
     __export __shared _imem_loc __addr40 __align256 unsigned long long int _name[_entries]
@@ -124,10 +124,10 @@ union stats_addr {
  * Stats address packing configuration.
  */
 enum stats_addr_pack {
-    STATS_ALL_16_BIT_PACKED             = 0x01, /* 16bit packed addresses.    */
-    STATS_ALL_32_BIT_UNPACKED           = 0x02, /* 32bit unpacked addresses.  */
-    STATS_FIRST_32_BIT_UNPACKED_ONLY    = 0x03  /* First is 32bit unpacked and
-                                                   remaining are 16bit packed.*/
+    STATS_ALL_16_BIT_PACKED          = 0x01, /* 16bit packed addresses. */
+    STATS_ALL_32_BIT_UNPACKED        = 0x02, /* 32bit unpacked addresses. */
+    STATS_FIRST_32_BIT_UNPACKED_ONLY = 0x03  /* First is 32bit unpacked and
+                                                remaining are 16bit packed. */
 };
 
 /**
@@ -162,42 +162,31 @@ union stats_push_cmd {
 
 /**
  * Get the 64 bits ctm/imem/emem counters base address.
- *
- * @param base      [in] 40 bits address of the counters memory,
- *                       must be 256 bytes aligned.
- *
- * @return - the base address as expected for the counters APIs.
+ * @param base      40 bits address of the counters memory
+ *                  (must be 256 bytes aligned)
+ * @return Base address as expected for the counters APIs.
  */
 __intrinsic unsigned int cntr64_get_addr(__mem void *base);
 
 /**
  * Clear a 64 bits ctm/imem/emem counter.
- *
- * @param base      [in] The counters base address as returned from
- *                       cntr64_get_addr.
- * @param offset    [in] The offset (counter index) of the relevant counter
- *                       from the base.
+ * @param base    Counters base address as returned from @cntr64_get_addr()
+ * @param offset  Offset (counter index) of the relevant counter from the base
  */
 __intrinsic void cntr64_clr(unsigned int base, unsigned int offset);
 
 /**
  * Increment a 64 bits ctm/imem/emem counter.
- *
- * @param base      [in] The counters base address as returned from
- *                       cntr64_get_addr.
- * @param offset    [in] The offset (counter index) of the relevant counter
- *                       from the base.
+ * @param base    Counters base address as returned from @cntr64_get_addr()
+ * @param offset  Offset (counter index) of the relevant counter from the base
  */
 __intrinsic void cntr64_incr(unsigned int base, unsigned int offset);
 
 /**
  * Add a given count value to a 64 bits ctm/imem/emem counter.
- *
- * @param base      [in] The counters base address as returned from
- *                       cntr64_get_addr.
- * @param offset    [in] The offset (counter index) of the relevant counter
- *                       from the base.
- * @param count     [in] The count value to be added.
+ * @param base    Counters base address as returned from @cntr64_get_addr()
+ * @param offset  Offset (counter index) of the relevant counter from the base.
+ * @param count   Count value to be added
  *
  * The implementation optimizes the usage depending on the type and value
  * of the given count.
@@ -214,42 +203,31 @@ __intrinsic void cntr64_add(unsigned int base, unsigned int offset,
 
 /**
  * Get the 64 bits cls counters base address.
- *
- * @param base      [in] 40 bits address of the counters memory,
- *                       must be 256 bytes aligned.
- *
- * @return - the base address as expected for the cls counters APIs.
+ * @param base    40 bits address of the counters memory
+ *                (must be 256 bytes aligned_
+ * @return Base address as expected for the cls counters APIs
  */
 __intrinsic unsigned int cntr64_cls_get_addr(__cls void *base);
 
 /**
  * Clear a 64 bits CLS counter.
- *
- * @param base      [in] The counters base address as returned from
- *                       cntr64_cls_get_addr.
- * @param offset    [in] The offset (counter index) of the relevant counter
- *                       from the base.
+ * @param base    Counters base address as returned from @cntr64_cls_get_addr()
+ * @param offset  Offset (counter index) of the relevant counter from the base
  */
 __intrinsic void cntr64_cls_clr(unsigned int base, unsigned int offset);
 
 /**
  * Increment a 64 bits CLS counter.
- *
- * @param base      [in] The counters base address as returned from
- *                       cntr64_cls_get_addr.
- * @param offset    [in] The offset (counter index) of the relevant counter
- *                       from the base.
+ * @param base    Counters base address as returned from @cntr64_cls_get_addr()
+ * @param offset  Offset (counter index) of the relevant counter from the base
  */
 __intrinsic void cntr64_cls_incr(unsigned int base, unsigned int offset);
 
 /**
  * Add a given count value to a 64 bits CLS counter.
- *
- * @param base      [in] The counters base address as returned from
- *                       cntr64_cls_get_addr.
- * @param offset    [in] The offset (counter index) of the relevant counter
- *                       from the base.
- * @param count     [in] The count value to be added.
+ * @param base    Counters base address as returned from @cntr64_cls_get_addr()
+ * @param offset  Offset (counter index) of the relevant counter from the base
+ * @param count   Count value to be added
  *
  * The implementation optimizes the usage depending on the type and value
  * of the given count.
@@ -270,12 +248,9 @@ __intrinsic void cntr64_cls_add(unsigned int base, unsigned int offset,
 
 /**
  * Get the Packets and bytes counters base address.
- *
- * @param base      [in] 40 bits address of the counters memory,
- *                       must be 256 bytes aligned.
- *
- * @return pkt_cntr_addr - the base address as expected for the
- *                         counters APIs.
+ * @param base    40 bits address of the counters memory
+ *                (must be 256 bytes aligned)
+ * @return Base address as expected for the counters APIs
  *
  * The packets and bytes counter address is held in a 64 bit structure
  * (pkt_cntr_addr) which splits the 40 bits address to "hi" and "low" parts.
@@ -287,14 +262,12 @@ __intrinsic struct pkt_cntr_addr pkt_cntr_get_addr(__imem __addr40 void *base);
 
 /**
  * Clears a packets and bytes counter.
- *
- * @param base          [in] The counters base address as returned from
- *                           cntrs_get_pkt_cntr_addr.
- * @param offset        [in] The offset (counter index) of the relevant counter
- *                           from the base.
- * @param base_select   [in] Selects the wanted MUSEBaseAddr CSR to be used.
- * @param sync          [in] The required sync type (sig_done / ctx_swap)
- * @param sig           [in] The signal's address
+ * @param base         Counters base address as returned from
+ *                     @cntrs_get_pkt_cntr_addr()
+ * @param offset       Offset (counter index) of the counter from the base
+ * @param base_select  Selects the wanted MUSEBaseAddr CSR to be used
+ * @param sync         Required sync type (sig_done / ctx_swap)
+ * @param sig          Signal to use
  */
 __intrinsic void pkt_cntr_clr(struct pkt_cntr_addr base, unsigned int offset,
                               unsigned int base_select, sync_t sync,
@@ -302,15 +275,13 @@ __intrinsic void pkt_cntr_clr(struct pkt_cntr_addr base, unsigned int offset,
 
 /**
  * Add to the packets and bytes counter.
- *
- * @param base          [in] The counters base address as returned from
- *                           cntrs_get_pkt_cntr_addr.
- * @param offset        [in] The offset (counter index) of the relevant counter
- *                           from the base.
- * @param base_select   [in] Selects the wanted MUSEBaseAddr CSR to be used.
- * @param byte_count    [in] The byte count
- * @param sync          [in] The required sync type (sig_done / ctx_swap)
- * @param sig           [in] The signal's address
+ * @param base         Counters base address as returned from
+ *                     @cntrs_get_pkt_cntr_addr()
+ * @param offset       Offset (counter index) of the counter from the base
+ * @param base_select  Selects the wanted MUSEBaseAddr CSR to be used
+ * @param byte_count   Byte count
+ * @param sync         Sync type (sig_done / ctx_swap)
+ * @param sig          Signal to use
  *
  * Packet count is incremented by 1, bytes count is incremented by
  * the given byte_count.
@@ -322,14 +293,11 @@ __intrinsic void pkt_cntr_add(struct pkt_cntr_addr base, unsigned int offset,
 
 /**
  * Reads the packets and bytes counts from a stats counter.
- *
- * @param base          [in]  The counters base address as returned from
- *                            cntrs_get_pkt_cntr_addr.
- * @param offset        [in]  The offset (counter index) of the relevant counter
- *                            from the base.
- * @param base_select   [in]  Selects the wanted MUSEBaseAddr CSR to be used.
- * @param pkt_count     [out] The packet count
- * @param byte_count    [out] The byte count
+ * @param base         Counters base address as returned from
+ *                     @cntrs_get_pkt_cntr_addr()
+ * @param offset       Offset (counter index) of the counter from the base
+ * @param base_select  Selects the wanted MUSEBaseAddr CSR to be used
+ * @param byte_count   Byte count
  *
  * Always swaps out to wait for the result.
  */
@@ -340,14 +308,12 @@ __intrinsic void pkt_cntr_read(struct pkt_cntr_addr base, unsigned int offset,
 
 /**
  * Reads and clear the packets and bytes counter.
- *
- * @param base          [in]  The counters base address as returned from
- *                            cntrs_get_pkt_cntr_addr.
- * @param offset        [in]  The offset (counter index) of the relevant counter
- *                            from the base.
- * @param base_select   [in]  Selects the wanted MUSEBaseAddr CSR to be used.
- * @param pkt_count     [out] The packet count
- * @param byte_count    [out] The byte count
+ * @param base         Counters base address as returned from
+ *                     @cntrs_get_pkt_cntr_addr()
+ * @param offset       Offset (counter index) of the counter from the base
+ * @param base_select  Selects the wanted MUSEBaseAddr CSR to be used
+ * @param pkt_count    Packet count
+ * @param byte_count   Byte count
  *
  * Always swaps out to wait for the result.
  */

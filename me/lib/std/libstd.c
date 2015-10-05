@@ -23,7 +23,6 @@
 /*
  * The following files implement all the functionality in <std/*.h>.
  */
-
 #include "_c/cntrs.c"
 #include "_c/event.c"
 #include "_c/hash.c"
