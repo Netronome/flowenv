@@ -38,33 +38,27 @@
  */
 
 /**
- * Adds, with carry, two 1s compliment sums
- *
+ * Add, with carry, two 1s compliment sums.
  * @param sum1  The first sum
  * @param sum2  The second sum
- *
  * @return The sum of both values + the carry
  */
 __intrinsic uint32_t ones_sum_add(uint32_t sum1, uint32_t sum2);
 
 /**
- * Fold a 32-bit checksum into a 16 bit value
- *
+ * Fold a 32-bit checksum into a 16 bit value.
  * @param sum  The 32 bits sum to fold
- *
  * @return The 16 bits sum after folding
  */
 __intrinsic uint16_t ones_sum_fold16(uint32_t sum);
 
 /**
- * Computes the TCP/UDP pseudo header checksum
- *
+ * Compute the TCP/UDP pseudo header checksum.
  * @param ip_type   NET_ETH_TYPE_IPV4 or NET_ETH_TYPE_IPV6
  * @param protocol  NET_IP_PROTO_TCP or NET_IP_PROTO_UDP
  * @param ip        Pointer to the IP header
  * @param l4_hdr    Pointer to the L4 header
  * @param l4_len    The length of the L4 payload
- *
  * @return A 32 bits sum of the pseudo header
  *
  * @ip and @l4_hdr must be located in LMEM or GPRs.
@@ -74,35 +68,29 @@ __intrinsic uint32_t ones_sum_pseudo(uint32_t ip_type, uint32_t protocol,
                                      void *ip, void *l4_hdr, uint32_t l4_len);
 
 /**
- * Computes checksum over a word array
- *
+ * Compute checksum over a word array.
  * @param buf   The buffer
  * @param len   The length (in bytes) of the array, must be <= 64. Does not
  *              have to be a mult of 4. If not, then the 4 - (len % 4)
  *              least significant bytes of the last word are omitted
  *              from the sum.
- *
  * @return A 32 bits sum of the entire array
  */
 __intrinsic uint32_t ones_sum_warr(__xread uint32_t *buf, uint32_t len);
 
 /**
- * Computes checksum over a memory region
- *
+ * Compute checksum over a memory region.
  * @param buf   The buffer of 32 bits words
  * @param len   The length (in bytes) of the memory region, can be arbitrary
- *
  * @return A 32 bits sum of the entire array
  */
 __intrinsic uint32_t ones_sum_mem(__addr40 void *mem, int32_t len);
 
 /**
- * Recalculate the checksum based on a single 16 bit value change
- *
+ * Recalculate the checksum based on a single 16 bit value change.
  * @param orig_csum Original header checksum
  * @param orig_val  Original value of the 16bit to change
  * @param new_val   New value for the Original value of the 16bit to change
- *
  * @return New checksum
  *
  * It is up to the caller to extract all of the relevant 16bit values.
@@ -111,11 +99,9 @@ __intrinsic uint16_t net_csum_mod(uint32_t orig_csum, uint32_t orig_val,
                                   uint32_t new_val);
 
 /**
- * Calculate the IPv4 header checksum
- *
+ * Calculate the IPv4 header checksum.
  * @param ip        Pointer to the IPv4 header
  * @param pkt_ptr   Pointer to the packet's L4 header start
- *
  * @return  IPv4 header checksum
  *
  * @ip (struct ip4_hdr) must be located in LMEM or GPRs.
@@ -134,8 +120,7 @@ __intrinsic uint16_t net_csum_mod(uint32_t orig_csum, uint32_t orig_val,
 __intrinsic uint16_t net_csum_ipv4(void *ip, __addr40 void *pkt_ptr);
 
 /**
- * Calculate the checksum of an IPv4 UDP packet
- *
+ * Calculate the checksum of an IPv4 UDP packet.
  * @param ip        Pointer to the IPv4 header
  * @param udp       Pointer to the UDP header
  * @param pkt_ctm   Address of the start of the L4 header in CTM
@@ -147,7 +132,6 @@ __intrinsic uint16_t net_csum_ipv4(void *ip, __addr40 void *pkt_ptr);
  * @param mem_len   The length of the payload (and optionally L4 header if no
  *                  CTM) in external memory (can be 0).
  *                  Must be at least 8 if there is no CTM buffer.
- *
  * @return The calculated checksum
  *
  * @ip (struct ip4_hdr) and @udp (struct udp_hdr) must be located in LMEM
@@ -171,8 +155,7 @@ __intrinsic uint16_t net_csum_ipv4_udp(void *ip, void *udp,
                                        uint32_t mem_len);
 
 /**
- * Calculate the checksum of an IPv4 TCP packet
- *
+ * Calculate the checksum of an IPv4 TCP packet.
  * @param ip        Pointer to the IPv4 header
  * @param tcp       Pointer to the TCP header
  * @param pkt_ctm   Address of the start of the L4 header in CTM
@@ -185,7 +168,6 @@ __intrinsic uint16_t net_csum_ipv4_udp(void *ip, void *udp,
  * @param mem_len   The length of the payload (and optionally L4 header if no
  *                  CTM) in external memory (can be 0).
  *                  Must be at least 20 if there is no CTM buffer.
- *
  * @return The calculated checksum
  *
  * @ip (struct ip4_hdr) and @tcp (struct tcp_hdr) must be located in
@@ -208,8 +190,7 @@ __intrinsic uint16_t net_csum_ipv4_tcp(void *ip, void *tcp,
                                        uint32_t mem_len);
 
 /**
- * Calculate the checksum of an IPv6 UDP packet
- *
+ * Calculate the checksum of an IPv6 UDP packet.
  * @param ip        Pointer to the IPv6 header
  * @param udp       Pointer to the UDP header
  * @param pkt_ctm   Address of the start of the L4 header in CTM
@@ -221,7 +202,6 @@ __intrinsic uint16_t net_csum_ipv4_tcp(void *ip, void *tcp,
  * @param mem_len   The length of the payload (and optionally L4 header if no
  *                  CTM) in external memory (can be 0).
  *                  Must be at least 8 if there is no CTM buffer.
- *
  * @return The calculated checksum
  *
  * @ip (struct ip6_hdr) and @udp (struct udp_hdr) must be located in
@@ -245,8 +225,7 @@ __intrinsic uint16_t net_csum_ipv6_udp(void *ip, void *udp,
                                        uint32_t mem_len);
 
 /**
- * Calculate the checksum of an IPv6 TCP packet
- *
+ * Calculate the checksum of an IPv6 TCP packet.
  * @param ip        Pointer to the IPv6 header
  * @param tcp       Pointer to the TCP header
  * @param pkt_ctm   Address of the start of the L4 header in CTM
@@ -259,7 +238,6 @@ __intrinsic uint16_t net_csum_ipv6_udp(void *ip, void *udp,
  * @param mem_len   The length of the payload (and optionally L4 header if no
  *                  CTM) in external memory (can be 0).
  *                  Must be at least 20 if there is no CTM buffer.
- *
  * @return The calculated checksum
  *
  * @ip (struct ip6_hdr) and @tcp (struct tcp_hdr) must be located in

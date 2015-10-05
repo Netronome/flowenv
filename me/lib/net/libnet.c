@@ -33,8 +33,8 @@
 #include <net/tcp.h>
 #include <net/udp.h>
 
-#include "_c/hdr_ext.c"
 #include "_c/csum.c"
+#include "_c/hdr_ext.c"
 
 #endif /* _LIB_NET_C_ */
 

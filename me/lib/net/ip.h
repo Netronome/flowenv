@@ -64,6 +64,7 @@
 
 
 #if defined(__NFP_LANG_MICROC)
+
 #include <nfp.h>
 #include <stdint.h>
 
@@ -109,7 +110,6 @@ __packed struct ip6_hdr {
     struct in6_addr dst;                /** Destination address */
 };
 
-
 /**
  * IPv6 Hop-by-Hop options header (NET_IP_PROTO_HOPOPT)
  */
@@ -121,7 +121,6 @@ __packed struct ip6_hbh {
     uint32_t opt_or_pad1;               /** Options or padding */
     /* Potentially followed by more options */
 };
-
 
 /**
  * IPv6 Routing header (NET_IP_PROTO_ROUTING)
@@ -135,7 +134,6 @@ __packed struct ip6_rt {
     uint32_t data;                      /** Routing data */
     /* Potentially followed by more routing data */
 };
-
 
 /**
  * IPv6 Fragment Header (NET_IP_PROTO_FRAG)
@@ -161,7 +159,6 @@ __packed struct ip6_none {
     uint32_t pad1;                      /** Padding */
 };
 
-
 /**
  * IPv6 Destination Options (NET_IP_PROTO_DSTOPTS)
  */
@@ -173,7 +170,6 @@ __packed struct ip6_dst {
     uint32_t opt_or_pad1;               /** Options or padding */
     /* Potentially followed by more options */
 };
-
 
 #endif /* __NFP_LANG_MICROC */
 

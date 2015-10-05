@@ -28,7 +28,6 @@
  * NVGRE is a particular case of of 2890
  */
 
-
 /**
  * GRE Flags
  */
@@ -47,6 +46,7 @@
      ? 1 : 0)
 
 #if defined(__NFP_LANG_MICROC)
+
 #include <nfp.h>
 #include <stdint.h>
 

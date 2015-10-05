@@ -25,6 +25,7 @@
 #define NET_VXLAN_PORT             4789
 
 #if defined(__NFP_LANG_MICROC)
+
 #include <nfp.h>
 #include <stdint.h>
 

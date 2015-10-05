@@ -31,6 +31,7 @@
 #define NET_TCP_LEN32            (NET_TCP_LEN / 4)
 
 #if defined(__NFP_LANG_MICROC)
+
 #include <nfp.h>
 #include <stdint.h>
 

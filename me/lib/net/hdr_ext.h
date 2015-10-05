@@ -67,7 +67,6 @@
 #include <net/udp.h>
 #include <net/tcp.h>
 
-
 /*
  * All header extract functions follow the same pattern.  They all
  * require the following arguments:
@@ -119,7 +118,7 @@
 
 /**
  * Indication of the protocol in the next header
- * 
+ *
  * The IPv6 extension header are arranged such that one can simply can
  * check with @HE_IP6_EXT (ie bit 8 set) for any of the header, if one
  * wants to skip them.
@@ -155,12 +154,12 @@ enum he_proto {
 __intrinsic int he_eth_fit(sz, off);
 
 /**
- * Extract an Ethernet header starting from an offset in the buffer
- *
- * @src_buf     Source buffer
- * @off         Byte offset within the @src_buf where the Ethernet header starts
- * @dst         Pointer to buffer in to which to return the extracted header
- * @return      Length and next protocol header indication.
+ * Extract an Ethernet header starting from an offset in the buffer.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within the @src_buf where the Ethernet
+ *                 header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
  *
  * @dst must point to a struct eth_hdr or larger.
  * The length encoded in the return value is: sizeof(struct eth_hdr).
@@ -176,12 +175,11 @@ __intrinsic unsigned int he_eth(void *src_buf, int off, void *dst);
 __intrinsic int he_vlan_fit(sz, off);
 
 /**
- * Extract an 802.1Q (VLAN) header starting from an offset in the buffer
- *
- * @src_buf     Source buffer
- * @off         Byte offset within @src_buf where the VLAN header starts
- * @dst         Pointer to buffer in to which to return the extracted header
- * @return      Length and next protocol header indication.
+ * Extract an 802.1Q (VLAN) header starting from an offset in the buffer.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within @src_buf where the VLAN header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
  *
  * @dst must point to a struct vlan_hdr or larger.
  * The length encoded in the return value is: sizeof(struct vlan_hdr).
@@ -198,18 +196,16 @@ __intrinsic int he_arp_fit(sz, off);
 
 /**
  * Extract a ARP header starting from an offset in the buffer.
- *
- * @src_buf     Source buffer
- * @off         Byte offset within @src_buf where the ARP header starts
- * @dst         Pointer to buffer in to which to return the extracted header
- * @return      Length and next protocol header indication.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within @src_buf where the ARP header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
  *
  * @dst must point to a struct arp_hdr or larger.
  * The next protocol encoded in the return value is HE_NONE
  * The length encoded in the return value is sizeof(struct arp_hdr).
  */
 __intrinsic unsigned int he_arp(void *src_buf, int off, void *dst);
-
 
 
 /**
@@ -219,12 +215,11 @@ __intrinsic unsigned int he_arp(void *src_buf, int off, void *dst);
 __intrinsic int he_ip4_fit(sz, off);
 
 /**
- * Extract an IPv4 header starting from an offset in the buffer
- *
- * @src_buf     Source buffer
- * @off         Byte offset within @src_buf where the IPv4 header starts
- * @dst         Pointer to buffer in to which to return the extracted header
- * @return      Length and next protocol header indication.
+ * Extract an IPv4 header starting from an offset in the buffer.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within @src_buf where the IPv4 header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
  *
  * @dst must point to a struct ip4_hdr or larger.
  * The length encoded in the return value is: sizeof(struct ip4_hdr) + options.
@@ -237,6 +232,7 @@ __intrinsic int he_ip4_fit(sz, off);
  */
 __intrinsic unsigned int he_ip4(void *src_buf, int off, void *dst);
 
+
 /**
  * Check if the a buffer of size @sz with current offset @off has
  * enough space to contain a IPv6 header.
@@ -244,12 +240,11 @@ __intrinsic unsigned int he_ip4(void *src_buf, int off, void *dst);
 __intrinsic int he_ip6_fit(sz, off);
 
 /**
- * Extract an IPv6 header starting from an offset in the buffer
- *
- * @src_buf     Source buffer
- * @off         Byte offset within @src_buf where the IPv6 header starts
- * @dst         Pointer to buffer in to which to return the extracted header
- * @return      Length and next protocol header indication.
+ * Extract an IPv6 header starting from an offset in the buffer.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within @src_buf where the IPv6 header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
  *
  * @dst must point to a struct ip6_hdr or larger.
  * The length encoded in the return value is: sizeof(struct ip6_hdr).
@@ -268,10 +263,9 @@ __intrinsic int he_ip6_ext_skip_fit(sz, off);
 
 /**
  * Parse an IPv6 extension header and skip it.
- *
- * @src_buf     Source buffer
- * @off         Byte offset within @src_buf where the IPv6 header starts
- * @return      Length and next protocol header indication.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within @src_buf where the IPv6 header starts
+ * @return         Length and next protocol header indication.
  *
  * This function allows to skip past the IPv6 extension headers if
  * they are of no interest. Instead of extracting the extension header
@@ -283,6 +277,7 @@ __intrinsic int he_ip6_ext_skip_fit(sz, off);
  */
 __intrinsic unsigned int he_ip6_ext_skip(void *src_buf, int off);
 
+
 /**
  * Check if the a buffer of size @sz with current offset @off has
  * enough space to contain a TCP header.
@@ -290,18 +285,18 @@ __intrinsic unsigned int he_ip6_ext_skip(void *src_buf, int off);
 __intrinsic int he_tcp_fit(sz, off);
 
 /**
- * Extract an TCP header starting from an offset in the buffer
- *
- * @src_buf     Source buffer
- * @off         Byte offset within @src_buf where the TCP header starts
- * @dst         Pointer to buffer in to which to return the extracted header
- * @return      Length and next protocol header indication.
+ * Extract an TCP header starting from an offset in the buffer.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within @src_buf where the TCP header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
  *
  * @dst must point to a struct tcp_hdr or larger.
  * The length encoded in the return value is: sizeof(struct tcp_hdr) + options.
  * The next protocol encoded in the return value is one of HE_NONE, HE_UNKNOWN.
  */
 __intrinsic unsigned int he_tcp(void *src_buf, int off, void *dst);
+
 
 /**
  * Check if the a buffer of size @sz with current offset @off has
@@ -310,13 +305,12 @@ __intrinsic unsigned int he_tcp(void *src_buf, int off, void *dst);
 __intrinsic int he_udp_fit(sz, off);
 
 /**
- * Extract an UDP header starting from an offset in the buffer
- *
- * @src_buf     Source buffer
- * @off         Byte offset within @src_buf where the UDP header starts
- * @dst         Pointer to buffer in to which to return the extracted header
- * @vxln_prt    UDP port that VXLAN uses, 0 for no VXLAN checking
- * @return      Length and next protocol header indication.
+ * Extract an UDP header starting from an offset in the buffer.
+ * @param src_buf   Source buffer
+ * @param off       Byte offset within @src_buf where the UDP header starts
+ * @param dst       Pointer to buffer in to which to return the extracted header
+ * @param vxln_prt  UDP port that VXLAN uses, 0 for no VXLAN checking
+ * @return          Length and next protocol header indication.
  *
  * @dst must point to a struct udp_hdr or larger.
  * The length encoded in the return value is: sizeof(struct udp_hdr).
@@ -329,6 +323,7 @@ __intrinsic int he_udp_fit(sz, off);
 __intrinsic unsigned int he_udp(void *src_buf, int off,
                                 void *dst, unsigned int vxln_prt);
 
+
 /**
  * Check if a buffer of size @sz with current offset @off has
  * enough space to contain a full GRE header with all optional fields.
@@ -337,11 +332,10 @@ __intrinsic int he_gre_fit(sz, off);
 
 /**
  * Extract a GRE header starting from an offset in the buffer.
- *
- * @src_buf     Source buffer
- * @off         Byte offset within @src_buf where the GRE header starts
- * @dst         Pointer to buffer in to which to return the extracted header
- * @return      Length and next protocol header indication.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within @src_buf where the GRE header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
  *
  * @dst must point to a struct gre_hdr or larger.
  * The next protocol encoded in the return value is one of HE_ETHER or
@@ -354,15 +348,15 @@ __intrinsic int he_gre_fit(sz, off);
 __intrinsic unsigned int he_gre(void *src_buf, int off, void *dst);
 
 /**
- * Extract a NVGRE extension header starting from an offset in the buffer
- *
- * @src_buf     Source buffer
- * @off         Byte offset within @src_buf where the GRE header starts
- * @dst         Pointer to buffer in to which to return the extracted header
+ * Extract a NVGRE extension header starting from an offset in the buffer.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within @src_buf where the GRE header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
  *
  * @dst must point to a struct nvgre_ext_hdr or larger.
  */
 __intrinsic void he_gre_nvgre(void *src_buf, int off, void *dst);
+
 
 /**
  * Check if a buffer of size @sz with current offset @off has
@@ -372,17 +366,15 @@ __intrinsic int he_vxlan_fit(sz, off);
 
 /**
  * Extract a VXLAN header starting from an offset in the buffer.
- *
- * @src_buf     Source buffer
- * @off         Byte offset within @src_buf where the VXLAN header starts
- * @dst         Pointer to buffer in to which to return the extracted header
- * @return      Length and next protocol header indication.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within @src_buf where the VXLAN header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
  *
  * @dst must point to a struct vxlan_hdr or larger.
  * The next protocol encoded in the return value is HE_ETHER
  * The length encoded in the return value is: sizeof(struct vxlan_hdr)
  */
 __intrinsic unsigned int he_vxlan(void *src_buf, int off, void *dst);
-
 
 #endif /* _HDR_EXT_H_ */

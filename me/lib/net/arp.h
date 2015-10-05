@@ -24,6 +24,7 @@
 #define NET_ARP_HA_LEN             6
 
 #if defined(__NFP_LANG_MICROC)
+
 #include <nfp.h>
 #include <stdint.h>
 
