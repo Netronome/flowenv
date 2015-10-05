@@ -142,6 +142,7 @@ __pkt_status_read(unsigned char isl, unsigned int pnum,
          * We put these 8 bits in the top 8 bits of addr_hi, and then use
          * the <<8 to put them into place in the 40-bit address. */
         __gpr unsigned int addr_hi = (isl | 0x80) << 24;
+
         if (sync == sig_done)
           __asm mem[packet_read_packet_status, *pkt_status, addr_hi, <<8, \
                     addr, 1], sig_done[*sig_ptr];
@@ -228,6 +229,7 @@ pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
 {
     SIGNAL sig;
     __xwrite uint32_t cmd;
+
     __pkt_mac_egress_cmd_write(pbuf, off, l3_csum_ins, l4_csum_ins, &cmd,
                                ctx_swap, &sig);
     return;
@@ -301,7 +303,6 @@ __pkt_nbi_recv(__xread void *meta, size_t msize, sync_t sync, SIGNAL *sig)
     ctassert(__is_ct_const(sync));
     ctassert(sync == ctx_swap || sync == sig_done);
     ctassert(__is_ct_const(msize));
-
     /* TODO: modify to allow for variable msize and msize > 64 */
     ctassert(msize % 4 == 0);
     ctassert(msize >= 24);

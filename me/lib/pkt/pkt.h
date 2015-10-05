@@ -180,18 +180,15 @@
 struct nbi_meta_pkt_info {
     union {
         struct {
-            unsigned int isl:6;    /**< Island of the CTM of the packet
-                                          */
+            unsigned int isl:6;    /**< Island of the CTM of the packet */
             unsigned int pnum:10;  /**< Packet number of the packet */
             unsigned int bls:2;    /**< Buffer list of the MU buffer */
             unsigned int len:14;   /**< Length of the packet in bytes
-                                        (includes possible MAC prepend bytes)
-                                        */
+                                        (includes possible MAC prepend bytes) */
 
             unsigned int split:1;  /**< Set if pkt split between CTM/MU */
             unsigned int resv0:2;  /**< Reserved */
             unsigned int muptr:29; /**< Pointer to the MU buffer >>11 */
-
         };
         uint32_t __raw[2];
     };
@@ -265,7 +262,6 @@ struct nbi_meta_null {
 *       +---------------------------------------------------------------+
 *    5  |P|I|W|S| VC |I|T|      O-Off   |     LIF+Mode / Match          |
 *       +---------------------------------------------------------------+
-*
 */
 struct nbi_meta_catamaran {
    union {
@@ -281,16 +277,11 @@ struct nbi_meta_catamaran {
            unsigned int buffer_pool:3;        /**< Buffer pool */
 
            unsigned int __reserved_19:13;     /**< Reserved */
-           unsigned int e_term:1;             /**< Early termination of packet
-                                                */
-           unsigned int tunnel_depth:2;       /**< Packet tunnel layer depth
-                                                */
-           unsigned int outer_l4_prot_type:4; /**< Packet outer L4 protocol
-                                                * type */
-           unsigned int outer_l3_prot_type:4; /**< Packet outer L3 protocol
-                                                * type */
-           unsigned int outer_l2_prot_type:5; /**< Packet outer L2 protocol
-                                                * type */
+           unsigned int e_term:1;             /**< Early termination of pkt */
+           unsigned int tunnel_depth:2;       /**< Packet tunnel layer depth */
+           unsigned int outer_l4_prot_type:4; /**< Packet outer L4 protocol */
+           unsigned int outer_l3_prot_type:4; /**< Packet outer L3 protocol */
+           unsigned int outer_l2_prot_type:5; /**< Packet outer L2 protocol */
            unsigned int __reserved_1:3;       /**< Reserved */
 
            unsigned int port:8;               /**< Port number */
@@ -301,14 +292,12 @@ struct nbi_meta_catamaran {
            unsigned int hp_off0:8;            /**< Packet header parse offset
                                                 * 2 Start of L4 relative to
                                                 * PKT_NBI_OFFSET */
-           unsigned int misc:8;               /**< Miscellaneous packet flags
-                                                */
+           unsigned int misc:8;               /**< Miscellaneous packet flags */
 
            unsigned int pe:1;                 /**< Packet error */
            unsigned int ie:1;                 /**< Interface error */
            unsigned int pw:1;                 /**< Packet warning */
-           unsigned int sp:1;                 /**< Special handling indicator
-                                                */
+           unsigned int sp:1;                 /**< Special handling indicator */
            unsigned int vlan_cnt:2;           /**< VLAN tag count */
            unsigned int it:1;                 /**< TCAM tag indicator */
            unsigned int ts:1;                 /**< Table set indicator */
@@ -360,9 +349,7 @@ struct pkt_iref_csr0 {
             unsigned int seq:14;        /**< NBI TM sequence number */
             unsigned int resv1:8;       /**< Reserved, set to 0 */
             unsigned int seqr:8;        /**< NBI TM sequencer number */
-
         };
-
         uint32_t __raw;
     };
 };
@@ -371,20 +358,15 @@ struct pkt_iref_csr0 {
 /**
  * Packet Ready address fields for directly sending the Packet Ready to the NBI
  *  must overide:
- *  * Total length                              (len)
- *
- *  * Packet number                             (pnum << 16)
- *
- *  * Data master (based on ME ID)              ((meid & 0x1 | 0x2) << 28)
- *
- *  * Data master island (island ID)            (iid << 32)
- *
- *  * NBI ID                                    (nbi << 38)
- *
+ *  - Total length                              (len)
+ *  - Packet number                             (pnum << 16)
+ *  - Data master (based on ME ID)              ((meid & 0x1 | 0x2) << 28)
+ *  - Data master island (island ID)            (iid << 32)
+ *  - NBI ID                                    (nbi << 38)
  *
  * Packet Ready address upper fields for directly sending the Packet Ready to
- *  the NBI is shifted before being sent:
- *  * Packet Ready address left shift amount    8
+ * the NBI is shifted before being sent:
+ * - Packet Ready address left shift amount    8
  */
 #define PKT_READY_ADDR_LO_PNUM_shf        16
 
@@ -419,7 +401,6 @@ struct pkt_iref_palu {
             unsigned int ms_off:5;      /**< Encoded mod script offset */
             unsigned int magic:8;       /**< PKT_IREF_PALU_MAGIC: see below */
         };
-
         uint32_t __raw;
     };
 };
@@ -427,16 +408,12 @@ struct pkt_iref_palu {
 
 /**
  * Previous ALU for Packet Processing Complete must override:
- *  * Signal master from CSR0 (seq number)  (1 << 0)
- *
- *  * Data master from CSR0 (seq number)    (1 << 1)
- *    Data master island from CSR0 (seq number)
- *
- *  * Data reference (from prev alu DATA16, for TXQ and NBI) (1 << 3)
- *
- *  * Bytemask from CSR0 (TM sequencer)  (1 << 6)
- *
- *  * Length (from prev ALU length, for offset of rewrite script) (1 << 7)
+ * - Signal master from CSR0 (seq number)  (1 << 0)
+ * - Data master from CSR0 (seq number)    (1 << 1)
+ *   Data master island from CSR0 (seq number)
+ * - Data reference (from prev alu DATA16, for TXQ and NBI) (1 << 3)
+ * - Bytemask from CSR0 (TM sequencer)  (1 << 6)
+ * - Length (from prev ALU length, for offset of rewrite script) (1 << 7)
  */
 #define PKT_IREF_PALU_MAGIC     0xcb
 
@@ -511,11 +488,9 @@ enum nbi_pkt_ms_instruct {
 };
 
 /**
- *
- * Build a NBI packet modify modification script opcode from parameters
- *
+ * Build a NBI packet modify modification script opcode from parameters.
  * @param _instruct  3-bit value defining the modification instruction:
- *                       See enum nbi_pkt_ms_instruct
+ *                       See enum nbi_pkt_ms_instruct.
  * @param _bytes     4-bit value defining the number of bytes to be modified:
  *                       0x0: modify 1 byte / pad 60 bytes
  *                       0x1: modify 2 bytes / pad 62 bytes
@@ -525,7 +500,7 @@ enum nbi_pkt_ms_instruct {
  * @param _rd_loc     1-bit indicating where to get the replacement data from
  *                    (when 'rdata'=b'10'):
  *                       0x0: from script        0x1: from config ram
-*/
+ */
 #define NBI_PM_OPCODE(_instruct, _bytes, _rd_loc) \
               (((_bytes) > 0 ? \
               (((_instruct & 0x7) << 5) | (((_bytes - 1) & 0xF) << 1) | \
@@ -541,7 +516,7 @@ enum PKT_CTM_SIZE {
     PKT_CTM_SIZE_2048,
 };
 
-/*
+/**
  * Packets and Buffers credits structure.
  * Used for CTM packets and buffers credits management.
  */
@@ -550,7 +525,7 @@ struct ctm_pkt_credits {
     unsigned int bufs;
 };
 
-/*
+/**
  * Packet Engine response for packet_alloc commands.
  */
 struct pe_pkt_alloc_res {
@@ -561,12 +536,11 @@ struct pe_pkt_alloc_res {
             unsigned int pkt_credit:11; /**< Packet credits */
             unsigned int buf_credit:9;  /**< Buffer credits */
         };
-
         unsigned int __raw;
     };
 };
 
-/*
+/**
  * Packet Engine response for packet_credit_get command.
  */
 struct pe_credit_get_res {
@@ -576,7 +550,6 @@ struct pe_credit_get_res {
             unsigned int pkt_credit:11; /**< Packet Credit */
             unsigned int buf_credit:9;  /**< Buffer Credit */
         };
-
         unsigned int __raw;
     };
 };
@@ -618,30 +591,30 @@ __intrinsic __addr40 void *pkt_ctm_ptr40(unsigned char isl, unsigned int pnum,
 __intrinsic __addr32 void *pkt_ctm_ptr32(unsigned int pnum, unsigned int off);
 
 
-/* packet engine packet wait/read status response structure */
+/**
+ * Packet engine packet wait/read status response structure
+ */
 typedef union pkt_status_t {
     struct {
-        unsigned int error:1;                    /**< Error. */
-        unsigned int last_seg_rcvd:1;            /**< Last segment received. */
-        unsigned int first_seg_rcvd:1;           /**< First segment received. */
-        unsigned int sent_to_me:1;               /**< Packet sent to ME. */
-        unsigned int not_valid:1;                /**< Packet not valid, error.
-                                                   */
-        unsigned int owned_by_me:1;              /**< Packet owned by
-                                                   * 0 = packet owned by NBI
-                                                   * 1 = packet owned by ME. */
-        unsigned int owner:2;                    /**< Packet owner.
-                                                   * 0 = owned by ME
-                                                   * 1 = owned by NBI-0
-                                                   * 2 = owned by NBI-1
-                                                   * 3 = owned by ME. */
-        unsigned int resv_0:6;                   /**< Reserved. */
-        unsigned int size:2;                     /**< Packet size. */
-        unsigned int resv_1:6;                   /**< Reserved. */
-        unsigned int ctm_addr_div256:10;         /**< CTM DCACHE address.
-                                                   * Multiply by 256 to get
-                                                   * actual CTM address. */
-
+        unsigned int error:1;             /**< Error. */
+        unsigned int last_seg_rcvd:1;     /**< Last segment received. */
+        unsigned int first_seg_rcvd:1;    /**< First segment received. */
+        unsigned int sent_to_me:1;        /**< Packet sent to ME. */
+        unsigned int not_valid:1;         /**< Packet not valid, error. */
+        unsigned int owned_by_me:1;       /**< Packet owned by
+                                           * 0 = packet owned by NBI
+                                           * 1 = packet owned by ME. */
+        unsigned int owner:2;             /**< Packet owner.
+                                           * 0 = owned by ME
+                                           * 1 = owned by NBI-0
+                                           * 2 = owned by NBI-1
+                                           * 3 = owned by ME. */
+        unsigned int resv_0:6;            /**< Reserved. */
+        unsigned int size:2;              /**< Packet size. */
+        unsigned int resv_1:6;            /**< Reserved. */
+        unsigned int ctm_addr_div256:10;  /**< CTM DCACHE address.
+                                           * Multiply by 256 to get
+                                           * actual CTM address. */
     };
     unsigned int __raw;
 } pkt_status_t;
@@ -653,10 +626,10 @@ typedef union pkt_status_t {
 
 /**
  * Extract the checksum-prepend word from a buffer.
- *
- * @src_buf     Input buffer
- * @off         Byte offset within the buffer where the Ethernet header starts
- * @return      Offset to the next protocol header
+ * @param src_buf  Input buffer
+ * @param off      Byte offset within the buffer where the Ethernet
+ *                 header starts
+ * @return         Offset to the next protocol header
  *
  * The NFP-6000 MAC can be configured to prepend a word to a packet
  * contain the results of checksum checks.  This function extracts
@@ -668,12 +641,11 @@ __intrinsic unsigned int pkt_csum_read(void *src_buf, int off);
 
 /**
  * Get the status response of a CTM packet buffer.
- *
- * @param isl         The CTM buffer island
- * @param pnum        The CTM packet number
- * @param pkt_status  The packet status response structure pkt_status_t
- * @param sync        The type of synchronization (sig_done or ctx_swap)
- * @param sig         The signal to use.
+ * @param isl         CTM buffer island
+ * @param pnum        CTM packet number
+ * @param pkt_status  Packet status response
+ * @param sync        Type of synchronization (sig_done or ctx_swap)
+ * @param sig         Signal to use
  */
 __intrinsic void __pkt_status_read(unsigned char isl, unsigned int pnum,
                                    __xread pkt_status_t *pkt_status,
@@ -685,9 +657,8 @@ __intrinsic void pkt_status_read(unsigned char isl, unsigned int pnum,
 
 /**
  * Get the number of packet bytes sitting in the CTM packet buffer.
- *
  * @param len            Total CTM+EMU packet data bytes
- * @param offset         The start-of-packet offset in CTM buffer.
+ * @param offset         Start-of-packet offset in CTM buffer
  * @param ctm_buf_size   Encoded CTM buffer size
  *                       [0 = 256b, 1 = 512b, 2 = 1024b or 3 = 2048b]
  */
@@ -697,9 +668,8 @@ __intrinsic size_t pkt_ctm_data_size(unsigned int pkt_len,
 
 /**
  * Get the number of packets bytes sitting in the EMU packet buffer.
- *
  * @param len            Total CTM+EMU packet data bytes
- * @param offset         The start-of-packet offset in CTM buffer.
+ * @param offset         Start-of-packet offset in CTM buffer
  * @param ctm_buf_size   Encoded CTM buffer size
  *                       [0 = 256b, 1 = 512b, 2 = 1024b or 3 = 2048b]
  */
@@ -734,14 +704,13 @@ __intrinsic size_t pkt_emem_data_size(unsigned int pkt_len,
 
 /**
  * Write a MAC egress command to the beginning of a packet.
- *
- * @param pbuf         A pointer to the start of the packet buffer
- * @param off          The starting offset of the packet data
+ * @param pbuf         Pointer to the start of the packet buffer
+ * @param off          Starting offset of the packet data
  * @param l3_csum_ins  Enables insertion of L3 checksum
  * @param l4_csum_ins  Enables insertion of L4 checksum
  * @param xcmd         Transfer registers to hold the command
- * @param sync         The type of synchronization (sig_done or ctx_swap)
- * @param sig          The signal to use.
+ * @param sync         Type of synchronization (sig_done or ctx_swap)
+ * @param sig          Signal to use.
  *
  * @note 'off' must be set to 20 or higher.
  * @note After calling this function, the 4-byte MAC egress command is
@@ -761,17 +730,18 @@ __intrinsic void pkt_mac_egress_cmd_write(__addr40 void *pbuf,
 
 /**
  * Write a direct packet modifier modification script to the beginning of a
- * packet and return the metadata required to send the packet.  The pointer
- * must point to the first byte of the packet to go over the wire (or the
- * MAC egress command that may precede it).  There must be at least 16 bytes
- * between this pointer and the beginning of the CTM buffer.
- *
- * @param pbuf  A pointer to the start of the packet buffer
- * @param off   The starting offset of the packet data
+ * packet and return the metadata required to send the packet.
+ * @param pbuf  Pointer to the start of the packet buffer
+ * @param off   Starting offset of the packet data
  * @param xms   Transfer registers to hold the script
- * @param size  The size of the xms.
- * @param sync  The type of synchronization (sig_done or ctx_swap)
- * @param sig   The signal to use.
+ * @param size  Size of the xms.
+ * @param sync  Type of synchronization (sig_done or ctx_swap)
+ * @param sig   Signal to use.
+ *
+ * The pointer must point to the first byte of the packet to go over
+ * the wire (or the MAC egress command that may precede it).  There
+ * must be at least 16 bytes between this pointer and the beginning of
+ * the CTM buffer.
  */
 __intrinsic struct pkt_ms_info __pkt_msd_write(__addr40 void *pbuf,
                                                unsigned char off,
@@ -785,18 +755,17 @@ __intrinsic struct pkt_ms_info pkt_msd_write(__addr40 void *pbuf,
 
 /**
  * Send a packet to an NBI port. Notifies sequencer and frees the packet.
- *
- * @param isl           The island of the CTM packet
- * @param pnum          The packet number of the CTM packet
- * @param msi           The modification script info required for transmission
- * @param len           The length of the packet from the start of the
- *                      packet data (which immediately follows the rewrite
- *                      script plus padding)
- * @param nbi           The NBI TM to send the packet to
- * @param txq           The NBI TM TX queue to send the packet to
- * @param seqr          The NBI TM sequencer to send the packet to
- * @param seq           The NBI TM sequence number of the packet
- * @param ctm_buf_size  The encoded CTM buffer size
+ * @param isl           Island of the CTM packet
+ * @param pnum          Packet number of the CTM packet
+ * @param msi           Modification script info required for transmission
+ * @param len           Length of the packet from the start of the packet data
+ *                      (which immediately follows the rewrite script
+ *                      plus padding)
+ * @param nbi           NBI TM to send the packet to
+ * @param txq           NBI TM TX queue to send the packet to
+ * @param seqr          NBI TM sequencer to send the packet to
+ * @param seq           NBI TM sequence number of the packet
+ * @param ctm_buf_size  Encoded CTM buffer size
  */
 __intrinsic void pkt_nbi_send(unsigned char isl, unsigned int pnum,
                               __gpr const struct pkt_ms_info *msi,
@@ -805,21 +774,19 @@ __intrinsic void pkt_nbi_send(unsigned char isl, unsigned int pnum,
                               unsigned int seq,
                               enum PKT_CTM_SIZE ctm_buf_size);
 
-
 /**
  * Send a packet to an NBI port without freeing it. Does not notify sequencer.
- *
- * @param isl           The island of the CTM packet
- * @param pnum          The packet number of the CTM packet
- * @param msi           The modification script info required for transmission
- * @param len           The length of the packet from the start of the
+ * @param isl           Island of the CTM packet
+ * @param pnum          Packet number of the CTM packet
+ * @param msi           Modification script info required for transmission
+ * @param len           Length of the packet from the start of the
  *                      packet data (which immediately follows the rewrite
  *                      script plus padding)
- * @param nbi           The NBI TM to send the packet to
- * @param txq           The NBI TM TX queue to send the packet to
- * @param seqr          The NBI TM sequencer to send the packet to
- * @param seq           The NBI TM sequence number of the packet
- * @param ctm_buf_size  The encoded CTM buffer size
+ * @param nbi           NBI TM to send the packet to
+ * @param txq           NBI TM TX queue to send the packet to
+ * @param seqr          NBI TM sequencer to send the packet to
+ * @param seq           NBI TM sequence number of the packet
+ * @param ctm_buf_size  Encoded CTM buffer size
  */
 __intrinsic void pkt_nbi_send_dont_free(unsigned char isl, unsigned int pnum,
                                         __gpr const struct pkt_ms_info *msi,
@@ -828,21 +795,19 @@ __intrinsic void pkt_nbi_send_dont_free(unsigned char isl, unsigned int pnum,
                                         unsigned int seq,
                                         enum PKT_CTM_SIZE ctm_buf_size);
 
-
 /**
  * Drop a packet sequence from an NBI port. Needed to keep sequencer happy.
- *
- * @param isl           The island of the CTM packet
- * @param pnum          The packet number of the CTM packet
- * @param msi           The modification script info required for transmission
- * @param len           The length of the packet from the start of the
+ * @param isl           Island of the CTM packet
+ * @param pnum          Packet number of the CTM packet
+ * @param msi           Modification script info required for transmission
+ * @param len           Length of the packet from the start of the
  *                      packet data (which immediately follows the rewrite
  *                      script plus padding)
- * @param nbi           The NBI TM to send the packet to
- * @param txq           The NBI TM TX queue to send the packet to
- * @param seqr          The NBI TM sequencer to send the packet to
- * @param seq           The NBI TM sequence number of the packet
- * @param ctm_buf_size  The encoded CTM buffer size
+ * @param nbi           NBI TM to send the packet to
+ * @param txq           NBI TM TX queue to send the packet to
+ * @param seqr          NBI TM sequencer to send the packet to
+ * @param seq           NBI TM sequence number of the packet
+ * @param ctm_buf_size  Encoded CTM buffer size
  */
 __intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
                                   __gpr const struct pkt_ms_info *msi,
@@ -878,22 +843,18 @@ __intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
 
 /**
  * Free a packet from CTM. Does not notify sequencer.
- *
- * @param isl   The island of the CTM packet
- * @param pnum  The packet number of the CTM packet
- *
+ * @param isl   Island of the CTM packet
+ * @param pnum  Packet number of the CTM packet
  */
 __intrinsic void pkt_ctm_free(unsigned char isl, unsigned int pnum);
 
 /**
  * Allocate a CTM packet buffer.
- *
- * @param credits           The credits management struct
- * @param isl               The island of the CTM packet
- * @param size              CTM buffer size (PKT_CTM_SIZE_*)
- * @param alloc_internal    If credits are to be allocated internally
- *
- * @return - the allocated packet number on success, 0xffffffff on failure.
+ * @param credits         Credits management struct
+ * @param isl             Island of the CTM packet
+ * @param size            CTM buffer size (PKT_CTM_SIZE_*)
+ * @param alloc_internal  If credits are to be allocated internally
+ * @return the allocated packet number on success, 0xffffffff on failure
  *
  * If the "alloc_internal" param is 0 - this function does not check for
  * available credits in the given credits structure.
@@ -903,17 +864,18 @@ __intrinsic void pkt_ctm_free(unsigned char isl, unsigned int pnum);
  * credits structure.
  *
  * A note of caution:
- *  Since the PE "assumes" that the ME has allocated 1 buffer credit before
- *  calling the "packet_alloc_poll" command, it will always return 1 buffer
- *  credit if no new buffer was allocated. This can overflow the initial
- *  credits (since the credits management structure is always updates with
- *  the returned credits). If the user prefers to allocate packets and credits
- *  once (for efficiency reasons) and skip the credits allocation done
- *  internally, he/she must make sure one buffer credit is allocated for every
- *  packet allocation request.
- *  For more details see Data Book section 9.2.2.7.1 Packet Allocation Request.
+ * Since the PE "assumes" that the ME has allocated 1 buffer credit
+ * before calling the "packet_alloc_poll" command, it will always
+ * return 1 buffer credit if no new buffer was allocated. This can
+ * overflow the initial credits (since the credits management
+ * structure is always updates with the returned credits). If the user
+ * prefers to allocate packets and credits once (for efficiency
+ * reasons) and skip the credits allocation done internally, he/she
+ * must make sure one buffer credit is allocated for every packet
+ * allocation request.
+ * For more details see Data Book section 9.2.2.7.1 Packet Allocation Request.
  *
- *  No overflow checking is done internally (for efficiency reasons).
+ * No overflow checking is done internally (for efficiency reasons).
  */
 __intrinsic unsigned int pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
                                        unsigned char isl,
@@ -921,11 +883,10 @@ __intrinsic unsigned int pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
                                        unsigned char alloc_internal);
 
 /**
- * Initialises the credit management structure.
- *
- * @param credits       The credits management structure to initialize.
- * @param pkt_credits   The number of packet credits.
- * @param buf_credits   The number of buffer credits.
+ * Initialise the credit management structure.
+ * @param credits       Credits management structure to initialize
+ * @param pkt_credits   Number of packet credits
+ * @param buf_credits   Number of buffer credits
  *
  * The user is expected to allocate the credits management structure and call
  * this function to initialize the required packets and buffers credits.
@@ -938,8 +899,7 @@ __intrinsic void pkt_ctm_init_credits(__cls struct ctm_pkt_credits *credits,
 
 /**
  * Poll for credits from the Packet Engine.
- *
- * @param credits   The credits management structure to update.
+ * @param credits   Credits management structure to update
  *
  * Updates the credits management structure with the new polled credits.
  * This function must be run periodically to replenish the credit buckets.
@@ -948,9 +908,8 @@ __intrinsic void pkt_ctm_poll_pe_credit(__cls struct ctm_pkt_credits *credits);
 
 /**
  * Get credits for allocation of packet(s) in CTM.
- *
- * @param pkt_credits   The desired amount of packet credits
- * @param buf_credits   The desired amount of buffer credits
+ * @param pkt_credits   Desired amount of packet credits
+ * @param buf_credits   Desired amount of buffer credits
  *
  * This function gets credits from the credits mangment structure
  * in a safe way.
