@@ -37,25 +37,20 @@ camht_lookup(__mem void *hash_tbl, __mem void *key_tbl,
              int32_t entries, size_t entry_sz,
              void *key, size_t key_sz)
 {
-    __gpr int32_t idx;
     __xread uint32_t ht_key[CAMHT_MAX_KEY_SZ32];
-    int32_t ret;
-
+    __gpr int32_t idx;
     __mem char* kt;
+    int32_t ret;
 
     /* Make sure the parameters are as we expect */
     ctassert(__is_in_mem(hash_tbl));
     ctassert(__is_in_mem(key_tbl));
-
     ctassert(__is_in_reg(key));
-
     ctassert(__is_ct_const(entries));
     ctassert((entries % CAMHT_BUCKET_ENTRIES) == 0);
-
     ctassert(__is_ct_const(key_sz));
     ctassert(key_sz <= CAMHT_MAX_KEY_SZ);
     ctassert((key_sz % 4) == 0);
-
     ctassert(__is_ct_const(entry_sz));
     ctassert(entry_sz <= 64);
     ctassert((entry_sz % 4) == 0);
@@ -78,6 +73,7 @@ camht_lookup(__mem void *hash_tbl, __mem void *key_tbl,
     /* compare keys */
     kt = key_tbl;
     kt += (idx * entry_sz);
+
     mem_read64(ht_key, kt, key_sz);
     if (reg_eq(ht_key, key, key_sz)) {
         ret = idx;
@@ -85,6 +81,7 @@ camht_lookup(__mem void *hash_tbl, __mem void *key_tbl,
     }
 
     ret = -1;
+
 out:
     return ret;
 }
@@ -94,23 +91,19 @@ __intrinsic int32_t
 camht_lookup_idx(__mem void *hash_tbl, int32_t entries,
                  void *key, size_t key_sz)
 {
+    __xrw struct mem_cam_24bit cam;
     __gpr uint32_t crc32;
     __gpr uint32_t crc32c;
     __gpr uint32_t b_idx;
     __gpr uint32_t b_entry;
-    __xrw struct mem_cam_24bit cam;
-    int32_t ret;
-
     __mem uint32_t *ht;
+    int32_t ret;
 
     /* Make sure the parameters are as we expect */
     ctassert(__is_in_mem(hash_tbl));
-
     ctassert(__is_in_reg_or_lmem(key));
-
     ctassert(__is_ct_const(entries));
     ctassert((entries % CAMHT_BUCKET_ENTRIES) == 0);
-
     ctassert(__is_ct_const(key_sz));
     ctassert(key_sz <= CAMHT_MAX_KEY_SZ);
     ctassert((key_sz % 4) == 0);
@@ -132,6 +125,7 @@ camht_lookup_idx(__mem void *hash_tbl, int32_t entries,
     }
 
     ret = (b_idx * CAMHT_BUCKET_ENTRIES) + cam.result.match;
+
 out:
     return ret;
 }
@@ -145,18 +139,14 @@ camht_lookup_idx_add(__mem void *hash_tbl, int32_t entries,
     __gpr uint32_t b_idx;
     __gpr uint32_t b_entry;
     __xrw struct mem_cam_24bit cam;
-    int32_t ret;
-
     __mem uint32_t *ht;
+    int32_t ret;
 
     /* Make sure the parameters are as we expect */
     ctassert(__is_in_mem(hash_tbl));
-
     ctassert(__is_in_reg_or_lmem(key));
-
     ctassert(__is_ct_const(entries));
     ctassert((entries % CAMHT_BUCKET_ENTRIES) == 0);
-
     ctassert(__is_ct_const(key_sz));
     ctassert(key_sz <= CAMHT_MAX_KEY_SZ);
     ctassert((key_sz % 4) == 0);

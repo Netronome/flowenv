@@ -78,12 +78,11 @@
 /* Include definitions shared with the host */
 #include "cam_hash_ctrl.h"
 
-
 #define CAMHT_NB_ENTRIES(_name) _name##_nb_entries
 #define CAMHT_ENTRY_SZ(_name) _name##_entry_sz
 
 /**
- * Declare/Define a new hash table
+ * Declare/Define a new hash table.
  * @param _name        Global name for the hash table
  * @param _nb_entries  Total number of entries in the hash table
  * @param _entry_type  The type for each entry
@@ -97,7 +96,7 @@
     static const int32_t CAMHT_ENTRY_SZ(_name) = sizeof(_entry_type);
 
 /**
- * Look up a key in a hash table
+ * Look up a key in a hash table.
  * @param _name        Hash table name
  * @param _key         A pointer to the key structure
  * @param _idx         Return hash table entry index or -1 if not found.
@@ -111,7 +110,7 @@
                  _key, sizeof(*_key))
 
 /**
- * Lookup a key in the hash table
+ * Lookup a key in the hash table.
  * @param hash_tbl     Address of the hash table
  * @param key_tbl      Address of the key table
  * @param entries      Total number of entries in the hash table
@@ -130,7 +129,7 @@ __intrinsic int32_t camht_lookup(__mem void *hash_tbl, __mem void *key_tbl,
 
 
 /**
- * Look up a key in a hash table
+ * Look up a key in a hash table.
  * @param _name        Hash table name
  * @param _key         A pointer to the key structure
  * @param _idx         Return hash table entry index or -1 if not found.
@@ -143,7 +142,7 @@ __intrinsic int32_t camht_lookup(__mem void *hash_tbl, __mem void *key_tbl,
                      (void *)_key, sizeof(*_key))
 
 /**
- * Lookup a key in the hash table
+ * Lookup a key in the hash table.
  * @param hash_tbl     Address of the hash table
  * @param entries      Total number of entries in the hash table
  * @param key          Pointer to the key to lookup
@@ -160,7 +159,7 @@ __intrinsic int32_t camht_lookup_idx(__mem void *hash_tbl, int32_t entries,
 
 
 /**
- * Lookup and add a key in the hash table
+ * Lookup and add a key in the hash table.
  * @param hash_tbl     Address of the hash table
  * @param entries      Total number of entries in the hash table
  * @param key          Pointer to the key to lookup

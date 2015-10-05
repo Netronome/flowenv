@@ -25,7 +25,6 @@
 /*
  * The following files implement all the funcitonality in <lu/*.h>.
  */
-
 #include "_c/cam_hash.c"
 
 #endif /* __NFP_LANG_MICROC */
@@ -33,5 +32,3 @@
 #endif /* !_LU__LIBLU_C_ */
 
 /* -*-  Mode:C; c-basic-offset:4; tab-width:4 -*- */
-
-
