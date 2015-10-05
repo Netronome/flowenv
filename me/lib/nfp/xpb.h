@@ -24,18 +24,16 @@
 #if defined(__NFP_LANG_MICROC)
 
 /**
- * Read the value from an XPB address
- *
- * @param addr XPB address
- * @return The value read
+ * Read the value from an XPB address.
+ * @param addr   XPB address
+ * @return the value read
  */
 __intrinsic unsigned int xpb_read(unsigned int addr);
 
 /**
- * Write a value to an XPB address
- *
- * @param addr XPB address
- * @param val Valye to write
+ * Write a value to an XPB address.
+ * @param addr    XPB address
+ * @param val     Value to write
  */
 __intrinsic void xpb_write(unsigned int addr, unsigned int val);
 

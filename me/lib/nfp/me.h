@@ -45,7 +45,7 @@ __intrinsic void ctx_wait(signal_t sig);
 #define ctx_swap() ctx_wait(voluntary)
 
 /**
- * Wait for signals indicated in a signal mask
+ * Wait for signals indicated in a signal mask.
  * @param sigmask       Signal mask
  *
  * Swap out the current context and wait for the signals indicated in the mask.
@@ -53,31 +53,27 @@ __intrinsic void ctx_wait(signal_t sig);
 __intrinsic void wait_sig_mask(SIGNAL_MASK sigmask);
 
 /**
- * Signal a context within the same ME
- *
+ * Signal a context within the same ME.
  * @param ctx            Context to signal
  * @param sig_no         Signal number to use
  */
 __intrinsic void signal_ctx(unsigned int ctx, unsigned int sig_no);
 
 /**
- * Signal the next context within the same ME
- *
+ * Signal the next context within the same ME.
  * @param sig_no         Signal number to use
  */
 __intrinsic void signal_next_ctx(unsigned int sig_no);
 
 /**
- * Signal a context in the next (numerically) ME in the cluster
- *
+ * Signal a context in the next (numerically) ME in the cluster.
  * @param ctx            Context to signal
  * @param sig_no         Signal number to use
  */
 __intrinsic void signal_next_me(unsigned int ctx, unsigned int sig_no);
 
 /**
- * Signal a context in the previous (numerically) ME in the cluster
- *
+ * Signal a context in the previous (numerically) ME in the cluster.
  * @param ctx            Context to signal
  * @param sig_no         Signal number to use
  */
@@ -85,8 +81,8 @@ __intrinsic void signal_prev_me(unsigned int ctx, unsigned int sig_no);
 
 /**
  * Set an alarm and use @sig when it goes off.
- * @param sig           Signal to assert after @cycles cycles.
- * @param cycles        approx number of cycles for the alarm
+ * @param sig           Signal to assert after @cycles cycles
+ * @param cycles        Approx number of cycles for the alarm
  *
  * This function asserts the signal after @cycles cycles.  A context
  * can only have one active alarm at a time.
@@ -102,7 +98,7 @@ __intrinsic void clear_alarm(void);
 
 /**
  * Sleep for a number of cycles.
- * @param cycles        approx number of cycles to sleep
+ * @param cycles        Approx number of cycles to sleep
  *
  * Note: @cycles must be less than 0x00100000 (1 << 20).
  */
@@ -125,7 +121,6 @@ __intrinsic int bit_test(unsigned int data, unsigned int bit_pos);
 
 /**
  * Find the first (least significant) bit set in 32bit @data.
- *
  * @param data          Data to examine
  *
  * This function finds the first (least significant) bit set in data
@@ -137,7 +132,6 @@ __intrinsic unsigned int ffs(unsigned int data);
 
 /**
  * Find the first (least significant) bit set in 64bit @data.
- *
  * @param data          Data to examine
  *
  * This function finds the first (least significant) bit set in 64bit
@@ -148,7 +142,7 @@ __intrinsic unsigned int ffs(unsigned int data);
 __intrinsic int ffs64(unsigned long long int data);
 
 /**
- * CRC bytes specifier.
+ * CRC bytes specifier
  *
  * The bytes_specifier_t enumeration is used as an argument to the CRC
  * functions and specifies one or more contiguous bytes within a
@@ -178,14 +172,14 @@ __intrinsic unsigned int crc_read(void);
 
 /**
  * Write the CRC remainder.
- * @param residue       value to initialize the CRC remainder
+ * @param residue   Value to initialize the CRC remainder
  */
 __intrinsic void crc_write(unsigned int residue);
 
 /**
  * 32-bit CRC-32 computation in Big-endian format.
- * @param data      data to perform the CRC computation on
- * @param bspec     bytes on which to perform the computation
+ * @param data      Data to perform the CRC computation on
+ * @param bspec     Bytes on which to perform the computation
  *
  * Perform a CRC-32 computation on specified bytes in the data
  * argument that is assumed to be in Big-endian format and return the
@@ -198,8 +192,8 @@ __intrinsic unsigned int crc_32_be(unsigned int data, crc_bytes_t bspec);
 
 /**
  * 32-bit iSCSI CRC computation in Big-endian format.
- * @param data      data to perform the iSCSI CRC computation on
- * @param bspec     bytes on which to perform the computation
+ * @param data      Data to perform the iSCSI CRC computation on
+ * @param bspec     Bytes on which to perform the computation
  *
  * Perform a 32-bit iSCSI CRC computation on specified bytes in the
  * data argument that is assumed to be in Big-endian format and return
@@ -248,7 +242,7 @@ enum inp_state_e {
 
 /**
  * Tests the value of the specified input state name.
- * @param statename     state to test
+ * @param statename    State to test
  *
  * Test the value of the specified state name and return 1 if the
  * state is set or 0 if clear.  The argument state must be a constant
@@ -271,8 +265,7 @@ __intrinsic unsigned long long int me_tsc_read(void);
  *
  * The profile count is a 16bit value which increments every clock-cycle. It
  * can be used to profile small sections of code.
- *
- **/
+ */
 __intrinsic unsigned short int me_pc_read(void);
 
 #endif /* __NFP_LANG_MICROC */

@@ -119,6 +119,7 @@ mem_cam_lookup(__xrw void *data, __mem void *addr,
                int camsize, int cambits)
 {
     SIGNAL_PAIR sigpair;
+
     __mem_cam_lookup(data, addr, camsize, cambits, sig_done, &sigpair);
     wait_for_all(&sigpair);
 }
@@ -220,6 +221,7 @@ mem_cam_lookup_add(__xrw void *data, __mem void *addr,
                    int camsize, int cambits)
 {
     SIGNAL_PAIR sigpair;
+
     __mem_cam_lookup_add(data, addr, camsize, cambits, sig_done, &sigpair);
     wait_for_all(&sigpair);
 }

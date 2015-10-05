@@ -263,12 +263,10 @@ struct macstats_channel_accum {
 
 /**
  * Reads and clears MAC stats for a given port.
- *
- * @param mac           [in] The mac to read from (0/1).
- * @param port          [in] The port number (0-23).
- * @param port_stats    [io] A pointer to the stats struct to fill,
- *                           must be in ctm/imem/emem only.
- *
+ * @param mac         The mac to read from (0/1)
+ * @param port        The port number (0-23)
+ * @param port_stats  A pointer to the stats struct to fill,
+ *                    must be in ctm/imem/emem only
  * @return 0 on success, -1 on error
  */
 int macstats_port_read(unsigned int mac, unsigned int port,
@@ -276,12 +274,10 @@ int macstats_port_read(unsigned int mac, unsigned int port,
 
 /**
  * Accumulate MAC stats for a given port.
- *
- * @param mac           [in] The mac to read from (0/1).
- * @param port          [in] The port number (0-23).
- * @param port_stats    [io] A pointer to the accumulate stats struct to
- *                           update, must be in ctm/imem/emem only.
- *
+ * @param mac         The mac to read from (0/1)
+ * @param port        The port number (0-23)
+ * @param port_stats  A pointer to the accumulate stats struct to
+ *                    update, must be in ctm/imem/emem only
  * @return 0 on success, -1 on error
  */
 int macstats_port_accum(unsigned int mac, unsigned int port,
@@ -290,12 +286,10 @@ int macstats_port_accum(unsigned int mac, unsigned int port,
 
 /**
  * Reads and clears MAC stats for a given channel.
- *
- * @param mac           [in] The mac to read from (0/1).
- * @param channel       [in] The channel number (0-127).
- * @param channel_stats [io] A pointer to the stats struct to fill,
- *                           must be in ctm/imem/emem only.
- *
+ * @param mac            The mac to read from (0/1)
+ * @param channel        The channel number (0-127)
+ * @param channel_stats  A pointer to the stats struct to fill,
+ *                       must be in ctm/imem/emem only
  * @return 0 on success, -1 on error
  */
 int macstats_channel_read(unsigned int mac, unsigned int channel,
@@ -303,12 +297,10 @@ int macstats_channel_read(unsigned int mac, unsigned int channel,
 
 /**
  * Accumulate MAC stats for a given channel.
- *
- * @param mac           [in] The mac to read from (0/1).
- * @param channel       [in] The channel number (0-127).
- * @param channel_stats [io] A pointer to the accumulate stats struct to
- *                           update, must be in ctm/imem/emem only.
- *
+ * @param mac            The mac to read from (0/1)
+ * @param channel        The channel number (0-127)
+ * @param channel_stats  A pointer to the accumulate stats struct to
+ *                       update, must be in ctm/imem/emem only
  * @return 0 on success, -1 on error
  */
 int macstats_channel_accum(unsigned int mac, unsigned int channel,

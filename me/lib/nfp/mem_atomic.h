@@ -24,13 +24,13 @@
 #include <types.h>
 
 /**
- * Atomic read/write multiples of 4B in memory (EMEM, IMEM, or CTM)
- * @param data      pointer to sufficient transfer registers for the op
+ * Atomic read/write multiples of 4B in memory (EMEM, IMEM, or CTM).
+ * @param data      Pointer to sufficient transfer registers for the op
  * @param addr      40-bit pointer to the memory start address
- * @param size      size of the op, must be a multiple of 4
- * @param max_size  used to determine largest op, if size is not a constant
- * @param sync      type of synchronisation (sig_done or ctx_swap)
- * @param sig       signal to use
+ * @param size      Size of the op, must be a multiple of 4
+ * @param max_size  Used to determine largest op, if size is not a constant
+ * @param sync      Type of synchronisation (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * These functions provide basic atomic read/write in NFP memory.
  * Atomic read/write functions are used rather than the bulk read/write
@@ -58,11 +58,11 @@ __intrinsic void mem_write_atomic(__xwrite void *data,
                                   __mem void *addr, size_t size);
 
 /**
- * Atomic increment/decrement of a value in memory (EMEM, IMEM, or CTM)
+ * Atomic increment/decrement of a value in memory (EMEM, IMEM, or CTM).
  * @param addr      40-bit pointer to the value in memory start address
  *
- * These functions increment or decrement a single 32 bit or 64 bit word in NFP
- * memory.
+ * These functions increment or decrement a single 32 bit or 64 bit
+ * word in NFP memory.
  */
 __intrinsic void mem_incr32(__mem void *addr);
 
@@ -73,7 +73,7 @@ __intrinsic void mem_incr64(__mem void *addr);
 __intrinsic void mem_decr64(__mem void *addr);
 
 /**
- * Atomic add immediate to a value in memory (EMEM, IMEM, or CTM)
+ * Atomic add immediate to a value in memory (EMEM, IMEM, or CTM).
  * @param val       16-bit integer
  * @param addr      40-bit pointer to the value in memory start address
  *
@@ -85,7 +85,7 @@ __intrinsic void mem_add32_imm(unsigned int val, __mem void *addr);
 __intrinsic void mem_add64_imm(unsigned int val, __mem void *addr);
 
 /**
- * Atomic bit set/clr immediate (EMEM, IMEM, or CTM)
+ * Atomic bit set/clr immediate (EMEM, IMEM, or CTM).
  * @param val       16-bit integer
  * @param addr      40-bit pointer to the value in memory
  *
@@ -97,13 +97,13 @@ __intrinsic void mem_bitset_imm(unsigned int val, __mem void *addr);
 __intrinsic void mem_bitclr_imm(unsigned int val, __mem void *addr);
 
 /**
- * Atomic add/sub to/from multiple 4B or 8B values (EMEM, IMEM, or CTM)
- * @param data      pointer to sufficient transfer registers for the op
+ * Atomic add/sub to/from multiple 4B or 8B values (EMEM, IMEM, or CTM).
+ * @param data      Pointer to sufficient transfer registers for the op
  * @param addr      40-bit pointer to first value in memory
- * @param size      size of the op, must be a multiple of 4 or 8
- * @param max_size  used to determine largest op, if size is not a constant
- * @param sync      type of synchronisation (sig_done or ctx_swap)
- * @param sig       signal to use
+ * @param size      Size of the op, must be a multiple of 4 or 8
+ * @param max_size  Used to determine largest op, if size is not a constant
+ * @param sync      Type of synchronisation (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * @note add/sub32 size max = 16
  * @note add/sub64 size max = 32
@@ -144,13 +144,13 @@ __intrinsic void mem_sub64(__xwrite void *data, __mem void *addr,
                            size_t size);
 
 /**
- * Atomic set/clear bits in multiple of 4B values (EMEM, IMEM, or CTM)
- * @param data      pointer to sufficient transfer registers for the op
+ * Atomic set/clear bits in multiple of 4B values (EMEM, IMEM, or CTM).
+ * @param data      Pointer to sufficient transfer registers for the op
  * @param addr      40-bit pointer to the first value in memory
- * @param size      size of the op, must be a multiple of 4
- * @param max_size  used to determine largest op, if size is not a constant
- * @param sync      type of synchronisation (sig_done or ctx_swap)
- * @param sig       signal to use
+ * @param size      Size of the op, must be a multiple of 4
+ * @param max_size  Used to determine largest op, if size is not a constant
+ * @param sync      Type of synchronisation (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * @note size max = 32
  * These functions provide basic atomic bit set/clr in NFP memory.  No special
@@ -176,13 +176,13 @@ __intrinsic void mem_bitclr(__xwrite void *data,
                             __mem void *addr, size_t size);
 
 /**
- * Atomic test and set/clr bits in multiple of 4B values (EMEM, IMEM, or CTM)
- * @param data      pointer to sufficient RW transfer registers for the op
+ * Atomic test and set/clr bits in multiple of 4B values (EMEM, IMEM, or CTM).
+ * @param data      Pointer to sufficient RW transfer registers for the op
  * @param addr      40-bit pointer to the first value in memory
- * @param size      size of the op, must be a multiple of 4
- * @param max_size  used to determine largest op, if size is not a constant
- * @param sync      type of synchronization (must be sig_done)
- * @param sig_pair  signal pair to use
+ * @param size      Size of the op, must be a multiple of 4
+ * @param max_size  Used to determine largest op, if size is not a constant
+ * @param sync      Type of synchronization (must be sig_done)
+ * @param sig_pair  Signal pair to use
  *
  * Note: Maximum for @max_size is 32.
  *
@@ -204,13 +204,13 @@ __intrinsic void mem_test_clr(__xrw void *data, __mem void *addr,
                               size_t size);
 
 /**
- * Atomic test and add/sub in multiple of 4B values (EMEM, IMEM, or CTM)
- * @param data      pointer to sufficient RW transfer registers for the op
+ * Atomic test and add/sub in multiple of 4B values (EMEM, IMEM, or CTM).
+ * @param data      Pointer to sufficient RW transfer registers for the op
  * @param addr      40-bit pointer to the first value in memory
- * @param size      size of the op, must be a multiple of 4
- * @param max_size  used to determine largest op, if size is not a constant
- * @param sync      type of synchronization (must be sig_done)
- * @param sig_pair  signal pair to use
+ * @param size      Size of the op, must be a multiple of 4
+ * @param max_size  Used to determine largest op, if size is not a constant
+ * @param sync      Type of synchronization (must be sig_done)
+ * @param sig_pair  Signal pair to use
  *
  * Note: Maximum for @max_size is 16.
  *

@@ -25,13 +25,13 @@
 #include <nfp6000/nfp_cls.h>
 
 /**
- * Read a multiple of 4B from CLS
- * @param data      pointer to sufficient write transfer registers for the op
+ * Read a multiple of 4B from CLS.
+ * @param data      Pointer to sufficient write transfer registers for the op
  * @param addr      32-bit pointer to the memory start address in local CLS
- * @param size      size of the read, must be a multiple of 4
- * @param max_size  used to determine largest read, if size is not a constant
- * @param sync      type of synchronization (sig_done or ctx_swap)
- * @param sig       signal to use
+ * @param size      Size of the read, must be a multiple of 4
+ * @param max_size  Used to determine largest read, if size is not a constant
+ * @param sync      Type of synchronization (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * This function provides basic bulk reads to the current island's CLS.  There
  * is currently limited support for size to be a runtime value, and for reads
@@ -46,13 +46,13 @@ __intrinsic void __cls_read(__xread void *data, __cls void *addr,
 __intrinsic void cls_read(__xread void *data, __cls void *addr, size_t size);
 
 /**
- * Write a multiple of 4B to CLS
- * @param data      pointer to sufficient write transfer registers for the op
+ * Write a multiple of 4B to CLS.
+ * @param data      Pointer to sufficient write transfer registers for the op
  * @param addr      32-bit pointer to the memory start address in local CLS
- * @param size      size of the write, must be a multiple of 4
- * @param max_size  used to determine largest write, if size is not a constant
- * @param sync      type of synchronization (sig_done or ctx_swap)
- * @param sig       signal to use
+ * @param size      Size of the write, must be a multiple of 4
+ * @param max_size  Used to determine largest write, if size is not a constant
+ * @param sync      Type of synchronization (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * This function provides basic bulk writes to the current island's CLS. There
  * is currently limited support for size to be a runtime value, and for read
@@ -99,14 +99,14 @@ __intrinsic void cls_write_le(__xwrite void *data, __cls void *addr,
                               size_t size);
 
 /**
- * Create a 64-bit hash_index over the transfer registers
- * @param key       pointer to sufficient write transfer registers for the hash
+ * Create a 64-bit hash_index over the transfer registers.
+ * @param key       Pointer to sufficient write transfer registers for the hash
  * @param mask      32-bit pointer to the start of the mask in CLS
- * @param size      size of the key/mask, must be a multiple of 4. Valid [4-128]
- * @param max_size  used to determine largest hash, if size is not a constant
+ * @param size      Size of the key/mask, must be a multiple of 4. Valid [4-128]
+ * @param max_size  Used to determine largest hash, if size is not a constant
  * @param idx       CLS hash index. Valid [0-7]
- * @param sync      type of synchronisation (sig_done or ctx_swap)
- * @param sig       signal to use
+ * @param sync      Type of synchronisation (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * These functions perform a hash on up to 128 bytes of data in the transfer
  * registers. The user should configure the CLS hash multiply register and
@@ -132,12 +132,12 @@ __intrinsic void cls_hash_mask(__xwrite void *key, __cls void *mask,
 /* Bit atomic functions */
 /**
  * Clear the bit(s) in multiples of 4B from CLS.
- * @param data     pointer to sufficient write transfer registers for the op
- * @param addr     32-bit pointer to the memory start address in local CLS
- * @param size     size of the write, must be a multiple of 4
- * @param max_size used to determine largest write, if size is not a constant
- * @param sync     type of synchronization (sig_done or ctx_swap)
- * @param sig      signal to use
+ * @param data      Pointer to sufficient write transfer registers for the op
+ * @param addr      32-bit pointer to the memory start address in local CLS
+ * @param size      Size of the write, must be a multiple of 4
+ * @param max_size  Used to determine largest write, if size is not a constant
+ * @param sync      Type of synchronization (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * This function provides bit atomic clear of the bit(s) at the specified
  * address according to a bit mask provided in the xfer register(s).
@@ -155,12 +155,12 @@ __intrinsic void cls_clr(__xwrite void *data, __cls void *addr, size_t size);
 
 /**
  * Set the bit(s) in multiples of 4B from CLS.
- * @param data     pointer to sufficient write transfer registers for the op
- * @param addr     32-bit pointer to the memory start address in local CLS
- * @param size     size of the write, must be a multiple of 4
- * @param max_size used to determine largest write, if size is not a constant
- * @param sync     type of synchronization (sig_done or ctx_swap)
- * @param sig      signal to use
+ * @param data      Pointer to sufficient write transfer registers for the op
+ * @param addr      32-bit pointer to the memory start address in local CLS
+ * @param size      Size of the write, must be a multiple of 4
+ * @param max_size  Used to determine largest write, if size is not a constant
+ * @param sync      Type of synchronization (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * This function provides bit atomic set of the bit(s) at the specified
  * address according to a bit mask provided in the transfer register(s). A 1
@@ -178,12 +178,12 @@ __intrinsic void cls_set(__xwrite void *data, __cls void *addr, size_t size);
 
 /**
  * Test and Clear the bit(s) in multiples of 4B from CLS.
- * @param data     pointer to sufficient RW transfer registers for the op
- * @param addr     32-bit pointer to the memory start address in local CLS
- * @param size     size of the write, must be a multiple of 4
- * @param max_size used to determine largest write, if size is not a constant
- * @param sync     type of synchronization (sig_done or ctx_swap)
- * @param sig      signal to use
+ * @param data      Pointer to sufficient RW transfer registers for the op
+ * @param addr      32-bit pointer to the memory start address in local CLS
+ * @param size      Size of the write, must be a multiple of 4
+ * @param max_size  Used to determine largest write, if size is not a constant
+ * @param sync      Type of synchronization (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * This function provides bit atomic clear of the bit(s) at the specified
  * address according to a bit mask provided in the write transfer register(s)
@@ -205,12 +205,12 @@ __intrinsic void cls_test_clr(__xrw void *data, __cls void *addr,
 
 /**
  * Test and Set the bit(s) in multiples of 4B from CLS.
- * @param data     pointer to sufficient RW transfer registers for the op
- * @param addr     32-bit pointer to the memory start address in local CLS
- * @param size     size of the write, must be a multiple of 4
- * @param max_size used to determine largest write, if size is not a constant
- * @param sync     type of synchronization (sig_done or ctx_swap)
- * @param sig      signal to use
+ * @param data      Pointer to sufficient RW transfer registers for the op
+ * @param addr      32-bit pointer to the memory start address in local CLS
+ * @param size      Size of the write, must be a multiple of 4
+ * @param max_size  Used to determine largest write, if size is not a constant
+ * @param sync      Type of synchronization (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * This function provides bit atomic set of the bit(s) at the specified
  * address according to a bit mask provided in the write transfer register(s)
@@ -231,12 +231,12 @@ __intrinsic void cls_test_set(__xrw void *data, __cls void *addr,
 
 /**
  * Test and add in multiples of 4B from CLS.
- * @param data     pointer to sufficient RW transfer registers for the op
- * @param addr     32-bit pointer to the memory start address in local CLS
- * @param size     size of the write, must be a multiple of 4
- * @param max_size used to determine largest write, if size is not a constant
- * @param sync     type of synchronization (sig_done or ctx_swap)
- * @param sig      signal to use
+ * @param data      Pointer to sufficient RW transfer registers for the op
+ * @param addr      32-bit pointer to the memory start address in local CLS
+ * @param size      Size of the write, must be a multiple of 4
+ * @param max_size  Used to determine largest write, if size is not a constant
+ * @param sync      Type of synchronization (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * This function provides atomic add of words at the specified
  * address according to the data provided in the write transfer register(s)
@@ -256,12 +256,12 @@ __intrinsic void cls_test_add(__xrw void *data, __cls void *addr,
 
 /**
  * Test and sub in multiples of 4B from CLS.
- * @param data     pointer to sufficient RW transfer registers for the op
- * @param addr     32-bit pointer to the memory start address in local CLS
- * @param size     size of the write, must be a multiple of 4
- * @param max_size used to determine largest write, if size is not a constant
- * @param sync     type of synchronization (sig_done or ctx_swap)
- * @param sig      signal to use
+ * @param data      Pointer to sufficient RW transfer registers for the op
+ * @param addr      32-bit pointer to the memory start address in local CLS
+ * @param size      Size of the write, must be a multiple of 4
+ * @param max_size  Used to determine largest write, if size is not a constant
+ * @param sync      Type of synchronization (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
  * This function provides atomic sub of words at the specified
  * address according to the data provided in the write transfer register(s)
@@ -281,7 +281,7 @@ __intrinsic void cls_test_sub(__xrw void *data, __cls void *addr,
 
 /**
  * Single instruction to increment by 1 a value in CLS.
- * @param addr     pointer to the memory address in CLS.
+ * @param addr     Pointer to the memory address in CLS.
  *
  * These functions provide bit atomic 32 or 64 bit CLS increment by 1.
  */
@@ -317,7 +317,6 @@ __intrinsic void cls_decr64(__cls void *addr);
  * alert_trig = 0 for bit 11 of address, 1 for bit 20 of address.
  * alignment = None, Resv, 32 bit word and 64 bit word.
  * padding = Provides a protection between VF address spaces.
- *
  */
 
 /**
@@ -336,20 +335,17 @@ __intrinsic void cls_decr64(__cls void *addr);
  *
  * Disables VF translate.
  * cls_vf_translate_disable();
- *
  */
 
 /**
  * Setup a CLS VF Translate config.
- *
- * @param base_addr  Starting address in CLS.
- * @param cls_bytes  Number of CLS bytes per VF.
- * @param page_size  Page size of VF BAR.
- * @param alert_trig Type of alert trigger configured
- * @param alignment  VF alignment configuration.
- * @param padding    Padding between CLS VF address spaces.
- *
- **/
+ * @param base_addr   Starting address in CLS
+ * @param cls_bytes   Number of CLS bytes per VF
+ * @param page_size   Page size of VF BAR
+ * @param alert_trig  Type of alert trigger configured
+ * @param alignment   VF alignment configuration
+ * @param padding     Padding between CLS VF address spaces
+ */
 __intrinsic void cls_vf_translate_setup(unsigned int base_addr,
                                         unsigned int cls_bytes,
                                         unsigned int page_size,
@@ -358,7 +354,8 @@ __intrinsic void cls_vf_translate_setup(unsigned int base_addr,
                                         unsigned int padding);
 
 /**
- * Disables a CLS VF Translate config
+ * Disables a CLS VF Translate config.
  */
 __intrinsic void cls_vf_translate_disable();
+
 #endif /* !_NFP__CLS_H_ */

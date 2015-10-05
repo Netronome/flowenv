@@ -88,6 +88,7 @@ __cls_read_be(__xread void *data, __cls void *addr,
               size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_read_reg(data));
+
     _CLS_CMD(read_be, data, addr, size, max_size, sync, sig, 1, 8);
 }
 
@@ -95,6 +96,7 @@ __intrinsic void
 cls_read_be(__xread void *data, __cls void *addr, size_t size)
 {
     SIGNAL sig;
+
     __cls_read_be(data, addr, size, size, ctx_swap, &sig);
 }
 
@@ -103,6 +105,7 @@ __cls_write_be(__xwrite void *data, __cls void *addr,
                size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
+
     _CLS_CMD(write_be, data, addr, size, max_size, sync, sig, 1, 8);
 }
 
@@ -110,6 +113,7 @@ __intrinsic void
 cls_write_be(__xwrite void *data, __cls void *addr, size_t size)
 {
     SIGNAL sig;
+
     __cls_write_be(data, addr, size, size, ctx_swap, &sig);
 }
 
@@ -118,6 +122,7 @@ __cls_read_le(__xread void *data, __cls void *addr,
               size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_read_reg(data));
+
     _CLS_CMD(read_le, data, addr, size, max_size, sync, sig, 1, 8);
 }
 
@@ -125,6 +130,7 @@ __intrinsic void
 cls_read_le(__xread void *data, __cls void *addr, size_t size)
 {
     SIGNAL sig;
+
     __cls_read_le(data, addr, size, size, ctx_swap, &sig);
 }
 
@@ -133,6 +139,7 @@ __cls_write_le(__xwrite void *data, __cls void *addr,
                size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
+
     _CLS_CMD(write_le, data, addr, size, max_size, sync, sig, 1, 8);
 }
 
@@ -140,6 +147,7 @@ __intrinsic void
 cls_write_le(__xwrite void *data, __cls void *addr, size_t size)
 {
     SIGNAL sig;
+
     __cls_write_le(data, addr, size, size, ctx_swap, &sig);
 }
 
@@ -263,6 +271,7 @@ __intrinsic void
 cls_clr(__xwrite void *data, __cls void *addr, size_t size)
 {
     SIGNAL sig;
+
     __cls_clr(data, addr, size, size, ctx_swap, &sig);
 }
 
@@ -272,6 +281,7 @@ __cls_set(__xwrite void *data, __cls void *addr, size_t size,
           const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     try_ctassert(size <= 64);
+
     _CLS_CMD(set, data, addr, size, max_size, sync, sig, 1, 8);
 }
 
@@ -279,6 +289,7 @@ __intrinsic void
 cls_set(__xwrite void *data, __cls void *addr, size_t size)
 {
     SIGNAL sig;
+
     __cls_set(data, addr, size, size, ctx_swap, &sig);
 }
 
@@ -288,6 +299,7 @@ __cls_test_clr(__xrw void *data, __cls void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     try_ctassert(size <= 64);
+
     _CLS_CMD(test_clr, data, addr, size, max_size, sync, sig, 1, 8);
 }
 
@@ -295,6 +307,7 @@ __intrinsic void
 cls_test_clr(__xrw void *data, __cls void *addr, size_t size)
 {
     SIGNAL sig;
+
     __cls_test_clr(data, addr, size, size, ctx_swap, &sig);
 }
 
@@ -304,6 +317,7 @@ __cls_test_set(__xrw void *data, __cls void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     try_ctassert(size <= 64);
+
     _CLS_CMD(test_set, data, addr, size, size, sync, sig, 1, 8);
 }
 
@@ -311,6 +325,7 @@ __intrinsic void
 cls_test_set(__xrw void *data, __cls void *addr, size_t size)
 {
     SIGNAL sig;
+
     __cls_test_set(data, addr, size, size, ctx_swap, &sig);
 }
 
@@ -320,6 +335,7 @@ __cls_test_add(__xrw void *data, __cls void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     try_ctassert(size <= 64);
+
     _CLS_CMD(test_add, data, addr, size, size, sync, sig, 1, 8);
 }
 
@@ -327,6 +343,7 @@ __intrinsic void
 cls_test_add(__xrw void *data, __cls void *addr, size_t size)
 {
     SIGNAL sig;
+
     __cls_test_add(data, addr, size, size, ctx_swap, &sig);
 }
 
@@ -336,6 +353,7 @@ __cls_test_sub(__xrw void *data, __cls void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     try_ctassert(size <= 64);
+
     _CLS_CMD(test_sub, data, addr, size, size, sync, sig, 1, 8);
 }
 
@@ -343,6 +361,7 @@ __intrinsic void
 cls_test_sub(__xrw void *data, __cls void *addr, size_t size)
 {
     SIGNAL sig;
+
     __cls_test_sub(data, addr, size, size, ctx_swap, &sig);
 }
 
@@ -381,9 +400,8 @@ cls_vf_translate_setup(unsigned int base_addr, unsigned int cls_bytes,
     __gpr unsigned int vftcfg_temp = 0;
     __xwrite unsigned int vftcfg;
 
-    if (padding) {
+    if (padding)
        vftcfg_temp |= NFP_CLS_AUTOPUSH_VF_TRANSLATION_PROT_VFS;
-    }
 
     vftcfg_temp |= (NFP_CLS_AUTOPUSH_VF_TRANSLATION_BASE(base_addr) |
                     NFP_CLS_AUTOPUSH_VF_TRANSLATION_OFFSET_SIZE(cls_bytes) |
@@ -404,4 +422,3 @@ cls_vf_translate_disable()
 
     cls_write(&vftcfg, vftaddr, sizeof(vftcfg));
 }
-

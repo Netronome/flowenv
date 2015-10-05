@@ -23,8 +23,7 @@
 #include <types.h>
 
 /**
- * Read a multiple of 8B (read64), 4B (read32), 1B (read8) from a memory unit
- *
+ * Read a multiple of 8B (read64), 4B (read32), 1B (read8) from a memory unit.
  * @param data      Pointer to sufficient number of read transfer registers
  * @param addr      40-bit pointer to the memory start address
  * @param size      Size of the read, must be a multiple of the base size
@@ -118,8 +117,7 @@ __intrinsic void mem_read8(__xread void *data, __mem void *addr,
 
 
 /**
- * Write a multiple of 8B (write64), 4B (write32), 1B (write8) to a memory unit
- *
+ * Write a multiple of 8B (write64), 4B (write32), 1B (write8) to a memory unit.
  * @param data      Pointer to sufficient number of write transfer registers
  * @param addr      40-bit pointer to the memory start address
  * @param size      Size of the write, must be a multiple of the base unit
@@ -229,6 +227,5 @@ __intrinsic void __mem_write8_swap_le(__xwrite void *data, __mem void *addr,
 
 __intrinsic void mem_write8_swap_le(__xwrite void *data, __mem void *addr,
                                  const size_t size);
-
 
 #endif /* !_NFP__MEM_BULK_H_ */

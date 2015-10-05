@@ -64,7 +64,6 @@ signal_ctx(unsigned int ctx, unsigned int sig_no)
     local_csr_write(local_csr_same_me_signal,
                     (NFP_MECSR_SAME_ME_SIGNAL_SIG_NO(sig_no) |
                      NFP_MECSR_SAME_ME_SIGNAL_CTX(ctx)));
-
 }
 
 __intrinsic void
@@ -73,7 +72,6 @@ signal_next_ctx(unsigned int sig_no)
     local_csr_write(local_csr_same_me_signal,
                     (NFP_MECSR_SAME_ME_SIGNAL_NEXT_CTX |
                      NFP_MECSR_SAME_ME_SIGNAL_SIG_NO(sig_no)));
-
 }
 
 __intrinsic void
@@ -82,7 +80,6 @@ signal_next_me(unsigned int ctx, unsigned int sig_no)
     local_csr_write(local_csr_next_neighbor_signal,
                     (NFP_MECSR_NEXT_NEIGHBOR_SIGNAL_SIG_NO(sig_no) |
                      NFP_MECSR_NEXT_NEIGHBOR_SIGNAL_CTX(ctx)));
-
 }
 
 __intrinsic void
@@ -91,7 +88,6 @@ signal_prev_me(unsigned int ctx, unsigned int sig_no)
     local_csr_write(local_csr_prev_neighbor_signal,
                     (NFP_MECSR_PREV_NEIGHBOR_SIGNAL_SIG_NO(sig_no) |
                      NFP_MECSR_PREV_NEIGHBOR_SIGNAL_CTX(ctx)));
-
 }
 
 __intrinsic void
@@ -270,4 +266,3 @@ me_pc_read()
 {
     return local_csr_read(local_csr_profile_count);
 }
-

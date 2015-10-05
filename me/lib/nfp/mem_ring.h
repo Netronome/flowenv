@@ -37,7 +37,6 @@ typedef unsigned int mem_ring_addr_t;
 
 /**
  * Declare the data structure for a ring or journal
- *
  * @param _name         Name of the ring/journal
  * @param _entries      Number of 32bit entries on ring/journal
  */
@@ -49,8 +48,7 @@ typedef unsigned int mem_ring_addr_t;
     __export __emem __align(_entries * 4) unsigned int _name[_entries]
 
 /**
- * Configure a memory ring/journal
- *
+ * Configure a memory ring/journal.
  * @param _name         Name of the ring/journal
  * @param _rnum         Ring number to use
  */
@@ -62,9 +60,8 @@ typedef unsigned int mem_ring_addr_t;
     mem_workq_setup(_rnum, _name, sizeof(_name))
 
 /**
- * Construct a mem_ring_addr_t
- *
- *@param base           base address
+ * Construct a mem_ring_addr_t.
+ *@param base           Base address
  *
  * Helper function to construct a mem_ring_addr_t address for the ring
  * given the memory address of the ring. It is preferably to save the
@@ -73,11 +70,10 @@ typedef unsigned int mem_ring_addr_t;
 __intrinsic mem_ring_addr_t mem_ring_get_addr(__dram void *base);
 
 /**
- * Setup/Configure a memory ring
- *
- * @param rnum          ring number
- * @param base          base address
- * @param size          size of ring in bytes (must be a compile time constant)
+ * Setup/Configure a memory ring.
+ * @param rnum          Ring number
+ * @param base          Base address
+ * @param size          Size of ring in bytes (must be a compile time constant)
  *
  * Initializes a DRAM ring with the given size using the memory
  * pointed to by base.  The ring type will always be set to two, and
@@ -87,11 +83,10 @@ __intrinsic mem_ring_addr_t mem_ring_setup(unsigned int rnum, __dram void *base,
                                            size_t log2size);
 
 /**
- * Setup/Configure a memory journal
- *
- * @param rnum          ring number
- * @param base          base address
- * @param size          size of ring (must be a compile time constant)
+ * Setup/Configure a memory journal.
+ * @param rnum          Ring number
+ * @param base          Base address
+ * @param size          Size of ring (must be a compile time constant)
  *
  * Initializes a DRAM journal with a given size using the memory
  * pointed to by base.
@@ -102,11 +97,10 @@ __intrinsic mem_ring_addr_t mem_journal_setup(unsigned int rnum,
 
 
 /**
- * Setup/Configure a memory work queue
- *
- * @param rnum          ring number
- * @param base          base address
- * @param size          size of ring (must be a compile time constant)
+ * Setup/Configure a memory work queue.
+ * @param rnum          Ring number
+ * @param base          Base address
+ * @param size          Size of ring (must be a compile time constant)
  *
  * Initializes a DRAM work queue with a given size using the memory
  * pointed to by base.
@@ -117,14 +111,13 @@ __intrinsic mem_ring_addr_t mem_workq_setup(unsigned int rnum,
 
 
 /**
- * Get entries off memory ring
- *
- * @param rnum          ring number
- * @param data          output data
- * @param size          size of output
- * @param max_size      used to determine largest op, if size is not a constant
- * @param sync          type of synchronization (must be sig_done)
- * @param sigpair       signal pair to report completion/failure
+ * Get entries off memory ring.
+ * @param rnum          Ring number
+ * @param data          Output data
+ * @param size          Size of output
+ * @param max_size      Used to determine largest op, if size is not a constant
+ * @param sync          Type of synchronization (must be sig_done)
+ * @param sigpair       Signal pair to report completion/failure
  *
  * Removes entries from the head of the ring and signal @sigpair[0]
  * when done.  If @sigpair[1] is also raised it indicates that the
@@ -137,10 +130,10 @@ __intrinsic void __mem_ring_get(unsigned int rnum, mem_ring_addr_t raddr,
                                 sync_t sync, SIGNAL_PAIR *sigpair);
 
 /**
- * Get entries off memory ring
- * @param rnum          ring number
- * @param data          output data
- * @param size          size of output (in bytes)
+ * Get entries off memory ring.
+ * @param rnum          Ring number
+ * @param data          Output data
+ * @param size          Size of output (in bytes)
  *
  * Removes entries from the head of the ring and return 0 on success.
  * Leave ring as-is and return -1 if the ring is not sufficiently full
@@ -151,18 +144,17 @@ __intrinsic int mem_ring_get(unsigned int rnum, mem_ring_addr_t raddr,
 
 
 /**
- * Get entries off memory ring using "freely" option
+ * Get entries off memory ring using "freely" option.
+ * @param rnum          Ring number
+ * @param data          Output data
+ * @param size          Size of output
+ * @param max_size      Used to determine largest op, if size is not a constant
+ * @param sync          Type of synchronization
+ * @param sig           Signal to report completion/failure
  *
- * @param rnum          ring number
- * @param data          output data
- * @param size          size of output
- * @param max_size      used to determine largest op, if size is not a constant
- * @param sync          type of synchronization
- * @param sig           signal to report completion/failure
- *
- * Removes entries from the head of the ring and signal @sig when done.
- * If the ring is not sufficiently full to complete the request, @data is padded
- * with zeros to make up @size bytes.
+ * Removes entries from the head of the ring and signal @sig when
+ * done.  If the ring is not sufficiently full to complete the
+ * request, @data is padded with zeros to make up @size bytes.
  */
 __intrinsic void __mem_ring_get_freely(unsigned int rnum, mem_ring_addr_t raddr,
                                        __xread void *data,
@@ -170,29 +162,27 @@ __intrinsic void __mem_ring_get_freely(unsigned int rnum, mem_ring_addr_t raddr,
                                        sync_t sync, SIGNAL *sig);
 
 /**
- * Get entries off memory ring using "freely" option
- *
- * @param rnum          ring number
- * @param data          output data
- * @param size          size of output
+ * Get entries off memory ring using "freely" option.
+ * @param rnum          Ring number
+ * @param data          Output data
+ * @param size          Size of output
  *
  * Removes entries from the head of the ring swapping until complete.
- * If the ring is not sufficiently full to complete the request, @data is padded
- * with zeros to make up @size bytes.
+ * If the ring is not sufficiently full to complete the request, @data
+ * is padded with zeros to make up @size bytes.
  */
 __intrinsic void mem_ring_get_freely(unsigned int rnum, mem_ring_addr_t raddr,
                                      __xread void *data, const size_t size);
 
 
 /**
- * Pop entries off memory ring
- *
- * @param rnum          ring number
- * @param data          output data
- * @param size          size of output
- * @param max_size      used to determine largest op, if size is not a constant
- * @param sync          type of synchronization (must be sig_done)
- * @param sigpair       signal pair to report completion/failure
+ * Pop entries off memory ring.
+ * @param rnum          Ring number
+ * @param data          Output data
+ * @param size          Size of output
+ * @param max_size      Used to determine largest op, if size is not a constant
+ * @param sync          Type of synchronization (must be sig_done)
+ * @param sigpair       Signal pair to report completion/failure
  *
  * Removes entries from the tail of the ring and signal @sigpair[0]
  * when done.  If @sigpair[1] is also raised it indicates that the
@@ -205,10 +195,10 @@ __intrinsic void __mem_ring_pop(unsigned int rnum, mem_ring_addr_t raddr,
                                 sync_t sync, SIGNAL_PAIR *sigpair);
 
 /**
- * Pop entries off memory ring
- * @param rnum          ring number
- * @param data          output data
- * @param size          size of output (in bytes)
+ * Pop entries off memory ring.
+ * @param rnum          Ring number
+ * @param data          Output data
+ * @param size          Size of output (in bytes)
  *
  * Removes entries from the tail of the ring and return 0 on success.
  * Leave ring as-is and return -1 if the ring is not sufficiently full
@@ -218,13 +208,13 @@ __intrinsic int mem_ring_pop(unsigned int rnum, mem_ring_addr_t raddr,
                              __xread void *data, const size_t size);
 
 /**
- * Put entries onto memory ring
- * @param rnum          ring number
- * @param data          input data
- * @param size          size of output
- * @param max_size      used to determine largest op, if size is not a constant
- * @param sync          type of synchronization (must be sig_done)
- * @param sigpair       signal pair to report completion/failure
+ * Put entries onto memory ring.
+ * @param rnum          Ring number
+ * @param data          Input data
+ * @param size          Size of output
+ * @param max_size      Used to determine largest op, if size is not a constant
+ * @param sync          Type of synchronization (must be sig_done)
+ * @param sigpair       Signal pair to report completion/failure
  *
  * Add entries to the tail of the ring. mem[put] returns a status word
  * in data[0] after both signals have been asserted.  It is the
@@ -244,10 +234,10 @@ __intrinsic void __mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr,
                                 sync_t sync, SIGNAL_PAIR *sigpair);
 
 /**
- * Put entries onto memory ring
- * @param rnum          ring number
- * @param data          input data
- * @param size          size of input (in bytes)
+ * Put entries onto memory ring.
+ * @param rnum          Ring number
+ * @param data          Input data
+ * @param size          Size of input (in bytes)
  *
  * Add entries to the tail of the ring and return number of bytes
  * already on ring.  Leave ring as-is and return -1 if the ring was
@@ -261,13 +251,13 @@ __intrinsic int mem_ring_put(unsigned int rnum,mem_ring_addr_t raddr,
 
 
 /**
- * Journal entries onto memory ring
- * @param rnum          ring number
- * @param data          input data
- * @param size          size of output
- * @param max_size      used to determine largest op, if size is not a constant
- * @param sync          type of synchronization
- * @param sig           signal to report completion
+ * Journal entries onto memory ring.
+ * @param rnum          Ring number
+ * @param data          Input data
+ * @param size          Size of output
+ * @param max_size      Used to determine largest op, if size is not a constant
+ * @param sync          Type of synchronization
+ * @param sig           Signal to report completion
  *
  * Add entries to the tail of the ring, overwriting oldest entries if
  * ring is full.
@@ -278,10 +268,10 @@ __intrinsic void __mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr,
                                     sync_t sync, SIGNAL *sig);
 
 /**
- * Journal entries onto memory ring
- * @param rnum          ring number
- * @param data          input data
- * @param size          size of input (in bytes)
+ * Journal entries onto memory ring.
+ * @param rnum          Ring number
+ * @param data          Input data
+ * @param size          Size of input (in bytes)
  *
  * Add entries to the tail of the ring, overwriting oldest entries if
  * ring is full.
@@ -290,9 +280,9 @@ __intrinsic void mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr,
                                  __xwrite void *data, const size_t size);
 
 /**
- * Fast journal an entry onto memory ring
- * @param rnum          ring number
- * @param value         value to journal
+ * Fast journal an entry onto memory ring.
+ * @param rnum          Ring number
+ * @param value         Value to journal
  *
  * Add entries to the tail of the ring, overwriting oldest entries if
  * ring is full.
@@ -302,14 +292,14 @@ __intrinsic void mem_ring_journal_fast(unsigned int rnum, mem_ring_addr_t raddr,
 
 
 /**
- * Put entries onto a work queue
- * @param rnum          work queue "ring" number
- * @param raddr         address bits for the queue engine island
- * @param data          input data
- * @param size          size of input
- * @param max_size      used to determine largest op, if size is not a constant
- * @param sync          type of synchronization
- * @param sig           signal to use for the operation
+ * Put entries onto a work queue.
+ * @param rnum          Work queue "ring" number
+ * @param raddr         Address bits for the queue engine island
+ * @param data          Input data
+ * @param size          Size of input
+ * @param max_size      Used to determine largest op, if size is not a constant
+ * @param sync          Type of synchronization
+ * @param sig           Signal to use for the operation
  *
  * Note that no work queue overflow checking is performed.
  */
@@ -319,11 +309,11 @@ __intrinsic void __mem_workq_add_work(unsigned int rnum, mem_ring_addr_t raddr,
                                       sync_t sync, SIGNAL *sig);
 
 /**
- * Put entries onto a work queue
- * @param rnum          work queue "ring" number
- * @param raddr         address bits for the queue engine island
- * @param data          input data
- * @param size          size of input
+ * Put entries onto a work queue.
+ * @param rnum          Work queue "ring" number
+ * @param raddr         Address bits for the queue engine island
+ * @param data          Input data
+ * @param size          Size of input
  *
  * Note that no work queue overflow checking is performed.
  */
@@ -332,14 +322,14 @@ __intrinsic void mem_workq_add_work(unsigned int rnum, mem_ring_addr_t raddr,
 
 
 /**
- * Put threads onto a work queue
- * @param rnum          work queue "ring" number
- * @param raddr         address bits for the queue engine island
- * @param data          output data
- * @param size          size of output
- * @param max_size      used to determine largest op, if size is not a constant
- * @param sync          type of synchronization
- * @param sig           signal to use for the operation
+ * Put threads onto a work queue.
+ * @param rnum          Work queue "ring" number
+ * @param raddr         Address bits for the queue engine island
+ * @param data          Output data
+ * @param size          Size of output
+ * @param max_size      Used to determine largest op, if size is not a constant
+ * @param sync          Type of synchronization
+ * @param sig           Signal to use for the operation
  *
  * Note that no work queue overflow checking is performed.
  */
@@ -350,11 +340,11 @@ __intrinsic void __mem_workq_add_thread(unsigned int rnum,
                                         sync_t sync, SIGNAL *sig);
 
 /**
- * Put threads onto a work queue
- * @param rnum          work queue "ring" number
- * @param raddr         address bits for the queue engine island
- * @param data          output data
- * @param size          size of output
+ * Put threads onto a work queue.
+ * @param rnum          Work queue "ring" number
+ * @param raddr         Address bits for the queue engine island
+ * @param data          Output data
+ * @param size          Size of output
  *
  * Note that no work queue overflow checking is performed.
  */
@@ -363,8 +353,8 @@ __intrinsic void mem_workq_add_thread(unsigned int rnum, mem_ring_addr_t raddr,
 
 
 /**
- * Get current amount of data in memory ring
- * @param rnum          ring number
+ * Get current amount of data in memory ring.
+ * @param rnum          Ring number
  */
 __intrinsic size_t mem_ring_current_size(unsigned int rnum,
                                          mem_ring_addr_t raddr);

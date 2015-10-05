@@ -40,4 +40,3 @@ xpb_write(unsigned int addr, unsigned int val)
 
     __asm ct[xpb_write, *xfer, addr, 0, 1], ctx_swap[sig]
 }
-

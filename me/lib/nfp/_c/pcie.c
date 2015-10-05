@@ -53,11 +53,10 @@ pcie_c2p_barcfg_set(unsigned int pcie_isl, unsigned char bar_idx,
     wr_val = tmp;
 
     __asm {
-        pcie[write_pci, wr_val, isl, <<8, bar_addr, 1], sig_done[wr_sig]; 
+        pcie[write_pci, wr_val, isl, <<8, bar_addr, 1], sig_done[wr_sig];
         pcie[read_pci, rd_val, isl, <<8, bar_addr, 1], sig_done[rd_sig];
     }
     wait_for_all(&wr_sig, &rd_sig);
-    
 }
 
 
@@ -129,6 +128,7 @@ __pcie_read(__xread void *data, unsigned int pcie_isl, unsigned char bar_idx,
             size_t size, size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_read_reg(data));
+
     _PCIE_C2P_CMD(read, data, pcie_isl, bar_idx, addr_hi, addr_lo, size, \
                   max_size, sync, sig);
 }
@@ -140,6 +140,7 @@ pcie_read(__xread void *data, unsigned int pcie_isl, unsigned char bar_idx,
     SIGNAL sig;
 
     ctassert(__is_ct_const(size));
+
     __pcie_read(data, pcie_isl, bar_idx, addr_hi, addr_lo, size, size,
                 ctx_swap, &sig);
 }
@@ -150,6 +151,7 @@ __pcie_write(__xwrite void *data, unsigned int pcie_isl, unsigned char bar_idx,
              size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
+
     _PCIE_C2P_CMD(write, data, pcie_isl, bar_idx, addr_hi, addr_lo, size, \
                   max_size, sync, sig);
 }
@@ -161,6 +163,7 @@ pcie_write(__xwrite void *data, unsigned int pcie_isl, unsigned char bar_idx,
     SIGNAL sig;
 
     ctassert(__is_ct_const(size));
+
     __pcie_write(data, pcie_isl, bar_idx, addr_hi, addr_lo, size, size,
                  ctx_swap, &sig);
 }
@@ -291,6 +294,7 @@ pcie_dma_enq(unsigned int pcie_isl, __xwrite struct nfp_pcie_dma_cmd *cmd,
              unsigned int queue)
 {
     SIGNAL sig;
+
     __pcie_dma_enq(pcie_isl, cmd, queue, ctx_swap, &sig);
 }
 

@@ -263,7 +263,6 @@ mem_read8(__xread void *data, __mem void *addr, const size_t size)
 }
 
 
-
 __intrinsic void
 __mem_write64(__xwrite void *data, __mem void *addr,
               size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)

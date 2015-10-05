@@ -55,6 +55,7 @@ mac_stats_load(__gpr unsigned int src_hi, __gpr unsigned int src_lo,
 {
     __xrw unsigned int stats[8];
     SIGNAL sig;
+
     __asm {
         nbi[read, stats[0], src_hi, <<8, src_lo, 4], ctx_swap[sig];
         alu[stats[0], --, B, stats[1]];
@@ -77,6 +78,7 @@ mac_stats_add(__gpr unsigned int src_hi, __gpr unsigned int src_lo,
     __xrw unsigned int stats[8];
     SIGNAL sig;
     __gpr unsigned int dst_lo2 = dst_lo + 32;
+
     __asm {
         nbi[read, stats[0], src_hi, <<8, src_lo, 4], ctx_swap[sig];
         alu[stats[0], --, B, stats[0]];

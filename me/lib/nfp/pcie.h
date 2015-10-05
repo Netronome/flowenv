@@ -15,7 +15,7 @@
  */
 
 /**
- * Set a CPP2PCIe BAR
+ * Set a CPP2PCIe BAR.
  * @param pcie_isl  PCIe Island to access
  * @param bar_idx   CPP2PCIe BAR to configure
  * @param addr_hi   High 32bit of host DMA address
@@ -38,13 +38,13 @@ __intrinsic void pcie_c2p_barcfg_set(unsigned int pcie_isl,
                                      unsigned char req_id);
 
 /**
- * Read data from the host through a CPP2PCIe BAR
+ * Read data from the host through a CPP2PCIe BAR.
  * @param data      xfer registers to return the data in
  * @param pcie_isl  PCIe island (0-3) to address
  * @param bar_idx   CPP2PCIe BAR to use (expected to be configured)
- * @param addr_hi   bits 35:32 of the host address to write to
- * @param addr_lo   bottom 32 bits of the Host address to read from
- * @param size      number of bytes to read
+ * @param addr_hi   Bits 35:32 of the host address to write to
+ * @param addr_lo   Bottom 32 bits of the Host address to read from
+ * @param size      Number of bytes to read
  *
  * Maximum size supported is 128B.
  */
@@ -58,13 +58,13 @@ __intrinsic void pcie_read(__xread void *data, unsigned int pcie_isl,
                            unsigned int addr_lo, size_t size);
 
 /**
- * Write data to the host through a CPP2PCIe BAR
+ * Write data to the host through a CPP2PCIe BAR.
  * @param data      xfer registers containing data to write to the host
  * @param pcie_isl  PCIe island (0-3) to address
- * @param bar_idx   which CPP2PCIe BAR to use (expected to be configured)
- * @param addr_hi   bits 35:32 of the host address to write to
- * @param addr_lo   bottom 32bits of the host address to write to
- * @param size      number of bytes to write
+ * @param bar_idx   Which CPP2PCIe BAR to use (expected to be configured)
+ * @param addr_hi   Bits 35:32 of the host address to write to
+ * @param addr_lo   Bottom 32bits of the host address to write to
+ * @param size      Number of bytes to write
  *
  * Maximum size supported is 128B.
  */
@@ -105,10 +105,10 @@ struct pcie_dma_cfg_one {
 };
 
 /**
- * Configure a DMADescrConfig register
+ * Configure a DMADescrConfig register.
  * @param pcie_isl          PCIe island (0-3) to address
  * @param index             DmaConfigRegIndex to configure
- * @param new_cfg           configuration to apply
+ * @param new_cfg           Configuration to apply
  *
  * This function accepts an index in the same format as the DMA descriptor,
  * and applies the given configuration to that index only.  A
@@ -121,12 +121,12 @@ __intrinsic void pcie_dma_cfg_set_one(unsigned int pcie_isl,
                                       struct pcie_dma_cfg_one new_cfg);
 
 /**
- * Configure a pair of DMADescrConfig registers
+ * Configure a pair of DMADescrConfig registers.
  * @param pcie_isl          PCIe island (0-3) to address
  * @param index             DmaConfigRegIndex to configure
- * @param new_cfg           configuration to apply
- * @param sync              type of synchronization
- * @param sig               signal to use
+ * @param new_cfg           Configuration to apply
+ * @param sync              Type of synchronization
+ * @param sig               Signal to use
  *
  * This function accepts an index in the same format as the DMA descriptor,
  * and applies the configuration to that index and it's pair. sig_done and
@@ -142,11 +142,11 @@ __intrinsic void pcie_dma_cfg_set_pair(unsigned int pcie_isl,
                                        nfp_pcie_dma_cfg *new_cfg);
 
 /**
- * Populate the mode_sel and dma_mode fields for a DMA completion signal
+ * Populate the mode_sel and dma_mode fields for a DMA completion signal.
  * @param cmd           struct nfp_pcie_dma_cmd containing partial descriptor
  * @param meid          ME to receive signal (formatted as from __MEID)
- * @param ctx           context to receive signal
- * @param sig_no        signal number to return
+ * @param ctx           Context to receive signal
+ * @param sig_no        Signal number to return
  *
  * Either 'cmd' must be held in R/W accessible registers, preferably GPRs, or
  * this function must operate on compile time constants only.
@@ -156,10 +156,10 @@ __intrinsic void pcie_dma_set_sig(void *cmd,
                                   unsigned int sig_no);
 
 /**
- * Populate the mode_sel and dma_mode fields for a DMA completion event
+ * Populate the mode_sel and dma_mode fields for a DMA completion event.
  * @param cmd           struct nfp_pcie_dma_cmd containing partial descriptor
- * @param type          event type
- * @param source        event source
+ * @param type          Event type
+ * @param source        Event source
  *
  * Either 'cmd' must be held in R/W accessible registers, preferably GPRs, or
  * this function must operate on compile time constants only.
@@ -168,10 +168,10 @@ __intrinsic void pcie_dma_set_event(void *cmd, unsigned int type,
                                     unsigned int source);
 
 /**
- * Enqueue a DMA descriptor
+ * Enqueue a DMA descriptor.
  * @param pcie_isl          PCIe island (0-3) to address
  * @param cmd               DMA command to send
- * @param queue             queue to use, e.g. NFP_PCIE_DMA_TOPCI_HI
+ * @param queue             Queue to use, e.g. NFP_PCIE_DMA_TOPCI_HI
  */
 __intrinsic void __pcie_dma_enq(unsigned int pcie_isl,
                                 __xwrite struct nfp_pcie_dma_cmd *cmd,

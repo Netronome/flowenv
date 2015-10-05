@@ -79,8 +79,8 @@ do {                                                                           \
     }                                                                          \
 } while (0)
 
-#define _MEM_ATOMIC_CMD_TEST(cmdname, data, addr, size, max_size, sync, sig_pair, shift, \
-                        cmdlen)                                                \
+#define _MEM_ATOMIC_CMD_TEST(cmdname, data, addr, size, max_size, sync,        \
+                             sig_pair, shift, cmdlen)                          \
 do {                                                                           \
     struct nfp_mecsr_prev_alu ind;                                             \
     unsigned int count = (size >> shift);                                      \
@@ -304,6 +304,7 @@ __intrinsic void
 mem_sub32(__xwrite void *data, __mem void *addr, size_t size)
 {
     SIGNAL sig;
+
     __mem_sub32(data, addr, size, size, ctx_swap, &sig);
 }
 
@@ -333,11 +334,11 @@ __mem_bitset(__xwrite void *data, __mem void *addr,
     ctassert(__is_write_reg(data));
     try_ctassert(size <= 32);
 
-    /* Set bits specified in write transfers registers to a number of 32-bit
-       memory words. A byte mask specifies which memory bytes are affected for
-       all memory words. This implementation does not allow the byte mask to be
-       configured. It defaults to all bits specfied in the transfer register
-       will be set. */
+    /* Set bits specified in write transfers registers to a number of
+     * 32-bit memory words. A byte mask specifies which memory bytes
+     * are affected for all memory words. This implementation does not
+     * allow the byte mask to be configured. It defaults to all bits
+     * specfied in the transfer register will be set. */
     _MEM_ATOMIC_CMD(set, data, addr, size, max_size, sync, sig, 2,
                     _MEM_ATOMIC_32_CMD);
 }
@@ -357,11 +358,11 @@ __mem_bitclr(__xwrite void *data, __mem void *addr,
     ctassert(__is_write_reg(data));
     try_ctassert(size <= 32);
 
-    /* Clear bits specified in write transfers registers to a number of 32-bit
-       memory words. A byte mask specifies which memory bytes are affected for
-       all memory words. This implementation does not allow the byte mask to be
-       configured. It defaults to all bits specified in the transfer register
-       will be cleared. */
+    /* Clear bits specified in write transfers registers to a number
+     * of 32-bit memory words. A byte mask specifies which memory
+     * bytes are affected for all memory words. This implementation
+     * does not allow the byte mask to be configured. It defaults to
+     * all bits specified in the transfer register will be cleared. */
     _MEM_ATOMIC_CMD(clr, data, addr, size, max_size, sync, sig, 2,
                     _MEM_ATOMIC_32_CMD);
 }

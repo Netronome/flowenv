@@ -106,7 +106,7 @@ struct mem_cam_32bit {
 };
 
 /**
- * Check if CAM lookup resulted in a hit
+ * Check if CAM lookup resulted in a hit.
  * @param data          CAM result data
  *
  * Return true if there was a match.  Note that function is only valid
@@ -119,7 +119,7 @@ struct mem_cam_32bit {
     (!(((data).result.mask_lo == 0) && ((data).result.mask_hi == 0)))
 
 /**
- * Check if CAM lookup add resulted in a new entry add
+ * Check if CAM lookup add resulted in a new entry add.
  * @param data          CAM result data
  *
  * On a cam lookup and add command if no match was found and there is space
@@ -133,13 +133,13 @@ struct mem_cam_32bit {
 #define mem_cam_lookup_add_fail(data) ((data).result.match == 0xff)
 
 /**
- * Perform CAM lookup
- * @param data          search/result data
+ * Perform CAM lookup.
+ * @param data          Search/result data
  * @param addr          CAM location
- * @param camsize       table size of CAM (128, 256, 384, or 512)
- * @param cambits       entry size of CAM (8, 16, 24, or 32)
- * @param sync          type of synchronization (must be sig_done)
- * @param sigpair       signal pair to report completion on
+ * @param camsize       Table size of CAM (128, 256, 384, or 512)
+ * @param cambits       Entry size of CAM (8, 16, 24, or 32)
+ * @param sync          Type of synchronization (must be sig_done)
+ * @param sigpair       Signal pair to report completion on
  *
  * Perform indicated CAM lookup.  The @camsize and @cambits parameters
  * must be constant literals.
@@ -149,11 +149,11 @@ __intrinsic void __mem_cam_lookup(__xrw void *data, __mem void *addr,
                                   sync_t sync, SIGNAL_PAIR *sigpair);
 
 /**
- * Perform synchronous CAM lookup
- * @param data          search/result data
+ * Perform synchronous CAM lookup.
+ * @param data          Search/result data
  * @param addr          CAM location
- * @param camsize       table size of CAM (128, 256, 384, or 512)
- * @param cambits       entry size of CAM (8, 16, 24, or 32)
+ * @param camsize       Table size of CAM (128, 256, 384, or 512)
+ * @param cambits       Entry size of CAM (8, 16, 24, or 32)
  *
  * Perform indicated CAM lookup.  Return when operation completes.
  */
@@ -161,13 +161,13 @@ __intrinsic void mem_cam_lookup(__xrw void *data, __mem void *addr,
                                 int camsize, int cambits);
 
 /**
- * Perform CAM lookup add
- * @param data          search/result data
+ * Perform CAM lookup add.
+ * @param data          Search/result data
  * @param addr          CAM location
- * @param camsize       table size of CAM (128, 256, 384, or 512)
- * @param cambits       entry size of CAM (8, 16, 24, or 32)
- * @param sync          type of synchronization (must be sig_done)
- * @param sigpair       signal pair to report completion on
+ * @param camsize       Table size of CAM (128, 256, 384, or 512)
+ * @param cambits       Entry size of CAM (8, 16, 24, or 32)
+ * @param sync          Type of synchronization (must be sig_done)
+ * @param sigpair       Signal pair to report completion on
  *
  * Perform indicated CAM lookup add.  The @camsize and @cambits parameters
  * must be constant literals.
@@ -177,11 +177,11 @@ __intrinsic void __mem_cam_lookup_add(__xrw void *data, __mem void *addr,
                                       sync_t sync, SIGNAL_PAIR *sigpair);
 
 /**
- * Perform synchronous CAM lookup add
- * @param data          search/result data
+ * Perform synchronous CAM lookup add.
+ * @param data          Search/result data
  * @param addr          CAM location
- * @param camsize       table size of CAM (128, 256, 384, or 512)
- * @param cambits       entry size of CAM (8, 16, 24, or 32)
+ * @param camsize       Table size of CAM (128, 256, 384, or 512)
+ * @param cambits       Entry size of CAM (8, 16, 24, or 32)
  *
  * Perform indicated CAM lookup add.  Return when operation completes.
  */

@@ -23,43 +23,43 @@
 #include <types.h>
 
 /**
- * DMA from MU to CTM
- *
+ * DMA from MU to CTM.
  * @param ctm_addr  32-bit pointer to the CTM start address (destination)
  * @param mem_addr  40-bit pointer to the MU start address (source)
- * @param size      size of the DMA, must be a multiple of 64B and <= 2048B
- * @param sync      type of synchronisation (sig_done or ctx_swap)
- * @param sig       signal to use
+ * @param size      Size of the DMA, must be a multiple of 64B and <= 2048B
+ * @param sync      Type of synchronisation (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
- * @note You *must not* have more than 16 outstanding DMA commands per CTM. It
-    is the caller's responsibility to enforce this. libpktdma provides safe
-    functions which enforce this constraint.
- * @note @ctm_addr must be a real address not a packet mode address
+ * @note You *must not* have more than 16 outstanding DMA commands per
+ *       CTM. It is the caller's responsibility to enforce
+ *       this. libpktdma provides safe functions which enforce this
+ *       constraint.
+ * @note @ctm_addr must be a real address not a packet mode address.
  */
 __intrinsic void
 __mem_pe_dma_mu_to_ctm(__ctm void *ctm_addr, __mem void *mem_addr,
-    size_t size, sync_t sync, SIGNAL *sig);
+                       size_t size, sync_t sync, SIGNAL *sig);
 
 __intrinsic void
 mem_pe_dma_mu_to_ctm(__ctm void *ctm_addr, __mem void *mem_addr, size_t size);
 
 /**
- * DMA from CTM to MU
- *
+ * DMA from CTM to MU.
  * @param mem_addr  40-bit pointer to the MU start address (destination)
  * @param ctm_addr  32-bit pointer to the CTM start address (source)
- * @param size      size of the DMA, must be a multiple of 64B and <= 2048B
- * @param sync      type of synchronisation (sig_done or ctx_swap)
- * @param sig       signal to use
+ * @param size      Size of the DMA, must be a multiple of 64B and <= 2048B
+ * @param sync      Type of synchronisation (sig_done or ctx_swap)
+ * @param sig       Signal to use
  *
- * @note You *must not* have more than 16 outstanding DMA commands per CTM. It
-    is the caller's responsibility to enforce this. libpktdma provides safe
-    functions which enforce this constraint.
- * @note @ctm_addr must be a real address not a packet mode address
+ * @note You *must not* have more than 16 outstanding DMA commands per
+ *       CTM. It is the caller's responsibility to enforce
+ *       this. libpktdma provides safe functions which enforce this
+ *       constraint.
+ * @note @ctm_addr must be a real address not a packet mode address.
  */
 __intrinsic void
 __mem_pe_dma_ctm_to_mu(__mem void *mem_addr, __ctm void *ctm_addr,
-    size_t size, sync_t sync, SIGNAL *sig);
+                       size_t size, sync_t sync, SIGNAL *sig);
 
 __intrinsic void
 mem_pe_dma_ctm_to_mu(__mem void *mem_addr, __ctm void *ctm_addr, size_t size);

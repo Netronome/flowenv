@@ -30,15 +30,15 @@
  * should not be included elsewhere.
  */
 #include "_c/cls.c"
+#include "_c/macstats.c"
 #include "_c/me.c"
+#include "_c/mem_atomic.c"
 #include "_c/mem_bulk.c"
 #include "_c/mem_cam.c"
 #include "_c/mem_pe.c"
 #include "_c/mem_ring.c"
-#include "_c/mem_atomic.c"
 #include "_c/pcie.c"
 #include "_c/xpb.c"
-#include "_c/macstats.c"
 
 /*
  * The following code implements all the functionality in <nfp.h>.  It
@@ -52,5 +52,3 @@ ___rt_assert(void *addr)
     local_csr_write(local_csr_mailbox_0, 0);
     __asm ctx_arb[bpt];
 }
-
-

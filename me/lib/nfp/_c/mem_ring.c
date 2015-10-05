@@ -239,6 +239,7 @@ __mem_ring_get(unsigned int rnum, mem_ring_addr_t raddr, __xread void *data,
                SIGNAL_PAIR *sigpair)
 {
     ctassert(__is_read_reg(data));
+
     _MEM_RING_CMD_SIGPAIR(get, data, rnum, raddr, size, max_size,
                           sync, sigpair);
 }
@@ -268,6 +269,7 @@ __mem_ring_get_freely(unsigned int rnum, mem_ring_addr_t raddr,
                       sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_read_reg(data));
+
     _MEM_RING_CMD_SIG(get_freely, data, rnum, raddr, size, max_size, sync, sig);
 }
 
@@ -276,6 +278,7 @@ mem_ring_get_freely(unsigned int rnum, mem_ring_addr_t raddr,
                     __xread void *data, const size_t size)
 {
     SIGNAL sig;
+
     __mem_ring_get_freely(rnum, raddr, data, size, size, ctx_swap, &sig);
 }
 
@@ -286,6 +289,7 @@ __mem_ring_pop(unsigned int rnum, mem_ring_addr_t raddr,  __xread void *data,
                SIGNAL_PAIR *sigpair)
 {
     ctassert(__is_read_reg(data));
+
     _MEM_RING_CMD_SIGPAIR(pop, data, rnum, raddr, size, max_size,
                           sync, sigpair);
 }
@@ -315,6 +319,7 @@ __mem_ring_put(unsigned int rnum, mem_ring_addr_t raddr,  __xrw void *data,
 {
     ctassert(__is_read_reg(data));
     ctassert(__is_write_reg(data));
+
     _MEM_RING_CMD_SIGPAIR(put, data, rnum, raddr, size, max_size,
                           sync, sigpair);
 
@@ -344,6 +349,7 @@ __mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr,
                    sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
+
     _MEM_RING_CMD_SIG(journal, data, rnum, raddr, size, max_size, sync, sig);
 }
 
@@ -352,6 +358,7 @@ mem_ring_journal(unsigned int rnum, mem_ring_addr_t raddr, __xwrite void *data,
                  const size_t size)
 {
     SIGNAL sig;
+
     __mem_ring_journal(rnum, raddr, data, size, size, ctx_swap, &sig);
 }
 
@@ -379,6 +386,7 @@ __mem_workq_add_work(unsigned int rnum, mem_ring_addr_t raddr,
                      sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
+
     _MEM_RING_CMD_SIG(qadd_work, data, rnum, raddr, size, max_size,
                       sync, sig);
 }
@@ -388,6 +396,7 @@ mem_workq_add_work(unsigned int rnum, mem_ring_addr_t raddr,
                    __xwrite void *data, const size_t size)
 {
     SIGNAL sig;
+
     __mem_workq_add_work(rnum, raddr, data, size, size, ctx_swap, &sig);
 }
 
@@ -398,6 +407,7 @@ __mem_workq_add_thread(unsigned int rnum, mem_ring_addr_t raddr,
                        sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_read_reg(data));
+
     _MEM_RING_CMD_SIG(qadd_thread, data, rnum, raddr, size, max_size,
                       sync, sig);
 }
@@ -407,6 +417,7 @@ mem_workq_add_thread(unsigned int rnum, mem_ring_addr_t raddr,
                      __xread void *data, const size_t size)
 {
     SIGNAL sig;
+
     __mem_workq_add_thread(rnum, raddr, data, size, size, ctx_swap, &sig);
 }
 
