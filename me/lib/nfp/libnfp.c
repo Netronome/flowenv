@@ -38,6 +38,7 @@
 #include "_c/mem_pe.c"
 #include "_c/mem_ring.c"
 #include "_c/pcie.c"
+#include "_c/tmq.c"
 #include "_c/xpb.c"
 
 /*

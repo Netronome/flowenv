@@ -43,13 +43,14 @@
 
 /* libnfp related header files */
 #include <nfp/cls.h>
+#include <nfp/macstats.h>
 #include <nfp/me.h>
 #include <nfp/mem_bulk.h>
 #include <nfp/mem_pe.h>
 #include <nfp/mem_ring.h>
 #include <nfp/pcie.h>
+#include <nfp/tmq.h>
 #include <nfp/xpb.h>
-#include <nfp/macstats.h>
 
 /* libstd related header files */
 #include <std/cntrs.h>
