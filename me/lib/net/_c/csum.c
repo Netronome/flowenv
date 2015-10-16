@@ -230,6 +230,7 @@ net_csum_ipv4(void *ip, __addr40 void *pkt_ptr)
         __mem_read64(ip_opts, pkt_ptr, ((opt_size + 7) & 0x78),
                      sizeof(ip_opts), ctx_swap, &read_sig);
         sum = ones_sum_add(sum, ones_sum_warr(ip_opts, opt_size));
+        __implicit_read(ip_opts);
     }
 
     return ~ones_sum_fold16(sum);
