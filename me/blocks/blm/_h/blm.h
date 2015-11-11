@@ -62,14 +62,11 @@
 #define BLM_LM_BLQ_DMA_EVNT_PEND_CNT_OFFSET     2
 #define BLM_LM_BLQ_NULL_RECYCLE_OFFSET          3
 #define BLM_LM_BLQ_CACHE_RDWR_BUSY_OFFSET       4
-#define BLM_BLQ_CACHE_LWM                       64
 
 #define BLM_MAX_DMA_PENDING_EVNTS               5
+#define BLM_NBI_BLQ_CACHE_DEFICIT               47
 
 /* BLM Stats */
-#define BLQ_MAX_CACHE_CNT                 (256)
-#define_eval BLQ_CACHE_SIZE               (BLQ_MAX_CACHE_CNT * 4)
-#define_eval BLM_BLQ_CACHE_HWM            (BLQ_MAX_CACHE_CNT - 47)
 #define BLQ_STATS_SIZE                    128
 
 .declare_resource BLQ_STATS_OFFSETS island BLQ_STATS_SIZE

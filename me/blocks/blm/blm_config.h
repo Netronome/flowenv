@@ -868,4 +868,29 @@
                 BLM_NBI9_BLQ3_EMU_EMEM2_NUM_BUFS, _BLM_NBI9_BLQ3_EMU_EMEM2_BUFS_BASE, BLM_NBI9_BLQ3_EMU_EMEM2_DENSITY
 #endif
 
+#ifndef BLM_NBI_BLQ0_CACHE_SIZE
+	#define BLM_NBI_BLQ0_CACHE_SIZE 128
+#else
+    .assert (LOG2(BLM_NBI_BLQ0_CACHE_SIZE))
+    .assert (BLM_NBI_BLQ0_CACHE_SIZE > 63)
+#endif
+#ifndef BLM_NBI_BLQ1_CACHE_SIZE
+	#define BLM_NBI_BLQ1_CACHE_SIZE 128
+#else
+    .assert (LOG2(BLM_NBI_BLQ0_CACHE_SIZE))
+    .assert (BLM_NBI_BLQ0_CACHE_SIZE > 63)
+#endif
+#ifndef BLM_NBI_BLQ2_CACHE_SIZE
+	#define BLM_NBI_BLQ2_CACHE_SIZE 128
+#else
+    .assert (LOG2(BLM_NBI_BLQ0_CACHE_SIZE))
+    .assert (BLM_NBI_BLQ0_CACHE_SIZE > 63)
+#endif
+#ifndef BLM_NBI_BLQ3_CACHE_SIZE
+	#define BLM_NBI_BLQ3_CACHE_SIZE 64
+#else
+    .assert (LOG2(BLM_NBI_BLQ0_CACHE_SIZE))
+    .assert (BLM_NBI_BLQ0_CACHE_SIZE > 63)
+#endif
+
 #endif // __NFP_BLM_CONFIG_H__
