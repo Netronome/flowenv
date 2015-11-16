@@ -1198,26 +1198,42 @@
 #ifndef BLM_NBI_BLQ0_CACHE_SIZE
 	#define BLM_NBI_BLQ0_CACHE_SIZE 128
 #else
-    .assert (LOG2(BLM_NBI_BLQ0_CACHE_SIZE))
-    .assert (BLM_NBI_BLQ0_CACHE_SIZE > 63)
+    #if ((BLM_NBI_BLQ0_CACHE_SIZE & (BLM_NBI_BLQ0_CACHE_SIZE - 1)) != 0)
+        #error "BLM_NBI_BLQ0_CACHE_SIZE is not power of 2."
+    #endif
+    #if (BLM_NBI_BLQ0_CACHE_SIZE < 64)
+        #error "BLM_NBI_BLQ0_CACHE_SIZE shoud be at least 64."
+    #endif
 #endif
 #ifndef BLM_NBI_BLQ1_CACHE_SIZE
 	#define BLM_NBI_BLQ1_CACHE_SIZE 128
 #else
-    .assert (LOG2(BLM_NBI_BLQ0_CACHE_SIZE))
-    .assert (BLM_NBI_BLQ0_CACHE_SIZE > 63)
+    #if ((BLM_NBI_BLQ1_CACHE_SIZE & (BLM_NBI_BLQ1_CACHE_SIZE - 1)) != 0)
+        #error "BLM_NBI_BLQ1_CACHE_SIZE is not power of 2."
+    #endif
+    #if (BLM_NBI_BLQ1_CACHE_SIZE < 64)
+        #error "BLM_NBI_BLQ1_CACHE_SIZE shoud be at least 64."
+    #endif
 #endif
 #ifndef BLM_NBI_BLQ2_CACHE_SIZE
 	#define BLM_NBI_BLQ2_CACHE_SIZE 128
 #else
-    .assert (LOG2(BLM_NBI_BLQ0_CACHE_SIZE))
-    .assert (BLM_NBI_BLQ0_CACHE_SIZE > 63)
+    #if ((BLM_NBI_BLQ2_CACHE_SIZE & (BLM_NBI_BLQ2_CACHE_SIZE - 1)) != 0)
+        #error "BLM_NBI_BLQ2_CACHE_SIZE is not power of 2."
+    #endif
+    #if (BLM_NBI_BLQ2_CACHE_SIZE < 64)
+        #error "BLM_NBI_BLQ2_CACHE_SIZE shoud be at least 64."
+    #endif
 #endif
 #ifndef BLM_NBI_BLQ3_CACHE_SIZE
 	#define BLM_NBI_BLQ3_CACHE_SIZE 64
 #else
-    .assert (LOG2(BLM_NBI_BLQ0_CACHE_SIZE))
-    .assert (BLM_NBI_BLQ0_CACHE_SIZE > 63)
+    #if ((BLM_NBI_BLQ3_CACHE_SIZE & (BLM_NBI_BLQ3_CACHE_SIZE - 1)) != 0)
+        #error "BLM_NBI_BLQ3_CACHE_SIZE is not power of 2."
+    #endif
+    #if (BLM_NBI_BLQ3_CACHE_SIZE < 64)
+        #error "BLM_NBI_BLQ3_CACHE_SIZE shoud be at least 64."
+    #endif
 #endif
 
 #endif // __NFP_BLM_CONFIG_H__
