@@ -221,6 +221,16 @@
                 #if (BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_NUM_BUFS > 0)
                     .alloc_mem _BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_BUFS_BASE emem2 global (NBI/**/_NBI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
                 #endif
+				/* Buffers from EMEM cache */
+                #if (BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM0_CACHE_NUM_BUFS > 0)
+                    .alloc_mem _BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM0_CACHE_BUFS_BASE emem0.emem_cache_upper global (NBI/**/_NBI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM0_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM1_CACHE_NUM_BUFS > 0)
+                    .alloc_mem _BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM1_CACHE_BUFS_BASE emem1.emem_cache_upper global (NBI/**/_NBI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM1_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_CACHE_NUM_BUFS > 0)
+                    .alloc_mem _BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_CACHE_BUFS_BASE emem2.emem_cache_upper global (NBI/**/_NBI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
             #endif
 
             /* Allocate buffers for the BLQ rings */
@@ -239,6 +249,15 @@
             #endif
             #if (BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_NUM_BUFS > 0)
                 .alloc_mem _BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_BUFS_BASE emem2 global (NBI/**/_NBI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+            #endif
+            #if (BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM0_CACHE_NUM_BUFS > 0)
+                .alloc_mem _BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM0_CACHE_BUFS_BASE emem0.emem_cache_upper global (NBI/**/_NBI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM0_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+            #endif
+            #if (BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM1_CACHE_NUM_BUFS > 0)
+                .alloc_mem _BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM1_CACHE_BUFS_BASE emem1.emem_cache_upper global (NBI/**/_NBI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM1_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+            #endif
+            #if (BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_CACHE_NUM_BUFS > 0)
+                .alloc_mem _BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_CACHE_BUFS_BASE emem2.emem_cache_upper global (NBI/**/_NBI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_NBI/**/_NBI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
             #endif
 
             #define_eval _RING_ (_RING_ + 1)

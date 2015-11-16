@@ -779,6 +779,9 @@ end_cache_fill#:
 #macro blm_ring_fill(R_TYPE, NBI_NUM, R_SIZE, R_BASE, BUF_SIZE, \
                      IMEM0_NUM_BUFS, IMEM0_BASE, IMEM0_DENSITY, \
                      IMEM1_NUM_BUFS, IMEM1_BASE, IMEM1_DENSITY, \
+                     EMEM0_CACHE_NUM_BUFS, EMEM0_CACHE_BASE, EMEM0_CACHE_DENSITY, \
+                     EMEM1_CACHE_NUM_BUFS, EMEM1_CACHE_BASE, EMEM1_CACHE_DENSITY, \
+                     EMEM2_CACHE_NUM_BUFS, EMEM2_CACHE_BASE, EMEM2_CACHE_DENSITY, \
                      EMEM0_NUM_BUFS, EMEM0_BASE, EMEM0_DENSITY, \
                      EMEM1_NUM_BUFS, EMEM1_BASE, EMEM1_DENSITY, \
                      EMEM2_NUM_BUFS, EMEM2_BASE, EMEM2_DENSITY)
@@ -807,7 +810,9 @@ end_cache_fill#:
     #endif
 
     /* Init count can not be > (blq length + emu ring size) */
-    #if (R_SIZE < (IMEM0_NUM_BUFS+IMEM1_NUM_BUFS+EMEM0_NUM_BUFS+EMEM1_NUM_BUFS+EMEM2_NUM_BUFS))
+    #if (R_SIZE < (IMEM0_NUM_BUFS+IMEM1_NUM_BUFS+ \
+                   EMEM0_CACHE_NUM_BUFS+EMEM1_CACHE_NUM_BUFS+EMEM2_CACHE_NUM_BUFS+ \
+                   EMEM0_NUM_BUFS+EMEM1_NUM_BUFS+EMEM2_NUM_BUFS))
         #error "Ring size too small for total number of buffers"
     #endif
 
@@ -825,6 +830,30 @@ end_cache_fill#:
         #endif
         #if (IMEM1_DENSITY <= 0)
             #error "IMEM1_DENSITY can not be <= 0"
+        #endif
+    #endif
+    #if (EMEM0_CACHE_NUM_BUFS > 0)
+        #if (EMEM0_CACHE_NUM_BUFS < EMEM0_CACHE_DENSITY)
+            #error "EMEM0 Cache number of buffers ("EMEM0_CACHE_NUM_BUFS") < EMEM0 CACHE density ("EMEM0_CACHE_DENSITY")"
+        #endif
+        #if (EMEM0_CACHE_DENSITY <= 0)
+            #error "EMEM0_CACHE_DENSITY can not be <= 0"
+        #endif
+    #endif
+    #if (EMEM1_CACHE_NUM_BUFS > 0)
+        #if (EMEM1_CACHE_NUM_BUFS < EMEM1_CACHE_DENSITY)
+            #error "EMEM1 Cache number of buffers ("EMEM1_CACHE_NUM_BUFS") < EMEM1 CACHE density ("EMEM1_CACHE_DENSITY")"
+        #endif
+        #if (EMEM1_CACHE_DENSITY <= 0)
+            #error "EMEM1_CACHE_DENSITY can not be <= 0"
+        #endif
+    #endif
+    #if (EMEM2_CACHE_NUM_BUFS > 0)
+        #if (EMEM2_CACHE_NUM_BUFS < EMEM2_CACHE_DENSITY)
+            #error "EMEM2 Cache number of buffers ("EMEM2_CACHE_NUM_BUFS") < EMEM2 CACHE density ("EMEM2_CACHE_DENSITY")"
+        #endif
+        #if (EMEM2_CACHE_DENSITY <= 0)
+            #error "EMEM2_CACHE_DENSITY can not be <= 0"
         #endif
     #endif
     #if (EMEM0_NUM_BUFS > 0)
@@ -852,14 +881,25 @@ end_cache_fill#:
         #endif
     #endif
 
-    #define_eval TOTAL_BUFS_LEFT (IMEM0_NUM_BUFS+IMEM1_NUM_BUFS+ \
-                                  EMEM0_NUM_BUFS+EMEM1_NUM_BUFS+ \
+    #define_eval TOTAL_BUFS_LEFT (IMEM0_NUM_BUFS+ \
+                                  IMEM1_NUM_BUFS+ \
+                                  EMEM0_CACHE_NUM_BUFS+ \
+                                  EMEM1_CACHE_NUM_BUFS+ \
+                                  EMEM2_CACHE_NUM_BUFS+ \
+                                  EMEM0_NUM_BUFS+ \
+                                  EMEM1_NUM_BUFS+ \
                                   EMEM2_NUM_BUFS)
 
     #define_eval IMEM0_BUFS_LEFT IMEM0_NUM_BUFS
     #define_eval IMEM0_BUFS_OFF 0
     #define_eval IMEM1_BUFS_LEFT IMEM1_NUM_BUFS
     #define_eval IMEM1_BUFS_OFF 0
+    #define_eval EMEM0_CACHE_BUFS_LEFT EMEM0_CACHE_NUM_BUFS
+    #define_eval EMEM0_CACHE_BUFS_OFF 0
+    #define_eval EMEM1_CACHE_BUFS_LEFT EMEM1_CACHE_NUM_BUFS
+    #define_eval EMEM1_CACHE_BUFS_OFF 0
+    #define_eval EMEM2_CACHE_BUFS_LEFT EMEM2_CACHE_NUM_BUFS
+    #define_eval EMEM2_CACHE_BUFS_OFF 0
     #define_eval EMEM0_BUFS_LEFT EMEM0_NUM_BUFS
     #define_eval EMEM0_BUFS_OFF 0
     #define_eval EMEM1_BUFS_LEFT EMEM1_NUM_BUFS
@@ -874,7 +914,7 @@ end_cache_fill#:
     #endif
 
     #while (TOTAL_BUFS_LEFT > 0)
-        #for _MEM_REGION_ [IMEM0, IMEM1, EMEM0, EMEM1, EMEM2]
+        #for _MEM_REGION_ [IMEM0, IMEM1, EMEM0_CACHE, EMEM1_CACHE, EMEM2_CACHE, EMEM0, EMEM1, EMEM2]
 
             #if (/**/_MEM_REGION_/**/_BUFS_LEFT > 0)
 
@@ -882,6 +922,12 @@ end_cache_fill#:
                     #define_eval DENSITY IMEM0_DENSITY
                 #elif (streq('_MEM_REGION_', 'IMEM1'))
                     #define_eval DENSITY IMEM1_DENSITY
+                #elif (streq('_MEM_REGION_', 'EMEM0_CACHE'))
+                    #define_eval DENSITY EMEM0_CACHE_DENSITY
+                #elif (streq('_MEM_REGION_', 'EMEM1_CACHE'))
+                    #define_eval DENSITY EMEM1_CACHE_DENSITY
+                #elif (streq('_MEM_REGION_', 'EMEM2_CACHE'))
+                    #define_eval DENSITY EMEM2_CACHE_DENSITY
                 #elif (streq('_MEM_REGION_', 'EMEM0'))
                     #define_eval DENSITY EMEM0_DENSITY
                 #elif (streq('_MEM_REGION_', 'EMEM1'))
@@ -898,6 +944,12 @@ end_cache_fill#:
                             .init R_BASE+R_OFF (((IMEM0_BASE + IMEM0_BUFS_OFF) | (1 <<23)) >> 11)
                         #elif (streq('_MEM_REGION_', 'IMEM1'))
                             .init R_BASE+R_OFF (((IMEM1_BASE + IMEM1_BUFS_OFF) | (1 <<23)) >> 11)
+                        #elif (streq('_MEM_REGION_', 'EMEM0_CACHE'))
+                            .init R_BASE+R_OFF ((EMEM0_CACHE_BASE + EMEM0_CACHE_BUFS_OFF) >> 11)
+                        #elif (streq('_MEM_REGION_', 'EMEM1_CACHE'))
+                            .init R_BASE+R_OFF ((EMEM1_CACHE_BASE + EMEM1_CACHE_BUFS_OFF) >> 11)
+                        #elif (streq('_MEM_REGION_', 'EMEM2_CACHE'))
+                            .init R_BASE+R_OFF ((EMEM2_CACHE_BASE + EMEM2_CACHE_BUFS_OFF) >> 11)
                         #elif (streq('_MEM_REGION_', 'EMEM0'))
                             .init R_BASE+R_OFF ((EMEM0_BASE + EMEM0_BUFS_OFF) >> 11)
                         #elif (streq('_MEM_REGION_', 'EMEM1'))
@@ -912,6 +964,12 @@ end_cache_fill#:
                             .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr (((IMEM0_BASE + IMEM0_BUFS_OFF) | (1 <<23)) >> 11) const
                         #elif (streq('_MEM_REGION_', 'IMEM1'))
                             .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr (((IMEM1_BASE + IMEM1_BUFS_OFF) | (1 <<23)) >> 11) const
+                        #elif (streq('_MEM_REGION_', 'EMEM0_CACHE'))
+                            .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr ((EMEM0_CACHE_BASE + EMEM0_CACHE_BUFS_OFF) >> 11) const
+                        #elif (streq('_MEM_REGION_', 'EMEM1_CACHE'))
+                            .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr ((EMEM1_CACHE_BASE + EMEM1_CACHE_BUFS_OFF) >> 11) const
+                        #elif (streq('_MEM_REGION_', 'EMEM2_CACHE'))
+                            .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr ((EMEM2_CACHE_BASE + EMEM2_CACHE_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM0'))
                             .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr ((EMEM0_BASE + EMEM0_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM1'))
@@ -933,6 +991,15 @@ end_cache_fill#:
                     #elif (streq('_MEM_REGION_', 'IMEM1'))
                         #define_eval IMEM1_BUFS_LEFT (IMEM1_BUFS_LEFT - 1)
                         #define_eval IMEM1_BUFS_OFF  (IMEM1_BUFS_OFF  + BUF_SIZE)
+                    #elif (streq('_MEM_REGION_', 'EMEM0_CACHE'))
+                        #define_eval EMEM0_CACHE_BUFS_LEFT (EMEM0_CACHE_BUFS_LEFT - 1)
+                        #define_eval EMEM0_CACHE_BUFS_OFF  (EMEM0_CACHE_BUFS_OFF  + BUF_SIZE)
+                    #elif (streq('_MEM_REGION_', 'EMEM1_CACHE'))
+                        #define_eval EMEM1_CACHE_BUFS_LEFT (EMEM1_CACHE_BUFS_LEFT - 1)
+                        #define_eval EMEM1_CACHE_BUFS_OFF  (EMEM1_CACHE_BUFS_OFF  + BUF_SIZE)
+                    #elif (streq('_MEM_REGION_', 'EMEM2_CACHE'))
+                        #define_eval EMEM2_CACHE_BUFS_LEFT (EMEM2_CACHE_BUFS_LEFT - 1)
+                        #define_eval EMEM2_CACHE_BUFS_OFF  (EMEM2_CACHE_BUFS_OFF  + BUF_SIZE)
                     #elif (streq('_MEM_REGION_', 'EMEM0'))
                         #define_eval EMEM0_BUFS_LEFT (EMEM0_BUFS_LEFT - 1)
                         #define_eval EMEM0_BUFS_OFF  (EMEM0_BUFS_OFF  + BUF_SIZE)
@@ -958,6 +1025,12 @@ end_cache_fill#:
     #undef IMEM0_BUFS_OFF
     #undef IMEM1_BUFS_LEFT
     #undef IMEM1_BUFS_OFF
+    #undef EMEM0_CACHE_BUFS_LEFT
+    #undef EMEM0_CACHE_BUFS_OFF
+    #undef EMEM1_CACHE_BUFS_LEFT
+    #undef EMEM1_CACHE_BUFS_OFF
+    #undef EMEM2_CACHE_BUFS_LEFT
+    #undef EMEM2_CACHE_BUFS_OFF
     #undef EMEM0_BUFS_LEFT
     #undef EMEM0_BUFS_OFF
     #undef EMEM1_BUFS_LEFT
@@ -984,6 +1057,9 @@ end_cache_fill#:
 #macro blm_blq_fill(NBI_NUM, BLQ_LEN, BDSRAM_OFF, BUF_SIZE, \
                     IMEM0_NUM_BUFS, IMEM0_BASE, IMEM0_DENSITY, \
                     IMEM1_NUM_BUFS, IMEM1_BASE, IMEM1_DENSITY, \
+                    EMEM0_CACHE_NUM_BUFS, EMEM0_CACHE_BASE, EMEM0_CACHE_DENSITY, \
+                    EMEM1_CACHE_NUM_BUFS, EMEM1_CACHE_BASE, EMEM1_CACHE_DENSITY, \
+                    EMEM2_CACHE_NUM_BUFS, EMEM2_CACHE_BASE, EMEM2_CACHE_DENSITY, \
                     EMEM0_NUM_BUFS, EMEM0_BASE, EMEM0_DENSITY, \
                     EMEM1_NUM_BUFS, EMEM1_BASE, EMEM1_DENSITY, \
                     EMEM2_NUM_BUFS, EMEM2_BASE, EMEM2_DENSITY)
@@ -991,6 +1067,9 @@ end_cache_fill#:
     blm_ring_fill(BLQ, NBI_NUM, BLQ_LEN, BDSRAM_OFF, BUF_SIZE,
                   IMEM0_NUM_BUFS, IMEM0_BASE, IMEM0_DENSITY,
                   IMEM1_NUM_BUFS, IMEM1_BASE, IMEM1_DENSITY,
+                  EMEM0_CACHE_NUM_BUFS, EMEM0_CACHE_BASE, EMEM0_CACHE_DENSITY,
+                  EMEM1_CACHE_NUM_BUFS, EMEM1_CACHE_BASE, EMEM1_CACHE_DENSITY,
+                  EMEM2_CACHE_NUM_BUFS, EMEM2_CACHE_BASE, EMEM2_CACHE_DENSITY,
                   EMEM0_NUM_BUFS, EMEM0_BASE, EMEM0_DENSITY,
                   EMEM1_NUM_BUFS, EMEM1_BASE, EMEM1_DENSITY,
                   EMEM2_NUM_BUFS, EMEM2_BASE, EMEM2_DENSITY)
@@ -1011,6 +1090,9 @@ end_cache_fill#:
 #macro blm_emu_ring_fill(NBI_NUM, R_SIZE, R_BASE, BUF_SIZE, \
                          IMEM0_NUM_BUFS, IMEM0_BASE, IMEM0_DENSITY, \
                          IMEM1_NUM_BUFS, IMEM1_BASE, IMEM1_DENSITY, \
+                         EMEM0_CACHE_NUM_BUFS, EMEM0_CACHE_BASE, EMEM0_CACHE_DENSITY, \
+                         EMEM1_CACHE_NUM_BUFS, EMEM1_CACHE_BASE, EMEM1_CACHE_DENSITY, \
+                         EMEM2_CACHE_NUM_BUFS, EMEM2_CACHE_BASE, EMEM2_CACHE_DENSITY, \
                          EMEM0_NUM_BUFS, EMEM0_BASE, EMEM0_DENSITY, \
                          EMEM1_NUM_BUFS, EMEM1_BASE, EMEM1_DENSITY, \
                          EMEM2_NUM_BUFS, EMEM2_BASE, EMEM2_DENSITY)
@@ -1018,6 +1100,9 @@ end_cache_fill#:
     blm_ring_fill(EMU, NBI_NUM, R_SIZE, R_BASE, BUF_SIZE,
                   IMEM0_NUM_BUFS, IMEM0_BASE, IMEM0_DENSITY,
                   IMEM1_NUM_BUFS, IMEM1_BASE, IMEM1_DENSITY,
+                  EMEM0_CACHE_NUM_BUFS, EMEM0_CACHE_BASE, EMEM0_CACHE_DENSITY,
+                  EMEM1_CACHE_NUM_BUFS, EMEM1_CACHE_BASE, EMEM1_CACHE_DENSITY,
+                  EMEM2_CACHE_NUM_BUFS, EMEM2_CACHE_BASE, EMEM2_CACHE_DENSITY,
                   EMEM0_NUM_BUFS, EMEM0_BASE, EMEM0_DENSITY,
                   EMEM1_NUM_BUFS, EMEM1_BASE, EMEM1_DENSITY,
                   EMEM2_NUM_BUFS, EMEM2_BASE, EMEM2_DENSITY)
@@ -1053,146 +1138,56 @@ ctx0#:
 
     /* Each BLM instance populates the buffers into the BLQ/BDSram */
     #ifndef BLM_SKIP_DMA_INIT
-    #if (NBII == 8)
-
-        blm_blq_fill(NBI8_BLQ0_FILL_PARAMS)
-        #define_eval _BLQ_INIT_COUNT_   (BLM_NBI8_BLQ0_BDSRAM_IMEM0_NUM_BUFS+BLM_NBI8_BLQ0_BDSRAM_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI8_BLQ0_BDSRAM_EMEM0_NUM_BUFS+BLM_NBI8_BLQ0_BDSRAM_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI8_BLQ0_BDSRAM_EMEM2_NUM_BUFS)
-        blm_blq_ring_init(NBII, 0, BLM_NBI8_BLQ0_LEN, 0, _BLQ_INIT_COUNT_)
-
-        blm_blq_fill(NBI8_BLQ1_FILL_PARAMS)
-        #define_eval _BLQ_INIT_COUNT_   (BLM_NBI8_BLQ1_BDSRAM_IMEM0_NUM_BUFS+BLM_NBI8_BLQ1_BDSRAM_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI8_BLQ1_BDSRAM_EMEM0_NUM_BUFS+BLM_NBI8_BLQ1_BDSRAM_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI8_BLQ1_BDSRAM_EMEM2_NUM_BUFS)
-        #define_eval _BLQ1_HEAD         (BLM_NBI8_BLQ0_LEN)
-        blm_blq_ring_init(NBII, 1, BLM_NBI8_BLQ1_LEN, _BLQ1_HEAD, _BLQ_INIT_COUNT_)
-
-        blm_blq_fill(NBI8_BLQ2_FILL_PARAMS)
-        #define_eval _BLQ_INIT_COUNT_   (BLM_NBI8_BLQ2_BDSRAM_IMEM0_NUM_BUFS+BLM_NBI8_BLQ2_BDSRAM_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI8_BLQ2_BDSRAM_EMEM0_NUM_BUFS+BLM_NBI8_BLQ2_BDSRAM_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI8_BLQ2_BDSRAM_EMEM2_NUM_BUFS)
-        #define_eval _BLQ2_HEAD         (BLM_NBI8_BLQ0_LEN + BLM_NBI8_BLQ1_LEN)
-        blm_blq_ring_init(NBII, 2, BLM_NBI8_BLQ2_LEN, _BLQ2_HEAD, _BLQ_INIT_COUNT_)
-
-        blm_blq_fill(NBI8_BLQ3_FILL_PARAMS)
-        #define_eval _BLQ_INIT_COUNT_   (BLM_NBI8_BLQ3_BDSRAM_IMEM0_NUM_BUFS+BLM_NBI8_BLQ3_BDSRAM_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI8_BLQ3_BDSRAM_EMEM0_NUM_BUFS+BLM_NBI8_BLQ3_BDSRAM_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI8_BLQ3_BDSRAM_EMEM2_NUM_BUFS)
-        #define_eval _BLQ3_HEAD         (BLM_NBI8_BLQ0_LEN + BLM_NBI8_BLQ1_LEN + BLM_NBI8_BLQ2_LEN)
-        blm_blq_ring_init(NBII, 3, BLM_NBI8_BLQ3_LEN, _BLQ3_HEAD, _BLQ_INIT_COUNT_)
-
+        #for _blq [0,1,2,3]
+            #if (_blq == 0)
+                #define _BLQ_HEAD   0
+            #else
+                #define_eval _blq_prev   (_blq - 1)
+                #define_eval _BLQ_HEAD  (BLM_NBI/**/NBII/**/_BLQ/**/_blq_prev/**/_LEN + _BLQ_HEAD)
+            #endif
+			#define_eval _BLQ_INIT_COUNT_ 0
+            #for _mem_type [BDSRAM_IMEM0,BDSRAM_IMEM1,BDSRAM_EMEM0,BDSRAM_EMEM1,BDSRAM_EMEM2,BDSRAM_EMEM0_CACHE,BDSRAM_EMEM1_CACHE,BDSRAM_EMEM2_CACHE]
+                #define_eval _BLQ_INIT_COUNT_   (_BLQ_INIT_COUNT_ + \
+                                            BLM_NBI/**/NBII/**/_BLQ/**/_blq/**/_/**/_mem_type/**/_NUM_BUFS)
+            #endloop
+            blm_blq_fill(NBI/**/NBII/**/_BLQ/**/_blq/**/_FILL_PARAMS)
+            blm_blq_ring_init(NBII, _blq, BLM_NBI/**/NBII/**/_BLQ/**/_blq/**/_LEN, _BLQ_HEAD, _BLQ_INIT_COUNT_)
+        #endloop
         #undef _BLQ_INIT_COUNT_
-        #undef _BLQ1_HEAD
-        #undef _BLQ2_HEAD
-        #undef _BLQ3_HEAD
-
-    #elif (NBII == 9)
-
-        blm_blq_fill(NBI9_BLQ0_FILL_PARAMS)
-        #define_eval _BLQ_INIT_COUNT_   (BLM_NBI9_BLQ0_BDSRAM_IMEM0_NUM_BUFS+BLM_NBI9_BLQ0_BDSRAM_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ0_BDSRAM_EMEM0_NUM_BUFS+BLM_NBI9_BLQ0_BDSRAM_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ0_BDSRAM_EMEM2_NUM_BUFS)
-        blm_blq_ring_init(NBII, 0, BLM_NBI9_BLQ0_LEN, 0, _BLQ_INIT_COUNT_)
-
-        blm_blq_fill(NBI9_BLQ1_FILL_PARAMS)
-        #define_eval _BLQ_INIT_COUNT_   (BLM_NBI9_BLQ1_BDSRAM_IMEM0_NUM_BUFS+BLM_NBI9_BLQ1_BDSRAM_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ1_BDSRAM_EMEM0_NUM_BUFS+BLM_NBI9_BLQ1_BDSRAM_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ1_BDSRAM_EMEM2_NUM_BUFS)
-        #define_eval _BLQ1_HEAD         (BLM_NBI9_BLQ0_LEN)
-        blm_blq_ring_init(NBII, 1, BLM_NBI9_BLQ1_LEN, _BLQ1_HEAD, _BLQ_INIT_COUNT_)
-
-        blm_blq_fill(NBI9_BLQ2_FILL_PARAMS)
-        #define_eval _BLQ_INIT_COUNT_   (BLM_NBI9_BLQ2_BDSRAM_IMEM0_NUM_BUFS+BLM_NBI9_BLQ2_BDSRAM_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ2_BDSRAM_EMEM0_NUM_BUFS+BLM_NBI9_BLQ2_BDSRAM_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ2_BDSRAM_EMEM2_NUM_BUFS)
-        #define_eval _BLQ2_HEAD         (BLM_NBI9_BLQ0_LEN + BLM_NBI9_BLQ1_LEN)
-        blm_blq_ring_init(NBII, 2, BLM_NBI9_BLQ2_LEN, _BLQ2_HEAD, _BLQ_INIT_COUNT_)
-
-        blm_blq_fill(NBI9_BLQ3_FILL_PARAMS)
-        #define_eval _BLQ_INIT_COUNT_   (BLM_NBI9_BLQ3_BDSRAM_IMEM0_NUM_BUFS+BLM_NBI9_BLQ3_BDSRAM_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ3_BDSRAM_EMEM0_NUM_BUFS+BLM_NBI9_BLQ3_BDSRAM_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ3_BDSRAM_EMEM2_NUM_BUFS)
-        #define_eval _BLQ3_HEAD         (BLM_NBI9_BLQ0_LEN + BLM_NBI9_BLQ1_LEN + BLM_NBI9_BLQ2_LEN)
-        blm_blq_ring_init(NBII, 3, BLM_NBI9_BLQ3_LEN, _BLQ3_HEAD, _BLQ_INIT_COUNT_)
-
-        #undef _BLQ_INIT_COUNT_
-        #undef _BLQ1_HEAD
-        #undef _BLQ2_HEAD
-        #undef _BLQ3_HEAD
-
-    #else
-        #error "NBII must be 8 or 9"
-    #endif
+        #undef _BLQ_HEAD
+        #undef _blq_prev
+        #undef _blq
+        #undef _mem_type
     #endif /* BLM_SKIP_DMA_INIT */
 
 
 #ifdef BLM_INIT_EMU_RINGS
-
-    blm_emu_ring_fill(NBI8_BLQ0_EMU_RING_FILL_PARAMS)
-    #define_eval _EMU_INIT_COUNT_   (BLM_NBI8_BLQ0_EMU_IMEM0_NUM_BUFS+BLM_NBI8_BLQ0_EMU_IMEM1_NUM_BUFS+ \
-                                     BLM_NBI8_BLQ0_EMU_EMEM0_NUM_BUFS+BLM_NBI8_BLQ0_EMU_EMEM1_NUM_BUFS+ \
-                                     BLM_NBI8_BLQ0_EMU_EMEM2_NUM_BUFS)
-    blm_emu_ring_init(BLM_NBI8_BLQ0_EMU_Q_ISLAND, BLM_NBI8_BLQ0_EMU_QID, (BLM_NBI8_BLQ0_Q_SIZE/4), \
-                      _BLM_NBI8_BLQ0_EMU_Q_BASE, BLM_NBI8_BLQ0_EMU_Q_LOCALITY, NBI8_BLQ_EMU_0_PKTBUF_SIZE, _EMU_INIT_COUNT_)
-
-    blm_emu_ring_fill(NBI8_BLQ1_EMU_RING_FILL_PARAMS)
-    #define_eval _EMU_INIT_COUNT_   (BLM_NBI8_BLQ1_EMU_IMEM0_NUM_BUFS+BLM_NBI8_BLQ1_EMU_IMEM1_NUM_BUFS+ \
-                                     BLM_NBI8_BLQ1_EMU_EMEM0_NUM_BUFS+BLM_NBI8_BLQ1_EMU_EMEM1_NUM_BUFS+ \
-                                     BLM_NBI8_BLQ1_EMU_EMEM2_NUM_BUFS)
-    blm_emu_ring_init(BLM_NBI8_BLQ1_EMU_Q_ISLAND, BLM_NBI8_BLQ1_EMU_QID, (BLM_NBI8_BLQ1_Q_SIZE/4), \
-                      _BLM_NBI8_BLQ1_EMU_Q_BASE, BLM_NBI8_BLQ1_EMU_Q_LOCALITY, NBI8_BLQ_EMU_1_PKTBUF_SIZE, _EMU_INIT_COUNT_)
-
-    blm_emu_ring_fill(NBI8_BLQ2_EMU_RING_FILL_PARAMS)
-    #define_eval _EMU_INIT_COUNT_   (BLM_NBI8_BLQ2_EMU_IMEM0_NUM_BUFS+BLM_NBI8_BLQ2_EMU_IMEM1_NUM_BUFS+ \
-                                     BLM_NBI8_BLQ2_EMU_EMEM0_NUM_BUFS+BLM_NBI8_BLQ2_EMU_EMEM1_NUM_BUFS+ \
-                                     BLM_NBI8_BLQ2_EMU_EMEM2_NUM_BUFS)
-    blm_emu_ring_init(BLM_NBI8_BLQ2_EMU_Q_ISLAND, BLM_NBI8_BLQ2_EMU_QID, (BLM_NBI8_BLQ2_Q_SIZE/4), \
-                      _BLM_NBI8_BLQ2_EMU_Q_BASE, BLM_NBI8_BLQ2_EMU_Q_LOCALITY, NBI8_BLQ_EMU_2_PKTBUF_SIZE, _EMU_INIT_COUNT_)
-
-    blm_emu_ring_fill(NBI8_BLQ3_EMU_RING_FILL_PARAMS)
-    #define_eval _EMU_INIT_COUNT_   (BLM_NBI8_BLQ3_EMU_IMEM0_NUM_BUFS+BLM_NBI8_BLQ3_EMU_IMEM1_NUM_BUFS+ \
-                                     BLM_NBI8_BLQ3_EMU_EMEM0_NUM_BUFS+BLM_NBI8_BLQ3_EMU_EMEM1_NUM_BUFS+ \
-                                     BLM_NBI8_BLQ3_EMU_EMEM2_NUM_BUFS)
-    blm_emu_ring_init(BLM_NBI8_BLQ3_EMU_Q_ISLAND, BLM_NBI8_BLQ3_EMU_QID, (BLM_NBI8_BLQ3_Q_SIZE/4), \
-                      _BLM_NBI8_BLQ3_EMU_Q_BASE, BLM_NBI8_BLQ3_EMU_Q_LOCALITY, NBI8_BLQ_EMU_3_PKTBUF_SIZE, _EMU_INIT_COUNT_)
-
-    #undef _EMU_INIT_COUNT_
-
-    #ifdef SPLIT_EMU_RINGS
-
-        blm_emu_ring_fill(NBI9_BLQ0_EMU_RING_FILL_PARAMS)
-        #define_eval _EMU_INIT_COUNT_   (BLM_NBI9_BLQ0_EMU_IMEM0_NUM_BUFS+BLM_NBI9_BLQ0_EMU_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ0_EMU_EMEM0_NUM_BUFS+BLM_NBI9_BLQ0_EMU_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ0_EMU_EMEM2_NUM_BUFS)
-        blm_emu_ring_init(BLM_NBI9_BLQ0_EMU_Q_ISLAND, BLM_NBI9_BLQ0_EMU_QID, (BLM_NBI9_BLQ0_Q_SIZE/4), \
-                          _BLM_NBI9_BLQ0_EMU_Q_BASE, BLM_NBI9_BLQ0_EMU_Q_LOCALITY, NBI9_BLQ_EMU_0_PKTBUF_SIZE, _EMU_INIT_COUNT_)
-
-        blm_emu_ring_fill(NBI9_BLQ1_EMU_RING_FILL_PARAMS)
-        #define_eval _EMU_INIT_COUNT_   (BLM_NBI9_BLQ1_EMU_IMEM0_NUM_BUFS+BLM_NBI9_BLQ1_EMU_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ1_EMU_EMEM0_NUM_BUFS+BLM_NBI9_BLQ1_EMU_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ1_EMU_EMEM2_NUM_BUFS)
-        blm_emu_ring_init(BLM_NBI9_BLQ1_EMU_Q_ISLAND, BLM_NBI9_BLQ1_EMU_QID, (BLM_NBI9_BLQ1_Q_SIZE/4), \
-                          _BLM_NBI9_BLQ1_EMU_Q_BASE, BLM_NBI9_BLQ1_EMU_Q_LOCALITY, NBI9_BLQ_EMU_1_PKTBUF_SIZE, _EMU_INIT_COUNT_)
-
-        blm_emu_ring_fill(NBI9_BLQ2_EMU_RING_FILL_PARAMS)
-        #define_eval _EMU_INIT_COUNT_   (BLM_NBI9_BLQ2_EMU_IMEM0_NUM_BUFS+BLM_NBI9_BLQ2_EMU_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ2_EMU_EMEM0_NUM_BUFS+BLM_NBI9_BLQ2_EMU_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ2_EMU_EMEM2_NUM_BUFS)
-        blm_emu_ring_init(BLM_NBI9_BLQ2_EMU_Q_ISLAND, BLM_NBI9_BLQ2_EMU_QID, (BLM_NBI9_BLQ2_Q_SIZE/4), \
-                          _BLM_NBI9_BLQ2_EMU_Q_BASE, BLM_NBI9_BLQ2_EMU_Q_LOCALITY, NBI9_BLQ_EMU_2_PKTBUF_SIZE, _EMU_INIT_COUNT_)
-
-        blm_emu_ring_fill(NBI9_BLQ3_EMU_RING_FILL_PARAMS)
-        #define_eval _EMU_INIT_COUNT_   (BLM_NBI9_BLQ3_EMU_IMEM0_NUM_BUFS+BLM_NBI9_BLQ3_EMU_IMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ3_EMU_EMEM0_NUM_BUFS+BLM_NBI9_BLQ3_EMU_EMEM1_NUM_BUFS+ \
-                                         BLM_NBI9_BLQ3_EMU_EMEM2_NUM_BUFS)
-        blm_emu_ring_init(BLM_NBI9_BLQ3_EMU_Q_ISLAND, BLM_NBI9_BLQ3_EMU_QID, (BLM_NBI9_BLQ3_Q_SIZE/4), \
-                          _BLM_NBI9_BLQ3_EMU_Q_BASE, BLM_NBI9_BLQ3_EMU_Q_LOCALITY, NBI9_BLQ_EMU_3_PKTBUF_SIZE, _EMU_INIT_COUNT_)
-
+        #ifdef SPLIT_EMU_RINGS
+            #define FOR_NBIS    8,9
+        #else
+            #define FOR_NBIS    8
+        #endif /* SPLIT_EMU_RINGS */
+        #for _nbi [FOR_NBIS]
+            #for _blq [0,1,2,3]
+                #define_eval _EMU_INIT_COUNT_   0
+                #for _mem_type [EMU_IMEM0,EMU_IMEM1,EMU_EMEM0,EMU_EMEM1,EMU_EMEM2,EMU_EMEM0_CACHE,EMU_EMEM1_CACHE,EMU_EMEM2_CACHE]
+                    #define_eval _EMU_INIT_COUNT_   (_EMU_INIT_COUNT_ + \
+                                                BLM_NBI/**/NBII/**/_BLQ/**/_blq/**/_/**/_mem_type/**/_NUM_BUFS)
+                #endloop
+                blm_emu_ring_fill(NBI/**/NBII/**/_BLQ/**/_blq/**/_EMU_RING_FILL_PARAMS)
+                blm_emu_ring_init(BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_Q_ISLAND, \
+                                  BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_QID, \
+                                 (BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_Q_SIZE/4), \
+                                 _BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_Q_BASE, \
+                                  BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_Q_LOCALITY, \
+                                  NBI/**/_nbi/**/_BLQ_EMU_/**/_blq/**/_PKTBUF_SIZE, \
+                                  _EMU_INIT_COUNT_)
+            #endloop
+        #endloop
         #undef _EMU_INIT_COUNT_
-
-    #endif /* SPLIT_EMU_RINGS */
-
+        #undef _nbi
+        #undef _blq
+        #undef _mem_type
 #endif /* BLM_INIT_EMU_RINGS */
 
     blm_cfg_blq_evnts(NBII_lsb, 0, ingress, NBI_BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
