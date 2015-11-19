@@ -122,7 +122,7 @@
 
 
     Nbi_TrafficManager_TrafficManagerReg_MiniPktCreditConfig(NBI_ID,
-    37,      //CreditLimit
+    128,      //CreditLimit
     0x200,          //FPCreditLimit
     1               //MiniPacketFCMode
     )
