@@ -29,6 +29,7 @@
    of this file.
    For NFCC applications we only need to supply a way to get the EMU ring numbers
 */
+#include <nfp_chipres.h>
 
 /* BLM default configuration file */
 #include "blm_config.h"
@@ -69,13 +70,21 @@
 
 #ifdef SPLIT_EMU_RINGS
 
-    /* XXX nfp_chipres.h for nfcc doesn't exist yet */
-    _declare_resource("emem0_queues global 1024")
-    _declare_resource("BLQ_EMU_RINGS global 8 emem0_queues+8");
+    __asm {
+        .declare_resource BLQ_EMU_RINGS global 8 emem0_queues+8
+        .alloc_resource BLM_NBI8_BLQ0_EMU_QID BLQ_EMU_RINGS+0 global 1
+        .alloc_resource BLM_NBI8_BLQ1_EMU_QID BLQ_EMU_RINGS+1 global 1
+        .alloc_resource BLM_NBI8_BLQ2_EMU_QID BLQ_EMU_RINGS+2 global 1
+        .alloc_resource BLM_NBI8_BLQ3_EMU_QID BLQ_EMU_RINGS+3 global 1
+        .alloc_resource BLM_NBI9_BLQ0_EMU_QID BLQ_EMU_RINGS+4 global 1
+        .alloc_resource BLM_NBI9_BLQ1_EMU_QID BLQ_EMU_RINGS+5 global 1
+        .alloc_resource BLM_NBI9_BLQ2_EMU_QID BLQ_EMU_RINGS+6 global 1
+        .alloc_resource BLM_NBI9_BLQ3_EMU_QID BLQ_EMU_RINGS+7 global 1
+    }
 
     /* Get a BLM ring number for a given NBI (8/9) and BLQ (0-3) */
     #define BLM_EMU_RING_ID(_NBI_,_BLQ_) \
-        __alloc_resource("BLM_NBI" #_NBI_ "_BLQ" #_BLQ_ "_EMU_QID BLQ_EMU_RINGS global 1")
+        __link_sym("BLM_NBI" #_NBI_ "_BLQ" #_BLQ_ "_EMU_QID")
 
     /* The NFCC application can get the 8 ring numbers using :
 
@@ -576,13 +585,17 @@
 
 #else
 
-    /* XXX nfp_chipres.h for nfcc doesn't exist yet */
-    _declare_resource("emem0_queues global 1024")
-    _declare_resource("BLQ_EMU_RINGS global 4 emem0_queues+4");
+    __asm {
+        .declare_resource BLQ_EMU_RINGS global 4 emem0_queues+4
+        .alloc_resource BLM_NBI8_BLQ0_EMU_QID BLQ_EMU_RINGS+0 global 1
+        .alloc_resource BLM_NBI8_BLQ1_EMU_QID BLQ_EMU_RINGS+1 global 1
+        .alloc_resource BLM_NBI8_BLQ2_EMU_QID BLQ_EMU_RINGS+2 global 1
+        .alloc_resource BLM_NBI8_BLQ3_EMU_QID BLQ_EMU_RINGS+3 global 1
+    }
 
     /* Get a BLM ring number for a given NBI (8/9) and BLQ (0-3) */
     #define BLM_EMU_RING_ID(_NBI_,_BLQ_) \
-        __alloc_resource("BLM_NBI8_BLQ" #_BLQ_ "_EMU_QID BLQ_EMU_RINGS global 1")
+        __link_sym("BLM_NBI8_BLQ" #_BLQ_ "_EMU_QID")
 
     /* The NFCC application can get the 4 ring numbers using :
 
