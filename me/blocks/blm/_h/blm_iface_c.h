@@ -20,6 +20,8 @@
 #ifndef __NFP_BLM_IFACE_C_H__
 #define __NFP_BLM_IFACE_C_H__
 
+#include <nfp_chipres.h>
+
 #if defined(__NFP_LANG_MICROC)
 
 /*
