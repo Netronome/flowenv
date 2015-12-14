@@ -90,6 +90,7 @@ he_eth_fit(sz, off)
     case NET_ETH_TYPE_TPID: next_proto = HE_8021Q; break;               \
     case NET_ETH_TYPE_IPV6: next_proto = HE_IP6; break;                 \
     case NET_ETH_TYPE_ARP: next_proto = HE_ARP; break;                  \
+    case NET_ETH_TYPE_MPLS: next_proto = HE_MPLS; break;                \
     default: next_proto = HE_UNKNOWN;                                   \
     }
 
@@ -130,6 +131,7 @@ he_vlan_fit(sz, off)
     switch(dst->type) {                                                 \
     case NET_ETH_TYPE_IPV4: next_proto = HE_IP4; break;                 \
     case NET_ETH_TYPE_IPV6: next_proto = HE_IP6; break;                 \
+    case NET_ETH_TYPE_MPLS: next_proto = HE_MPLS; break;                \
     default: next_proto = HE_UNKNOWN;                                   \
     }
 
@@ -169,9 +171,6 @@ he_arp_fit(sz, off)
 __intrinsic unsigned int
 he_arp(void *src_buf, int off, void *dst)
 {
-    __gpr unsigned int next_proto;
-    __gpr int ret;
-
     ctassert(__is_in_lmem(src_buf));
     ctassert(__is_in_reg_or_lmem(dst));
 
@@ -436,6 +435,7 @@ he_gre_fit(sz, off)
     case NET_ETH_TYPE_TEB: next_proto = HE_ETHER; break;                \
     case NET_ETH_TYPE_IPV4: next_proto = HE_IP4; break ;                \
     case NET_ETH_TYPE_IPV6: next_proto = HE_IP6; break ;                \
+    case NET_ETH_TYPE_MPLS: next_proto = HE_MPLS; break;                \
     default: next_proto = HE_UNKNOWN;                                   \
     }
 
@@ -527,4 +527,35 @@ he_vxlan(void *src_buf, int off, void *dst)
     len = sizeof(struct vxlan_hdr);
 
     return HE_RES(next_proto, len);
+}
+
+
+__intrinsic int
+he_mpls_fit(sz, off)
+{
+    ctassert(__is_ct_const(sz));
+    ctassert(sz >= sizeof(struct mpls_hdr));
+    return (off + sizeof(struct mpls_hdr)) <= sz;
+}
+
+#define HE_MPLS_FUNC(dst)                                                \
+    *dst = *(__lmem struct mpls_hdr *)(((__lmem char *)src_buf) + off);
+
+__intrinsic unsigned int
+he_mpls(void *src_buf, int off, void *dst)
+{
+    ctassert(__is_in_lmem(src_buf));
+    ctassert(__is_in_reg_or_lmem(dst));
+
+    if (__is_in_lmem(dst)) {
+#define __HE_MPLS ((__lmem struct mpls_hdr *)dst)
+        HE_MPLS_FUNC(__HE_MPLS);
+#undef __HE_MPLS
+    } else {
+#define __HE_MPLS ((__gpr struct mpls_hdr *)dst)
+        HE_MPLS_FUNC(__HE_MPLS);
+#undef __HE_MPLS
+    }
+
+    return HE_RES(HE_NONE, sizeof(struct mpls_hdr));
 }

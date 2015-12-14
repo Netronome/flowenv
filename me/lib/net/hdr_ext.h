@@ -135,6 +135,7 @@ enum he_proto {
     HE_GRE,              /**  8: GRE header */
     HE_VXLAN,            /**  9: VXLAN header */
     HE_ESP,              /** 10: ESP header */
+    HE_MPLS,             /** 11: MPLS header */
 
     HE_IP6_EXT =  0x100, /** IPv6 Extension header */
     HE_IP6_HBH =  0x101, /** IPv6 Hop-by-Hop Options header */
@@ -164,7 +165,7 @@ __intrinsic int he_eth_fit(sz, off);
  * @dst must point to a struct eth_hdr or larger.
  * The length encoded in the return value is: sizeof(struct eth_hdr).
  * The next protocol encoded in the return value is one of HE_8021Q,
- * HE_IP4, HE_IP6, or HE_UNKNOWN.
+ * HE_IP4, HE_IP6, HE_MPLS or HE_UNKNOWN.
  */
 __intrinsic unsigned int he_eth(void *src_buf, int off, void *dst);
 
@@ -184,7 +185,7 @@ __intrinsic int he_vlan_fit(sz, off);
  * @dst must point to a struct vlan_hdr or larger.
  * The length encoded in the return value is: sizeof(struct vlan_hdr).
  * The next protocol encoded in the return value is one of HE_IP4,
- * HE_IP6, or HE_UNKNOWN.
+ * HE_IP6, HE_MPLS or HE_UNKNOWN.
  */
 __intrinsic unsigned int he_vlan(void *src_buf, int off, void *dst);
 
@@ -339,7 +340,7 @@ __intrinsic int he_gre_fit(sz, off);
  *
  * @dst must point to a struct gre_hdr or larger.
  * The next protocol encoded in the return value is one of HE_ETHER or
- * HE_IP4, HE_IP6, or HE_UNKNOWN.
+ * HE_IP4, HE_IP6, HE_MPLS or HE_UNKNOWN.
  * The length encoded in the return value is the complete GRE header.
  * Note this function only extracts the mandatory struct gre_hdr. Those
  * interested in the optional header fields should either use one of the
@@ -376,5 +377,25 @@ __intrinsic int he_vxlan_fit(sz, off);
  * The length encoded in the return value is: sizeof(struct vxlan_hdr)
  */
 __intrinsic unsigned int he_vxlan(void *src_buf, int off, void *dst);
+
+
+/**
+ * Check if a buffer of size @sz with current offset @off has
+ * enough space to contain a MPLS header.
+ */
+__intrinsic int he_mpls_fit(sz, off);
+
+/**
+ * Extract a MPLS header starting from an offset in the buffer.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within @src_buf where the MPLS header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
+ *
+ * @dst must point to a struct mpls_hdr or larger.
+ * The next protocol encoded in the return value is HE_NONE
+ * The length encoded in the return value is: sizeof(struct mpls_hdr)
+ */
+__intrinsic unsigned int he_mpls(void *src_buf, int off, void *dst);
 
 #endif /* _HDR_EXT_H_ */
