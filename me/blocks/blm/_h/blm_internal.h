@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @file        blm.h
- * @brief
+ * @file        blm_internal.h
+ * @brief       Internal definitions for BLM
  */
 
-#ifndef __NFP_BLM_H__
-#define __NFP_BLM_H__
-
-#include "libblm.h"
+#ifndef __NFP_BLM_INTERNAL_H__
+#define __NFP_BLM_INTERNAL_H__
 
 /* Internal use constants */
 #define BLM_BLQ_NON_SPLIT_MODE  1
@@ -255,4 +253,4 @@
     #endif
 #endm
 
-#endif // __NFP_BLM_H__
+#endif /* __NFP_BLM_INTERNAL_H__ */

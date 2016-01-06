@@ -22,12 +22,15 @@
 
 #include <aggregate.uc>
 #include <nfp_chipres.h>
+
 #include <ring_utils.uc>
-#include "event_autopush.uc"
-#include "blm_nbi.uc"
-#include "libblm_pkt_fl.uc"
-#include "libblm.h"
-#include "blm.h"
+#include <event_autopush.uc>
+
+#include "_h/blm_uc.h"
+#include "_h/blm_internal.h"
+
+#include "_uc/blm_nbi.uc"
+#include "blm_api.uc"
 
 
 #ifndef ALARM_TICKS

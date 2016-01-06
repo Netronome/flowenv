@@ -25,7 +25,7 @@
 #if defined(__NFP_LANG_ASM)
 
 /* BLM default configuration file */
-#include "blm_config.h"
+#include "../blm_cfg.h"
 
 #define BLM_INIT_DONE                           0xd043
 #define NBI_BLQ_EVENT_THRESHOLD                 32 /* 0:16, 1:32, 2:64, 3:128 */

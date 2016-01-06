@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @file        blm_config.h
+ * @file        blm_cfg.h
  * @brief
  */
 
-#ifndef __NFP_BLM_CONFIG_H__
-#define __NFP_BLM_CONFIG_H__
+#ifndef __NFP_BLM_CFG_H__
+#define __NFP_BLM_CFG_H__
 
 
 /*
@@ -1236,4 +1236,4 @@
     #endif
 #endif
 
-#endif // __NFP_BLM_CONFIG_H__
+#endif // __NFP_BLM_CFG_H__
