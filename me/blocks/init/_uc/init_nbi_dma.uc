@@ -179,7 +179,7 @@
         SPLIT_LENGTH,
         BLQ_SECONDARY(NBI_DMA_BP0_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP0_BLQ_TARGET),
-        1,  //CtmOffset = 64B
+        CTM_OFFSET,
         NBI_DMA_BP_DROP_ENABLE
     )
     /* Buffer Pool 1: Packets <= 1984B */
@@ -189,7 +189,7 @@
         SPLIT_LENGTH,
         BLQ_SECONDARY(NBI_DMA_BP1_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP1_BLQ_TARGET),
-        1,  //CtmOffset = 64B
+        CTM_OFFSET,
         NBI_DMA_BP_DROP_ENABLE
     )
     /* Buffer Pool 2: Packets > 1984B */
@@ -199,7 +199,7 @@
         SPLIT_LENGTH,
         BLQ_SECONDARY(NBI_DMA_BP2_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP2_BLQ_TARGET),
-        1,  //CtmOffset = 64B
+        CTM_OFFSET,
         NBI_DMA_BP_DROP_ENABLE
     )
     /* Buffer Pool 3: Exceptiond Packets <= 192B */
@@ -209,7 +209,7 @@
         SPLIT_LENGTH,
         BLQ_SECONDARY(NBI_DMA_BP3_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP3_BLQ_TARGET),
-        1,  //CtmOffset = 64B
+        CTM_OFFSET,
         NBI_DMA_BP_DROP_ENABLE
     )
     /* Buffer Pool 4: Exceptiond Packets <= 1984B */
@@ -219,7 +219,7 @@
         SPLIT_LENGTH,
         BLQ_SECONDARY(NBI_DMA_BP4_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP4_BLQ_TARGET),
-        1,  //CtmOffset = 64B
+        CTM_OFFSET,
         NBI_DMA_BP_DROP_ENABLE
     )
     /* Buffer Pool 5: Exceptiond Packets > 1984B */
@@ -229,7 +229,7 @@
         SPLIT_LENGTH,
         BLQ_SECONDARY(NBI_DMA_BP5_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP5_BLQ_TARGET),
-        1,  //CtmOffset = 64B
+        CTM_OFFSET,
         NBI_DMA_BP_DROP_ENABLE
     )
     /* Buffer Pool 6: Unused */
@@ -239,7 +239,7 @@
         SPLIT_LENGTH,
         BLQ_SECONDARY(NBI_DMA_BP6_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP6_BLQ_TARGET),
-        1,  //CtmOffset = 64B
+        CTM_OFFSET,
         NBI_DMA_BP_DROP_ENABLE
     )
 
@@ -470,7 +470,7 @@
         SPLIT_LENGTH,
         BLQ_SECONDARY(NBI_DMA_BP7_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP7_BLQ_TARGET),
-        1,  //CtmOffset = 64B
+        CTM_OFFSET,
         NBI_DMA_BP_DROP_ENABLE
     )
 

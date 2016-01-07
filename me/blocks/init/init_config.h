@@ -52,6 +52,31 @@
     #define NBI_PKT_PREPEND_BYTES 0
 #endif
 
+/* The starting offset of the packet data in CTM */
+#ifndef PKT_NBI_OFFSET
+    #define PKT_NBI_OFFSET 64
+#endif
+
+#if (__REVISION_MIN == __REVISION_A0)
+    #if (PKT_NBI_OFFSET == 32)
+        #define CTM_OFFSET 0
+    #elif (PKT_NBI_OFFSET == 64)
+        #define CTM_OFFSET 1
+    #else
+        #error "Invalid PKT_NBI_OFFSET must be 32 or 64"
+    #endif
+#elif (__REVISION_MIN == __REVISION_B0)
+    #if (PKT_NBI_OFFSET == 64)
+        #define CTM_OFFSET 1
+    #elif (PKT_NBI_OFFSET == 128)
+        #define CTM_OFFSET 0
+    #else
+        #error "Invalid PKT_NBI_OFFSET must be 64 or 128"
+    #endif
+#else
+    #error "Invalid CHIP REVISION"
+#endif
+
 /* Maxmimum split length boundary between a packets CTM buffer and it's backing
  * IMEM/EMEM buffer:
  * 0 - Split at 256B boundary
