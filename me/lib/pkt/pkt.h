@@ -525,6 +525,11 @@ struct ctm_pkt_credits {
     unsigned int bufs;
 };
 
+/* CTM credit allocation fail sleep */
+#ifndef PKT_CTM_CRED_ALLOC_FAIL_SLEEP
+#define PKT_CTM_CRED_ALLOC_FAIL_SLEEP 1000
+#endif
+
 /**
  * Packet Engine response for packet_alloc commands.
  */
@@ -829,13 +834,22 @@ __intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
  *
  *  3. Get credits for the packets to be allocated (could be skipped if done
  *     internally in the pkt_ctm_alloc function).
- *      pkt_ctm_get_credits(&my_credits, NUM_PKTS, NUM_BUFS);
+ *      pkt_ctm_get_credits(&my_credits, NUM_PKTS, NUM_BUFS, 0);
+ *     or
+ *      pkt_ctm_get_credits(&my_credits, NUM_PKTS, NUM_BUFS, 1);
  *
  *  4. Allocate packets (one at a time, in this example 256 bytes)
- *      pkt_num = pkt_ctm_alloc(&my_credits, isl_num, PKT_CTM_SIZE_256, 0);
+ *     (do not allocate or replenish credits; already performed):
+ *      pkt_num = pkt_ctm_alloc(&my_credits, isl_num, PKT_CTM_SIZE_256, 0, 0);
+ *     or (allocate but do not replenish credits if low):
+ *      pkt_num = pkt_ctm_alloc(&my_credits, isl_num, PKT_CTM_SIZE_256, 1, 0);
+ *     or (allocate and replenish credits if low):
+ *      pkt_num = pkt_ctm_alloc(&my_credits, isl_num, PKT_CTM_SIZE_256, 1, 1);
  *
- *  5. Periodically replenish the credit buckets.
- *      pkt_ctm_poll_pe_credit(&my_credits, PKT_CTM_SIZE_256);
+ *  5. (optional) Periodically replenish the credit buckets.  One can omit
+ *     this if the firmware invokes pkt_ctm_get_credits() or
+ *     pkt_ctm_alloc() with the 'replenish_credits' argument as non-zero.
+ *      pkt_ctm_poll_pe_credit(&my_credits);
  *
  *  6. Free CTM packets (using pkt_num from stage 4).
  *      pkt_ctm_free(isl_num, pkt_num);
@@ -850,10 +864,11 @@ __intrinsic void pkt_ctm_free(unsigned char isl, unsigned int pnum);
 
 /**
  * Allocate a CTM packet buffer.
- * @param credits         Credits management struct
- * @param isl             Island of the CTM packet
- * @param size            CTM buffer size (PKT_CTM_SIZE_*)
- * @param alloc_internal  If credits are to be allocated internally
+ * @param credits           Credits management struct
+ * @param isl               Island of the CTM packet
+ * @param size              CTM buffer size (PKT_CTM_SIZE_*)
+ * @param alloc_internal    If credits are to be allocated internally
+ * @param replenish_credits Try and replenish credits internally
  * @return the allocated packet number on success, 0xffffffff on failure
  *
  * If the "alloc_internal" param is 0 - this function does not check for
@@ -880,7 +895,8 @@ __intrinsic void pkt_ctm_free(unsigned char isl, unsigned int pnum);
 __intrinsic unsigned int pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
                                        unsigned char isl,
                                        enum PKT_CTM_SIZE size,
-                                       unsigned char alloc_internal);
+                                       unsigned char alloc_internal,
+                                       int replenish_credits);
 
 /**
  * Initialise the credit management structure.
@@ -908,8 +924,9 @@ __intrinsic void pkt_ctm_poll_pe_credit(__cls struct ctm_pkt_credits *credits);
 
 /**
  * Get credits for allocation of packet(s) in CTM.
- * @param pkt_credits   Desired amount of packet credits
- * @param buf_credits   Desired amount of buffer credits
+ * @param pkt_credits       Desired amount of packet credits
+ * @param buf_credits       Desired amount of buffer credits
+ * @param replenish_credits Try and replenish credits internally
  *
  * This function gets credits from the credits mangment structure
  * in a safe way.
@@ -917,7 +934,8 @@ __intrinsic void pkt_ctm_poll_pe_credit(__cls struct ctm_pkt_credits *credits);
  */
 __intrinsic void pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
                                      unsigned int pkt_credits,
-                                     unsigned int buf_credits);
+                                     unsigned int buf_credits,
+                                     int replenish_credits);
 
 #endif /* __NFP_LANG_MICROC */
 

@@ -477,7 +477,8 @@ pkt_ctm_free(unsigned char isl, unsigned int pnum)
 __intrinsic unsigned int
 pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
               unsigned char isl, enum PKT_CTM_SIZE size,
-              unsigned char alloc_internal)
+              unsigned char alloc_internal,
+              int replenish_credits)
 {
     __gpr unsigned int addr_hi = 0;
     __gpr unsigned int addr_lo = 0;
@@ -490,7 +491,7 @@ pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
 
     /* Allocate one packet credit and one buffer credit if requested */
     if (alloc_internal)
-        pkt_ctm_get_credits(credits, 1, 1);
+        pkt_ctm_get_credits(credits, 1, 1, replenish_credits);
 
     if (isl != 0)
         addr_hi = (0x80 | isl) << 24;
@@ -511,7 +512,7 @@ pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
             /* credits where returned add them back to the buckets */
             credits_update.pkts = pe_res.pkt_credit;
             credits_update.bufs = pe_res.buf_credit;
-            __asm cls[test_add, credits_update, credits, 0, 2], \
+            __asm cls[add, credits_update, credits, 0, 2], \
                 ctx_swap[sig_cls];
         }
     }
@@ -544,15 +545,17 @@ pkt_ctm_poll_pe_credit(__cls struct ctm_pkt_credits *credits)
         credits_update.pkts = pe_res.pkt_credit;
         credits_update.bufs = pe_res.buf_credit;
 
-        __asm cls[test_add, credits_update, credits, 0, 2], ctx_swap[sig_cls];
+        __asm cls[add, credits_update, credits, 0, 2], ctx_swap[sig_cls];
     }
 }
 
 __intrinsic void
 pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
-                    unsigned int pkt_credits, unsigned int buf_credits)
+                    unsigned int pkt_credits, unsigned int buf_credits,
+                    int replenish_credits)
 {
     __xrw struct ctm_pkt_credits credits_update;
+    __xwrite struct ctm_pkt_credits credits_add_back;
     SIGNAL sig_cls;
 
     credits_update.pkts = pkt_credits;
@@ -562,22 +565,29 @@ pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
     /* Check the returned number of credits (the value before the sub) */
     while ((credits_update.pkts < pkt_credits) ||
            (credits_update.bufs < buf_credits)) {
+
+        /* Allow other threads to run */
+        sleep(PKT_CTM_CRED_ALLOC_FAIL_SLEEP);
+
         /* Either the packet or the buffer credits have run out
          * return the credit(s) acquired, and wait for both */
         if (credits_update.pkts >= pkt_credits)
             /* Add back what we asked for */
-            credits_update.pkts = pkt_credits;
+            credits_add_back.pkts = pkt_credits;
         else
             /* Since the value in the management struct saturated
              * to 0 we should add back the value before the sub */
-            credits_update.pkts = credits_update.pkts;
+            credits_add_back.pkts = credits_update.pkts;
 
         if (credits_update.bufs >= buf_credits)
-            credits_update.bufs = buf_credits;
+            credits_add_back.bufs = buf_credits;
         else
-            credits_update.bufs = credits_update.bufs;
+            credits_add_back.bufs = credits_update.bufs;
 
-        __asm cls[add, credits_update, credits, 0, 2], ctx_swap[sig_cls];
+        __asm cls[add, credits_add_back, credits, 0, 2], ctx_swap[sig_cls];
+
+        if (replenish_credits)
+            pkt_ctm_poll_pe_credit(credits);
 
         /* Try again */
         credits_update.pkts = pkt_credits;
