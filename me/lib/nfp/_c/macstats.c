@@ -21,6 +21,9 @@
 #include <nfp6000/nfp_me.h>
 #include <assert.h>
 #include <nfp/macstats.h>
+#include <nfp/me.h>
+#include <nfp/mem_atomic.h>
+#include <nfp/xpb.h>
 
 
 /* Definitions for MACs/Ports/Channels numbers */
@@ -47,6 +50,12 @@
 #define MACSTATS_PORT_ADDR_LO(_core, _seg) \
                 (MACSTATS_BASE + (_core)* MACSTATS_PER_CORE_PORT_SIZE + \
                  (_seg) * MACSTATS_PER_PORT_SIZE)
+
+/* Sleep between each mac head counter read to reduce the short burst CPP
+ * accesses. */
+#ifndef MAC_HEAD_DROP_SLEEP
+#define MAC_HEAD_DROP_SLEEP 2000
+#endif
 
 /* Read 8 stats values from nbi and write to destination */
 __intrinsic static void
@@ -246,4 +255,56 @@ macstats_channel_accum(unsigned int mac, unsigned int channel,
     channel_stats->TxCIfOutOctets_unused = 0;
 
     return 0;
+}
+
+__intrinsic int
+macstats_head_drop_accum(unsigned int nbi, unsigned int core,
+                         unsigned short ports_mask,
+                         __mem struct macstats_head_drop_accum *port_stats)
+{
+    __gpr uint32_t addr;
+    __xwrite uint64_t add_val[2];
+    __gpr uint32_t drop_pair;
+    __gpr int add_even;
+    __gpr int add_odd;
+    int i;
+    int ret = 0;
+
+    if (nbi > 1) {
+        ret = -1;
+        goto out;
+    }
+    if (core > (NFP_MAX_MAC_CORES_PER_MAC_ISL - 1)) {
+        ret = -1;
+        goto out;
+    }
+
+    addr = NFP_MAC_XPB_OFF(nbi);
+
+    if (core == 0)
+        addr += NFP_MAC_CSR_ETH0_IG_HEAD_DROP_CNTR_PAIR(0);
+    else
+        addr += NFP_MAC_CSR_ETH1_IG_HEAD_DROP_CNTR_PAIR(0);
+
+    for (i = 0 ; i < NFP_MAX_ETH_PORTS_PER_MAC_CORE ; i+=2) {
+        add_even = ports_mask & (1 << i);
+        add_odd  = ports_mask & (1 << (i + 1));
+        if (add_even || add_odd) {
+            drop_pair = xpb_read(addr + (i << 1));
+            add_val[0] = ((uint64_t)(drop_pair & 0xffff) << 32);
+            add_val[1] = ((uint64_t)((drop_pair >> 16) & 0xffff) << 32);
+            if (add_even)
+                mem_add64(&add_val[0], &port_stats->ports_drop[i],
+                          sizeof(uint64_t));
+            if (add_odd)
+                mem_add64(&add_val[1], &port_stats->ports_drop[i + 1],
+                          sizeof(uint64_t));
+
+            /* Spread the short bursts of CPP commands this loop is
+             * generating to minimize DSF port utilization issues. */
+            sleep(MAC_HEAD_DROP_SLEEP);
+        }
+    }
+out:
+    return ret;
 }

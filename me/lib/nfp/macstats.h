@@ -22,6 +22,7 @@
 
 #include <nfp.h>
 #include <stdint.h>
+#include <nfp6000/nfp_mac.h>
 
 /**
  * This file contains the API for reading and accumulating MAC statistics.
@@ -260,6 +261,26 @@ struct macstats_channel_accum {
     uint64_t TxCIfOutMultiCastPkts;
     uint64_t TxCIfOutBroadCastPkts;
 };
+
+/* Per port mac head drop counters accumulation */
+struct macstats_head_drop_accum {
+    /* We have 12 ports */
+    uint64_t ports_drop[NFP_MAX_ETH_PORTS_PER_MAC_CORE];
+};
+
+/**
+ * Accumulates the per port mac head drop counters.
+ * @param nbi         The nbi to read from (0/1)
+ * @param core        The MAC core to read from (0/1)
+ * @param ports_mask  A 16 bits ports mask configuration used, each bit
+ *                    indicates if a port is in use. Only bits 0-11 are used.
+ * @param port_stats  A pointer to the accumulate stats struct to update,
+ *                    must be in ctm/imem/emem only
+ * @return 0 on success, -1 on error
+ */
+int macstats_head_drop_accum(unsigned int nbi, unsigned int core,
+                             unsigned short ports_mask,
+                             __mem struct macstats_head_drop_accum *port_stats);
 
 /**
  * Reads and clears MAC stats for a given port.
