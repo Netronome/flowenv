@@ -61,6 +61,23 @@
 #define NET_IP_FLAGS_CE      0x8000     /** Congestion */
 #define NET_IP_FLAGS_DF      0x4000     /** Don't fragment flag  */
 #define NET_IP_FLAGS_MF      0x2000     /** More fragments flag  */
+/* Convenience macro to determine if packet is fragmented */
+#define NET_IP_IS_FRAG(_frag) \
+    (_frag & (NET_IP_FRAG_OFF_MASK | NET_IP_FLAGS_MF))
+
+
+#define NET_IP_MCAST_ADDR      0xE0000000
+#define NET_IP_MCAST_ADDR_MASK 0xF0000000
+#define NET_IP_BCAST_ADDR      0xFFFFFFFF
+/* Convenience macro determine if IPv4 address is link-local Broadcast */
+#define NET_IP_IS_BCAST(_addr) (_addr == NET_IP_BCAST_ADDR)
+/* Convenience macro determine if IPv4 address is Multicast */
+#define NET_IP_IS_MCAST(_addr) \
+    ((_addr & NET_IP_MCAST_ADDR_MASK) == NET_IP_MCAST_ADDR)
+/* Convenience macro determine if destination IPv4 address is
+ * link-local Broadcast or Multicast */
+#define NET_IP_IS_BMCAST(_addr) \
+    ((NET_IP_IS_MCAST(_addr) || NET_IP_IS_BCAST(_addr))
 
 
 #if defined(__NFP_LANG_MICROC)
