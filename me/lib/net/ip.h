@@ -77,7 +77,7 @@
 /* Convenience macro determine if destination IPv4 address is
  * link-local Broadcast or Multicast */
 #define NET_IP_IS_BMCAST(_addr) \
-    ((NET_IP_IS_MCAST(_addr) || NET_IP_IS_BCAST(_addr))
+    (NET_IP_IS_MCAST(_addr) || NET_IP_IS_BCAST(_addr))
 
 
 #if defined(__NFP_LANG_MICROC)
