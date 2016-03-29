@@ -52,6 +52,7 @@
 #define NET_IP_PROTO_ICMPV6     0x3a    /** ICMP for IPv6 */
 #define NET_IP_PROTO_NONE       0x3b    /** No Next Header for IPv6 */
 #define NET_IP_PROTO_DSTOPTS    0x3c    /** Destination Options for IPv6 */
+#define NET_IP_PROTO_SCTP       0x84    /** Stream Control Transmission Protocol */
 
 
 /**
