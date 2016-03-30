@@ -464,7 +464,7 @@ pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
 }
 
 __intrinsic void
-pkt_ctm_free(unsigned char isl, unsigned int pnum)
+pkt_ctm_free(unsigned int isl, unsigned int pnum)
 {
     __gpr unsigned int addr_hi = 0;
 

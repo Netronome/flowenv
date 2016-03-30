@@ -860,7 +860,7 @@ __intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
  * @param isl   Island of the CTM packet
  * @param pnum  Packet number of the CTM packet
  */
-__intrinsic void pkt_ctm_free(unsigned char isl, unsigned int pnum);
+__intrinsic void pkt_ctm_free(unsigned int isl, unsigned int pnum);
 
 /**
  * Allocate a CTM packet buffer.
