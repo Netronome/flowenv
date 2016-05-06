@@ -74,7 +74,7 @@ do {                                                                    \
     try_ctassert(size <= 128);                                          \
     ctassert(sync == sig_done || sync == ctx_swap);                     \
                                                                         \
-    addr = (isl << 30) | ((bar & 0x7) << 27) | ((addr_hi & 0xf) << 24); \
+    addr = (isl << 30) | ((bar & 0x7) << 27) | ((addr_hi & 0x7) << 24); \
                                                                         \
     if (__is_ct_const(size)) {                                          \
         if (size <= 32) {                                               \
