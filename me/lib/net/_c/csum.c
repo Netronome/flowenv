@@ -236,7 +236,7 @@ net_csum_ipv4(void *ip, __addr40 void *pkt_ptr)
     return ~ones_sum_fold16(sum);
 }
 
-static __intrinsic uint16_t
+__intrinsic uint16_t
 net_csum_l4_ip(uint32_t ip_type, uint32_t protocol,
                void *ip, void *l4_hdr,
                __addr40 void* pkt_ctm, uint32_t ctm_len,

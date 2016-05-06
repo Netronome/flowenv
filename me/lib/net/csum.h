@@ -120,6 +120,49 @@ __intrinsic uint16_t net_csum_mod(uint32_t orig_csum, uint32_t orig_val,
 __intrinsic uint16_t net_csum_ipv4(void *ip, __addr40 void *pkt_ptr);
 
 /**
+ * Calculate the checksum of an IP packet.
+ * @param ip_type   The IP type NET_ETH_TYPE_IPV4 or NET_ETH_TYPE_IPV6
+ * @param protocol  The L4 protocol NET_IP_PROTO_TCP or NET_IP_PROTO_UDP
+ * @param ip        Pointer to the IP header
+ * @param l4_hdr    Pointer to the L4 header
+ * @param pkt_ctm   Address of the start of the L4 header in CTM
+ * @param ctm_len   The length of the L4 header + payload in CTM (can be 0).
+ *                  Must be at least 8 for UDP and 20 for TCP if there is
+ *                  a CTM buffer.
+ * @param pkt_mem   Memory Unit Address of the remainder of the packet
+ *                  contents not in CTM. May include the UDP/TCP header if
+ *                  there is no CTM buffer.
+ * @param mem_len   The length of the payload (and optionally L4 header if no
+ *                  CTM) in external memory (can be 0).
+ *                  Must be at least 8 for UDP and 20 for TCP if there is
+ *                  no CTM buffer.
+ * @return The calculated checksum
+ *
+ * @ip and @l4_hdr must be located in LMEM or GPRs.
+ *
+ * For checksum calculation the user must zero the checksum field in the
+ * UDP/TCP header. For checksum verification 0 will be returned if the
+ * checksum value in the UDP/TCP header is correct.
+ *
+ * For UDP, RFC768 instructs :
+ * "If the computed  checksum  is zero,  it is transmitted  as all ones (the
+ * equivalent  in one's complement  arithmetic)."
+ * The return value from this function will NOT be adjusted to 0xFFFF in case
+ * of a 0 result. It is the caller's responsibility to do so if the function
+ * was called for checksum calculation (rather than just verification).
+ *
+ * A note about TCP options:
+ * Since the TCP header structure does not contain the TCP options, if
+ * TCP options are present (this is checked internally) the @ctm_len/@mem_len
+ * and @ctm_ptr/@mem_ptr will be adjusted properly to account for the options
+ * fields.
+ */
+__intrinsic uint16_t net_csum_l4_ip(uint32_t ip_type, uint32_t protocol,
+                                    void *ip, void *l4_hdr,
+                                    __addr40 void* pkt_ctm, uint32_t ctm_len,
+                                    __addr40 void* pkt_mem, uint32_t mem_len);
+
+/**
  * Calculate the checksum of an IPv4 UDP packet.
  * @param ip        Pointer to the IPv4 header
  * @param udp       Pointer to the UDP header
