@@ -47,12 +47,6 @@
 #include "init_nbi_pc.uc"
 
 /* Sanity Checks */
-#ifndef NBI_TM_H_0_Q
-    #error "NBI_TM_H_0_Q not defined"
-#endif
-#ifndef NBI_TM_H_1_Q
-    #error "NBI_TM_H_1_Q not defined"
-#endif
 #ifndef NBI_COUNT
     #error "NBI_COUNT not defined"
 #endif
@@ -62,12 +56,13 @@
     #define NBI_ID 0
     #while (NBI_ID < NBI_COUNT)
 
-        Nbi_TrafficManager_Init(NBI_ID, NBI_TM_H_0_Q, NBI_TM_H_1_Q)
         Nbi_Dma_Init(NBI_ID)
         Nbi_PreClassifier_Init(NBI_ID)
 
         #define_eval NBI_ID (NBI_ID + 1)
     #endloop
+
+    Nbi_TrafficManager_Init(NBI_COUNT)
 
 #endm
 
