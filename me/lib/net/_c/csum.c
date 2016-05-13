@@ -201,6 +201,12 @@ net_csum_mod(uint32_t orig_csum, uint32_t orig_val, uint32_t new_val)
 __intrinsic uint16_t
 net_csum_ipv4(void *ip, __addr40 void *pkt_ptr)
 {
+    return __net_csum_ipv4(ip, pkt_ptr, 1);
+}
+
+__intrinsic uint16_t
+__net_csum_ipv4(void *ip, __addr40 void *pkt_ptr, const uint32_t test_ip_opt)
+{
     __gpr uint32_t sum = 0;
     __gpr uint32_t opt_size;
     __gpr uint32_t hl;
@@ -208,6 +214,7 @@ net_csum_ipv4(void *ip, __addr40 void *pkt_ptr)
     SIGNAL read_sig;
 
     ctassert(__is_in_reg_or_lmem(ip));
+    ctassert(__is_ct_const(test_ip_opt));
 
     /* Sum up the standard IP header */
     sum = ones_sum_add(sum, UINT32_REG(ip)[0]);
@@ -223,14 +230,16 @@ net_csum_ipv4(void *ip, __addr40 void *pkt_ptr)
         hl = ((__gpr struct ip4_hdr *)ip)->hl;
     }
 
-    if(hl > NET_IP4_LEN32) {
-        opt_size = (hl - NET_IP4_LEN32) * sizeof(uint32_t);
-        ((__addr40 uint8_t*)pkt_ptr) -= opt_size;
-        /* The read size must be a mult of 8 bytes */
-        __mem_read64(ip_opts, pkt_ptr, ((opt_size + 7) & 0x78),
-                     sizeof(ip_opts), ctx_swap, &read_sig);
-        sum = ones_sum_add(sum, ones_sum_warr(ip_opts, opt_size));
-        __implicit_read(ip_opts);
+    if (test_ip_opt) {
+        if (hl > NET_IP4_LEN32) {
+            opt_size = (hl - NET_IP4_LEN32) * sizeof(uint32_t);
+            ((__addr40 uint8_t*)pkt_ptr) -= opt_size;
+            /* The read size must be a mult of 8 bytes */
+            __mem_read64(ip_opts, pkt_ptr, ((opt_size + 7) & 0x78),
+                         sizeof(ip_opts), ctx_swap, &read_sig);
+            sum = ones_sum_add(sum, ones_sum_warr(ip_opts, opt_size));
+            __implicit_read(ip_opts);
+        }
     }
 
     return ~ones_sum_fold16(sum);

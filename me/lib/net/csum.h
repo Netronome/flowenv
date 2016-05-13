@@ -120,6 +120,33 @@ __intrinsic uint16_t net_csum_mod(uint32_t orig_csum, uint32_t orig_val,
 __intrinsic uint16_t net_csum_ipv4(void *ip, __addr40 void *pkt_ptr);
 
 /**
+ * Calculate the IPv4 header checksum.
+ * @param ip            Pointer to the IPv4 header
+ * @param pkt_ptr       Pointer to the packet's L4 header start
+ * @param test_ip_opt   A flag indicating if IP options should be considered
+ * @return  IPv4 header checksum
+ *
+ * @ip (struct ip4_hdr) must be located in LMEM or GPRs.
+ * If the IPv4 header contains options this function will access the packet's
+ * buffer to load them, it is assumed that @pkt_ptr points to the beginning
+ * of the payload (after any IPv4 options), therefore to access the options
+ * fields this pointer will be adjusted to get to the first options word.
+ * The header must be word aligned.
+ *
+ * @test_ip_opt is a compile time constant flag that gives the option to
+ * disable/enable (0/1) the inclusion of the IP options in the checksum
+ * calculation. It is recommended to enable it.
+ *
+ * This function can be used for checksum calculation if the checksum
+ * field within the IPv4 header is set to 0 by the caller, or for
+ * checksum verification.
+ * In the case of checksum verification 0 will be returned if the checksum
+ * value in the IP header is correct.
+ */
+__intrinsic uint16_t __net_csum_ipv4(void *ip, __addr40 void *pkt_ptr,
+                                     const uint32_t test_ip_opt);
+
+/**
  * Calculate the checksum of an IP packet.
  * @param ip_type   The IP type NET_ETH_TYPE_IPV4 or NET_ETH_TYPE_IPV6
  * @param protocol  The L4 protocol NET_IP_PROTO_TCP or NET_IP_PROTO_UDP
