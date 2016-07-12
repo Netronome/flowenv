@@ -295,32 +295,47 @@ pkt_msd_write(__addr40 void *pbuf, unsigned char off)
 
 
 __intrinsic void
-__pkt_nbi_recv(__xread void *meta, size_t msize, sync_t sync, SIGNAL *sig)
+__pkt_nbi_recv_with_hdrs(__xread void *meta, size_t msize, uint32_t off,
+                         sync_t sync, SIGNAL *sig)
 {
-    unsigned int zero = 0;
+
+    unsigned int addr = (off >> 2);
     unsigned int count = (msize >> 2);
 
     ctassert(__is_ct_const(sync));
     ctassert(sync == ctx_swap || sync == sig_done);
     ctassert(__is_ct_const(msize));
-    /* TODO: modify to allow for variable msize and msize > 64 */
+    ctassert(off % 4 == 0);
     ctassert(msize % 4 == 0);
     ctassert(msize >= 24);
     ctassert(msize <= 64);
 
     if (sync == ctx_swap)
-        __asm mem[packet_add_thread, *meta, zero, 0, count], ctx_swap[*sig];
+        __asm mem[packet_add_thread, *meta, addr, 0, count], ctx_swap[*sig];
     else
-        __asm mem[packet_add_thread, *meta, zero, 0, count], sig_done[*sig];
+        __asm mem[packet_add_thread, *meta, addr, 0, count], sig_done[*sig];
+}
+
+
+__intrinsic void
+pkt_nbi_recv_with_hdrs(__xread void *meta, size_t msize, uint32_t off)
+{
+    SIGNAL add_thread_sig;
+    __pkt_nbi_recv_with_hdrs(meta, msize, off, ctx_swap, &add_thread_sig);
+}
+
+
+__intrinsic void
+__pkt_nbi_recv(__xread void *meta, size_t msize, sync_t sync, SIGNAL *sig)
+{
+    __pkt_nbi_recv_with_hdrs(meta, msize, 0, sync, sig);
 }
 
 
 __intrinsic void
 pkt_nbi_recv(__xread void *meta, size_t msize)
 {
-    SIGNAL add_thread_sig;
-
-    __pkt_nbi_recv(meta, msize, ctx_swap, &add_thread_sig);
+    pkt_nbi_recv_with_hdrs(meta, msize, 0);
 }
 
 

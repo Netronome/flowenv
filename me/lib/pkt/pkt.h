@@ -561,12 +561,36 @@ struct pe_credit_get_res {
 
 
 /**
+ * Receive a packet from a the local island's CTM workq receiving NBI
+ * metadata and/or MAC prepend data in the same push.  The NBI metadata
+ * goes in the first 6 words of the 'meta' parameter while the MAC
+ * prepend and/or header data goes in the subsequent words.  The user
+ * is not required to supply transfer-register space to this call
+ * beyond the first 6 words.
+ *
+ * @param meta  Pointer to the location to store the packet metadata
+ *              followed by (optional) space for prepend/packet header data
+ * @param msize The size of the metadata/prepend/header buffer (in bytes)
+ * @param off   The offset in bytes to receive data from in the CTM buffer;
+ *              this is the packet offset from which to receive data after
+ *              the first 24 bytes of metadata (must be a multiple of 4)
+ * @param sync  The type of synchronization (sig_done or ctx_swap)
+ * @param sig   The signal to use
+ */
+__intrinsic void __pkt_nbi_recv_with_hdrs(__xread void *meta, size_t msize,
+                                          uint32_t off, sync_t sync,
+                                          SIGNAL *sig);
+
+__intrinsic void pkt_nbi_recv_with_hdrs(__xread void *meta, size_t msize,
+                                        uint32_t off);
+
+/**
  * Receive a packet from a the local island's CTM workq.
  *
  * @param meta  Pointer to the location to store the packet metadata
  * @param msize The size of the metadata buffer (in bytes)
  * @param sync  The type of synchronization (sig_done or ctx_swap)
- * @param sig   The signal to use.
+ * @param sig   The signal to use
  */
 __intrinsic void __pkt_nbi_recv(__xread void *meta, size_t msize, sync_t sync,
                                 SIGNAL *sig);
