@@ -375,7 +375,7 @@ mem_ring_journal_fast(unsigned int rnum, mem_ring_addr_t raddr,
     ind.ove_data = 1;
     __asm {
         alu[--, --, B, ind.__raw];
-        mem[fast_journal,--, raddr, <<8, value, 0], indirect_ref
+        mem[fast_journal,--, raddr, <<8, value], indirect_ref
     }
 }
 
