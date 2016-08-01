@@ -258,9 +258,10 @@ macstats_channel_accum(unsigned int mac, unsigned int channel,
 }
 
 __intrinsic int
-macstats_head_drop_accum(unsigned int nbi, unsigned int core,
-                         unsigned short ports_mask,
-                         __mem struct macstats_head_drop_accum *port_stats)
+__macstats_head_drop_accum(unsigned int nbi, unsigned int core,
+                           unsigned short ports_mask,
+                           __mem struct macstats_head_drop_accum *port_stats,
+                           unsigned int break_cpp_burst)
 {
     __gpr uint32_t addr;
     __xwrite uint64_t add_val[2];
@@ -269,6 +270,8 @@ macstats_head_drop_accum(unsigned int nbi, unsigned int core,
     __gpr int add_odd;
     int i;
     int ret = 0;
+
+    ctassert(__is_ct_const(break_cpp_burst));
 
     if (nbi > 1) {
         ret = -1;
@@ -300,11 +303,21 @@ macstats_head_drop_accum(unsigned int nbi, unsigned int core,
                 mem_add64(&add_val[1], &port_stats->ports_drop[i + 1],
                           sizeof(uint64_t));
 
-            /* Spread the short bursts of CPP commands this loop is
-             * generating to minimize DSF port utilization issues. */
-            sleep(MAC_HEAD_DROP_SLEEP);
+            if (break_cpp_burst) {
+                /* Spread the short bursts of CPP commands this loop is
+                * generating to minimize DSF port utilization issues. */
+                sleep(MAC_HEAD_DROP_SLEEP);
+            }
         }
     }
 out:
     return ret;
+}
+
+__intrinsic int
+macstats_head_drop_accum(unsigned int nbi, unsigned int core,
+                         unsigned short ports_mask,
+                         __mem struct macstats_head_drop_accum *port_stats)
+{
+    return __macstats_head_drop_accum(nbi, core, ports_mask, port_stats, 0);
 }

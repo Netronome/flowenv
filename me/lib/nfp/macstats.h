@@ -270,12 +270,39 @@ struct macstats_head_drop_accum {
 
 /**
  * Accumulates the per port mac head drop counters.
- * @param nbi         The nbi to read from (0/1)
- * @param core        The MAC core to read from (0/1)
- * @param ports_mask  A 16 bits ports mask configuration used, each bit
- *                    indicates if a port is in use. Only bits 0-11 are used.
- * @param port_stats  A pointer to the accumulate stats struct to update,
- *                    must be in ctm/imem/emem only
+ * @param nbi               The nbi to read from (0/1)
+ * @param core              The MAC core to read from (0/1)
+ * @param ports_mask        A 16 bits ports mask configuration used, each bit
+ *                          indicates if a port is in use. Only bits 0-11 are
+ *                          used.
+ * @param port_stats        A pointer to the accumulate stats struct to update,
+ *                          must be in ctm/imem/emem only
+ * @param break_cpp_burst   A flag indicating if this function should sleep
+ *                          between loops to avoid a burst of CPP commands.
+ *                          This should only be used if the current ctx is not
+ *                          already waiting for an alarm to fire.
+ *                          (using the CTX_FUTURE_COUNT mechanism).
+ *
+ * @return 0 on success, -1 on error
+ */
+int __macstats_head_drop_accum(unsigned int nbi, unsigned int core,
+                             unsigned short ports_mask,
+                             __mem struct macstats_head_drop_accum *port_stats,
+                             unsigned int break_cpp_burst);
+
+/**
+ * Accumulates the per port mac head drop counters.
+ * @param nbi               The nbi to read from (0/1)
+ * @param core              The MAC core to read from (0/1)
+ * @param ports_mask        A 16 bits ports mask configuration used, each bit
+ *                          indicates if a port is in use. Only bits 0-11 are
+ *                          used.
+ * @param port_stats        A pointer to the accumulate stats struct to update,
+ *                          must be in ctm/imem/emem only
+ *
+ * This API simply calls the __macstats_head_drop_accum with the
+ * break_cpp_burst set to 0.
+ *
  * @return 0 on success, -1 on error
  */
 int macstats_head_drop_accum(unsigned int nbi, unsigned int core,
