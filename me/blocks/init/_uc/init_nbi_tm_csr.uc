@@ -88,6 +88,31 @@
 #endm
 
 
+/** Nbi_TrafficManager_TMShaperReg_ShaperEntry
+ *
+ * Configure the NBI TM Shaper Registers.  See the NFP-6xxx Databook section on
+ * the NBI Traffic Manager
+ *
+ * @param NBI_ID      The NBI number, can be 0 or 1
+ * @param SHAPER_NUM  Shaper/scheduler number
+ * @param RATE        Maximum rate (in 10 Mbps increments when PClk = 1 GHz):
+ *                        maximum rate = RATE * 10 Mbps * (Pclk/1 GHz)
+ * @param THRESHOLD   Threshold to trigger rate limiter:
+ *                        0 = 8192 B   1 = 16384 B  2 = 24576 B  3 = 32768 B
+ *                        4 = 40960 B  5 = 49152 B  6 = 57344 B  7 = 65535 B
+ * @param OVERSHOOT   Maximum overshoot tracked:
+ *                        0 = 16384 B  1 = 24576 B  2 = 32768 B  3 = 40960 B
+ *                        4 = 49152 B  5 = 57344 B  6 = 65536 B  7 = 131071 B
+ * @param RATE_ADJ    Amount of bytes to ignore from each packet
+ */
+#macro Nbi_TrafficManager_TMShaperReg_ShaperEntry(NBI_ID,SHAPER_NUM,RATE,THRESHOLD,OVERSHOOT,RATE_ADJ)
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperRate/**/SHAPER_NUM/**/.Rate                  RATE                const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperThreshold/**/SHAPER_NUM/**/.Threshold        THRESHOLD           const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperMaxOvershoot/**/SHAPER_NUM/**/.MaxOvershoot  OVERSHOOT           const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperRateAdjust/**/SHAPER_NUM/**/.RateAdjust      RATE_ADJ            const
+#endm
+
+
 /** NBITMCPP_TMHeadTailSram_TMHeadTailEntry
  *
  * The NBI Traffic Manager contains a 4KB array of registers to store the head and tail pointers for the descriptor queues. See the NFP-6xxx Databook section on the NBI Traffic Manager

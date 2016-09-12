@@ -36,6 +36,10 @@
 #ifndef NBI_TM_L1_INPUT_SELECT
     #error "NBI_TM_L1_INPUT_SELECT not defined"
 #endif
+#ifndef NBI_TM_ENABLE_SHAPER
+    /* By default, leave the shaper disabled. */
+    #define NBI_TM_ENABLE_SHAPER 0
+#endif
 
 /* Macro to help parse TM queue configurations */
 #define ENABLE_Q(w,x,y,z)       w
@@ -51,6 +55,17 @@
 
 #define ALIGN_HT_PTR(htptr,w,x,y,z)                       \
     ((htptr + SIZE_MASK(w,x,y,z)) & ~SIZE_MASK(w,x,y,z))
+
+
+/* Macro to help parse TM shaper configurations */
+#define ENABLE_SHAPER(t,u,v,w,x,y,z)     t
+#define START_SHAPER(t,u,v,w,x,y,z)      u
+#define END_SHAPER(t,u,v,w,x,y,z)        v
+#define SHAPER_RATE(t,u,v,w,x,y,z)       w
+#define SHAPER_THRESHOLD(t,u,v,w,x,y,z)  x
+#define SHAPER_OVERSHOOT(t,u,v,w,x,y,z)  y
+#define SHAPER_RATE_ADJ(t,u,v,w,x,y,z)   z
+#define SHAPER_CFG_PARAMS(t,u,v,w,x,y,z) u,v,w,x,y,z
 
 
 /** Nbi_TrafficManager_QCfg
@@ -128,6 +143,317 @@
 #endm
 
 
+/** Nbi_TrafficManager_ShaperCfg
+ *
+ * Traffic Manager Rate Shaper configuration
+ *
+ * @param NBI_ID        NBI number (can be 0 or 1)
+ * @param START_SHAPER  First shaper to configure (inclusive, can be 0-144)
+ * @param END_SHAPER    Last shaper to configure (inclusive, can be 0-144)
+ * @param RATE          Maximum rate (in 10 Mbps increments when PClk = 1 GHz,
+ *                      can be 1-12000):
+ *                          maximum rate = RATE * 10 Mbps * (1 GHz/PClk)
+ * @param THRESHOLD     Threshold to trigger rate limiter (can be 0-7):
+ *                          0 = 8192 B   1 = 16384 B  2 = 24576 B  3 = 32768 B
+ *                          4 = 40960 B  5 = 49152 B  6 = 57344 B  7 = 65535 B
+ * @param OVERSHOOT     Maximum overshoot tracked (can be 0-7):
+ *                          0 = 16384 B  1 = 24576 B  2 = 32768 B  3 = 40960 B
+ *                          4 = 49152 B  5 = 57344 B  6 = 65536 B  7 = 131071 B
+ * @param RATE_ADJ      Amount of bytes to ignore from each packet (can be from
+ *                      -512 to 1023)
+ *
+ * @note Shapers 0-127 are level 2 shapers, shapers 128-143 are level 1
+ *       shapers, and shaper 144 is the level 0 shaper.
+ */
+#macro Nbi_TrafficManager_ShaperCfg(NBI_ID, START_SHAPER, END_SHAPER, RATE, THRESHOLD, OVERSHOOT, RATE_ADJ)
+    #if (NBI_ID < 0) || (NBI_ID > 1)
+        #error "NBI_ID can only be 0 or 1"
+    #endif
+    #if (START_SHAPER < 0) || (START_SHAPER > 144)
+        #error "START_SHAPER can only be between 0 and 144"
+    #endif
+    #if (END_SHAPER < 0) || (END_SHAPER > 144)
+        #error "END_SHAPER can only be between 0 and 144"
+    #endif
+    #if START_SHAPER > END_SHAPER
+        #error "START_SHAPER cannot be higher than END_SHAPER"
+    #endif
+    #if (RATE < 1) || (RATE > 12000)
+        #error "RATE can only be between 1 and 12000"
+    #endif
+    #if (THRESHOLD < 0) || (THRESHOLD > 7)
+        #error "THRESHOLD can only be between 0 and 7"
+    #endif
+    #if (OVERSHOOT < 0) || (OVERSHOOT > 7)
+        #error "OVERSHOOT can only be between 0 and 7"
+    #endif
+    #if (RATE_ADJ < -512) || (RATE_ADJ > 1023)
+        #error "RATE_ADJ can only be between -512 and 1023"
+    #endif
+
+    #define      RATE_ADJ_MASK 0x3FF
+    #define_eval SHAPER        (START_SHAPER)
+
+    #while (SHAPER <= (END_SHAPER))
+        Nbi_TrafficManager_TMShaperReg_ShaperEntry(NBI_ID, SHAPER, RATE,
+                                                   THRESHOLD, OVERSHOOT,
+                                                   (RATE_ADJ & RATE_ADJ_MASK))
+
+        #define_eval SHAPER (SHAPER + 1)
+    #endloop
+
+    #undef RATE_ADJ_MASK
+    #undef SHAPER
+#endm
+
+
+/** Nbi_TrafficManager_Init_Shapers
+ *
+ * Traffic Manager Rate Shaper initialization
+ */
+#macro Nbi_TrafficManager_Init_Shapers()
+    /* NBI 0 TM Rate Shaper Config Range #0 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE0)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE0))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #1 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE1)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE1))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #2 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE2)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE2))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #3 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE3)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE3))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #4 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE4)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE4))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #5 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE5)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE5))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #6 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE6)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE6))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #7 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE7)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE7))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #8 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE8)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE8))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #9 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE9)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE9))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #10 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE10)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE10))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #11 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE11)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE11))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #12 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE12)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE12))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #13 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE13)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE13))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #14 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE14)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE14))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #15 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE15)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE15))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #16 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE16)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE16))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #17 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE17)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE17))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #18 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE18)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE18))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #19 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE19)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE19))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #20 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE20)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE20))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #21 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE21)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE21))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #22 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE22)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE22))
+    #endif
+
+    /* NBI 0 TM Rate Shaper Config Range #23 */
+    #if ENABLE_SHAPER(NBI0_TM_SHAPER_CFG_RANGE23)
+        Nbi_TrafficManager_ShaperCfg(0, SHAPER_CFG_PARAMS(NBI0_TM_SHAPER_CFG_RANGE23))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #0 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE0)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE0))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #1 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE1)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE1))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #2 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE2)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE2))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #3 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE3)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE3))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #4 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE4)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE4))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #5 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE5)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE5))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #6 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE6)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE6))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #7 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE7)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE7))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #8 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE8)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE8))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #9 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE9)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE9))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #10 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE10)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE10))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #11 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE11)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE11))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #12 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE12)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE12))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #13 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE13)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE13))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #14 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE14)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE14))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #15 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE15)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE15))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #16 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE16)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE16))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #17 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE17)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE17))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #18 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE18)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE18))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #19 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE19)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE19))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #20 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE20)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE20))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #21 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE21)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE21))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #22 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE22)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE22))
+    #endif
+
+    /* NBI 1 TM Rate Shaper Config Range #23 */
+    #if ENABLE_SHAPER(NBI1_TM_SHAPER_CFG_RANGE23)
+        Nbi_TrafficManager_ShaperCfg(1, SHAPER_CFG_PARAMS(NBI1_TM_SHAPER_CFG_RANGE23))
+    #endif
+#endm
+
+
 /** Nbi_TrafficManager_Init
  *
  * Traffic Manager initialisation
@@ -151,7 +477,7 @@
         0,                          //OOBFCEnable
         1,                          //SchedulerEnable
         NBI_TM_ENABLE_SEQUENCER0,   //Sequencer0Enable
-        0                           //ShaperEnable
+        NBI_TM_ENABLE_SHAPER        //ShaperEnable
         )
         #define_eval NBI_ID (NBI_ID + 1)
     #endloop
@@ -794,6 +1120,8 @@
         #define_eval TM_Q_CNT (TM_Q_CNT + NUM_OF_QS(NBI1_TM_Q_CFG_RANGE23))
     #endif
 
+    /* Initialize all of the rate shapers */
+    Nbi_TrafficManager_Init_Shapers()
 
     #define_eval NBI_ID (0)
     #while (NBI_ID < NBI_COUNT)
