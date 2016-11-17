@@ -136,6 +136,8 @@ enum he_proto {
     HE_VXLAN,            /**  9: VXLAN header */
     HE_ESP,              /** 10: ESP header */
     HE_MPLS,             /** 11: MPLS header */
+    HE_ICMP,             /** 12: ICMP/ICMPV6 header */
+    HE_SCTP,             /** 13: SCTP header */
 
     HE_IP6_EXT =  0x100, /** IPv6 Extension header */
     HE_IP6_HBH =  0x101, /** IPv6 Hop-by-Hop Options header */
