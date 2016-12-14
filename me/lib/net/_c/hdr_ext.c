@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2015 Netronome, Inc.
+ * Copyright 2012-2016 Netronome, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,195 @@
  * failed.
  */
 
+/* Note that you can selectively omit protocols from being detected by
+ * adding the OMIT_NET_XXX to your active #defines when compiling this
+ * library. By omitting protocols you can also save on code store and control
+ * looking for protocols that you wish to not process. All omitted protocol
+ * when not found will return as HE_UNKNOWN.
+ */
+
+/* ------- Ethertype header extract switch statements -------- */
+
+/* IPv4 */
+#ifndef OMIT_NET_ETH_TYPE_IPV4
+#define CASE_NET_ETH_TYPE_IPV4 \
+    case NET_ETH_TYPE_IPV4: next_proto = HE_IP4; break;
+#else
+#define CASE_NET_ETH_TYPE_IPV4
+#endif
+
+/* VLAN tags */
+#ifndef OMIT_NET_ETH_TYPE_TPID
+#define CASE_NET_ETH_TYPE_TPID \
+    case NET_ETH_TYPE_TPID: next_proto = HE_8021Q; break;
+#else
+#define CASE_NET_ETH_TYPE_TPID
+#endif
+
+/* IPv6 tags */
+#ifndef OMIT_NET_ETH_TYPE_IPV6
+#define CASE_NET_ETH_TYPE_IPV6 \
+    case NET_ETH_TYPE_IPV6: next_proto = HE_IP6; break;
+#else
+#define CASE_NET_ETH_TYPE_IPV6
+#endif
+
+/* ARP */
+#ifndef OMIT_NET_ETH_TYPE_ARP
+#define CASE_NET_ETH_TYPE_ARP \
+    case NET_ETH_TYPE_ARP: next_proto = HE_ARP; break;
+#else
+#define CASE_NET_ETH_TYPE_ARP
+#endif
+
+/* MPLS */
+#ifndef OMIT_NET_ETH_TYPE_MPLS
+#define CASE_NET_ETH_TYPE_MPLS \
+    case NET_ETH_TYPE_MPLS: next_proto = HE_MPLS; break;
+#else
+#define CASE_NET_ETH_TYPE_MPLS
+#endif
+
+/* Transparent Ethernet Bridging */
+#ifndef OMIT_NET_ETH_TYPE_TEB
+#define CASE_NET_ETH_TYPE_TEB \
+    case NET_ETH_TYPE_TEB: next_proto = HE_ETHER; break;
+#else
+#define CASE_NET_ETH_TYPE_TEB
+#endif
+
+
+/* ------- IP / IPv6 header extract switch statements -------- */
+
+/* ICMP */
+#ifndef OMIT_NET_IP_PROTO_ICMP
+#define CASE_NET_IP_PROTO_ICMP \
+    case NET_IP_PROTO_ICMP: next_proto = HE_ICMP; break;
+#else
+#define CASE_NET_IP_PROTO_ICMP
+#endif
+
+/* TCP */
+#ifndef OMIT_NET_IP_PROTO_TCP
+#define CASE_NET_IP_PROTO_TCP \
+    case NET_IP_PROTO_TCP: next_proto = HE_TCP; break;
+#else
+#define CASE_NET_IP_PROTO_TCP
+#endif
+
+/* UDP */
+#ifndef OMIT_NET_IP_PROTO_UDP
+#define CASE_NET_IP_PROTO_UDP \
+    case NET_IP_PROTO_UDP: next_proto = HE_UDP; break;
+#else
+#define CASE_NET_IP_PROTO_UDP
+#endif
+
+/* GRE */
+#ifndef OMIT_NET_IP_PROTO_GRE
+#define CASE_NET_IP_PROTO_GRE \
+    case NET_IP_PROTO_GRE: next_proto = HE_GRE; break;
+#else
+#define CASE_NET_IP_PROTO_GRE
+#endif
+
+/* ESP */
+#ifndef OMIT_NET_IP_PROTO_ESP
+#define CASE_NET_IP_PROTO_ESP \
+    case NET_IP_PROTO_ESP: next_proto = HE_ESP; break;
+#else
+#define CASE_NET_IP_PROTO_ESP
+#endif
+
+/* Authentication header */
+#ifndef OMIT_NET_IP_PROTO_AH
+#define CASE_NET_IP_PROTO_AH \
+    case NET_IP_PROTO_AH: next_proto = HE_AH; break;
+#else
+#define CASE_NET_IP_PROTO_AH
+#endif
+
+/* ICMPv6 */
+#ifndef OMIT_NET_IP_PROTO_ICMPV6
+#define CASE_NET_IP_PROTO_ICMPV6 \
+    case NET_IP_PROTO_ICMPV6: next_proto = HE_ICMP; break;
+#else
+#define CASE_NET_IP_PROTO_ICMPV6
+#endif
+
+/* SCTP */
+#ifndef OMIT_NET_IP_PROTO_SCTP
+#define CASE_NET_IP_PROTO_SCTP \
+    case NET_IP_PROTO_SCTP: next_proto = HE_SCTP; break;
+#else
+#define CASE_NET_IP_PROTO_SCTP
+#endif
+
+/* IPv6 Extension header types */
+/* IPv6 Hop-by-hop option */
+#ifndef OMIT_NET_IP_PROTO_HOPOPT
+#define CASE_NET_IP_PROTO_HOPOPT \
+    case NET_IP_PROTO_HOPOPT: next_proto = HE_IP6_HBH; break;
+#else
+#define CASE_NET_IP_PROTO_HOPOPT
+#endif
+
+/* IPv6 Routing option */
+#ifndef OMIT_NET_IP_PROTO_ROUTING
+#define CASE_NET_IP_PROTO_ROUTING \
+    case NET_IP_PROTO_ROUTING: next_proto = HE_IP6_RT; break;
+#else
+#define CASE_NET_IP_PROTO_ROUTING
+#endif
+
+/* IPv6 Fragment header */
+#ifndef OMIT_NET_IP_PROTO_FRAG
+#define CASE_NET_IP_PROTO_FRAG \
+    case NET_IP_PROTO_FRAG: next_proto = HE_IP6_FRAG; break;
+#else
+#define CASE_NET_IP_PROTO_FRAG
+#endif
+
+/* IP proto 'none' */
+#ifndef OMIT_NET_IP_PROTO_NONE
+#define CASE_NET_IP_PROTO_NONE \
+    case NET_IP_PROTO_NONE: next_proto = HE_NONE; break;
+#else
+#define CASE_NET_IP_PROTO_NONE
+#endif
+
+/* IPv6 Destination options */
+#ifndef OMIT_NET_IP_PROTO_DSTOPTS
+#define CASE_NET_IP_PROTO_DSTOPTS \
+    case NET_IP_PROTO_DSTOPTS: next_proto = HE_IP6_DST; break;
+#else
+#define CASE_NET_IP_PROTO_DSTOPTS
+#endif
+
+/* IPv6 Mobility header */
+#ifndef OMIT_NET_IP_PROTO_MOBILITY
+#define CASE_NET_IP_PROTO_MOBILITY \
+    case NET_IP_PROTO_MOBILITY: next_proto = HE_IP6_MOB; break;
+#else
+#define CASE_NET_IP_PROTO_MOBILITY
+#endif
+
+/* IPv6 Host Identification header */
+#ifndef OMIT_NET_IP_PROTO_HOST_ID
+#define CASE_NET_IP_PROTO_HOST_ID \
+    case NET_IP_PROTO_HOST_ID: next_proto = HE_IP6_HOST_ID; break;
+#else
+#define CASE_NET_IP_PROTO_HOST_ID
+#endif
+
+/* IPv6 Shim6 header */
+#ifndef OMIT_NET_IP_PROTO_SHIM6
+#define CASE_NET_IP_PROTO_SHIM6 \
+    case NET_IP_PROTO_SHIM6: next_proto = HE_IP6_SHIM6; break;
+#else
+#define CASE_NET_IP_PROTO_SHIM6
+#endif
+
 __intrinsic int
 he_eth_fit(sz, off)
 {
@@ -86,11 +275,11 @@ he_eth_fit(sz, off)
     *dst =  *(__lmem struct eth_hdr *)(((__lmem char *)src_buf) + off); \
                                                                         \
     switch(dst->type) {                                                 \
-    case NET_ETH_TYPE_IPV4: next_proto = HE_IP4; break;                 \
-    case NET_ETH_TYPE_TPID: next_proto = HE_8021Q; break;               \
-    case NET_ETH_TYPE_IPV6: next_proto = HE_IP6; break;                 \
-    case NET_ETH_TYPE_ARP: next_proto = HE_ARP; break;                  \
-    case NET_ETH_TYPE_MPLS: next_proto = HE_MPLS; break;                \
+    CASE_NET_ETH_TYPE_IPV4                                              \
+    CASE_NET_ETH_TYPE_TPID                                              \
+    CASE_NET_ETH_TYPE_IPV6                                              \
+    CASE_NET_ETH_TYPE_ARP                                               \
+    CASE_NET_ETH_TYPE_MPLS                                              \
     default: next_proto = HE_UNKNOWN;                                   \
     }
 
@@ -129,9 +318,9 @@ he_vlan_fit(sz, off)
 #define HE_VLAN_FUNC(dst)                                               \
     *dst = *(__lmem struct vlan_hdr *)(((__lmem char *)src_buf) + off); \
     switch(dst->type) {                                                 \
-    case NET_ETH_TYPE_IPV4: next_proto = HE_IP4; break;                 \
-    case NET_ETH_TYPE_IPV6: next_proto = HE_IP6; break;                 \
-    case NET_ETH_TYPE_MPLS: next_proto = HE_MPLS; break;                \
+    CASE_NET_ETH_TYPE_IPV4                                              \
+    CASE_NET_ETH_TYPE_IPV6                                              \
+    CASE_NET_ETH_TYPE_MPLS                                              \
     default: next_proto = HE_UNKNOWN;                                   \
     }
 
@@ -197,12 +386,13 @@ he_ip4_fit(sz, off)
     *dst = *(__lmem struct ip4_hdr *)(((__lmem char *)src_buf) + off);  \
                                                                         \
     switch(dst->proto) {                                                \
-    case NET_IP_PROTO_ICMP: next_proto = HE_ICMP; break;                \
-    case NET_IP_PROTO_TCP: next_proto = HE_TCP; break;                  \
-    case NET_IP_PROTO_UDP: next_proto = HE_UDP; break;                  \
-    case NET_IP_PROTO_GRE: next_proto = HE_GRE; break;                  \
-    case NET_IP_PROTO_ESP: next_proto = HE_ESP; break;                  \
-    case NET_IP_PROTO_SCTP: next_proto = HE_SCTP; break;                \
+    CASE_NET_IP_PROTO_ICMP                                              \
+    CASE_NET_IP_PROTO_TCP                                               \
+    CASE_NET_IP_PROTO_UDP                                               \
+    CASE_NET_IP_PROTO_GRE                                               \
+    CASE_NET_IP_PROTO_ESP                                               \
+    CASE_NET_IP_PROTO_AH                                                \
+    CASE_NET_IP_PROTO_SCTP                                              \
     default: next_proto = HE_UNKNOWN;                                   \
     }                                                                   \
                                                                         \
@@ -249,17 +439,21 @@ he_ip6_fit(sz, off)
  * parsing IPv6 and extension header. Define it as a macro to avoid
  * code duplication.*/
 #define _IP6_PROTO_SWITCH \
-    case NET_IP_PROTO_TCP: next_proto = HE_TCP; break;              \
-    case NET_IP_PROTO_UDP: next_proto = HE_UDP; break;              \
-    case NET_IP_PROTO_GRE: next_proto = HE_GRE; break;              \
-    case NET_IP_PROTO_ESP: next_proto = HE_ESP; break;              \
-    case NET_IP_PROTO_ICMPV6: next_proto = HE_ICMP; break;          \
-    case NET_IP_PROTO_SCTP: next_proto = HE_SCTP; break;            \
-    case NET_IP_PROTO_HOPOPT: next_proto = HE_IP6_HBH; break;       \
-    case NET_IP_PROTO_ROUTING: next_proto = HE_IP6_RT; break;       \
-    case NET_IP_PROTO_FRAG: next_proto = HE_IP6_FRAG; break;        \
-    case NET_IP_PROTO_NONE: next_proto = HE_NONE; break;            \
-    case NET_IP_PROTO_DSTOPTS: next_proto = HE_IP6_DST; break;      \
+    CASE_NET_IP_PROTO_TCP                                           \
+    CASE_NET_IP_PROTO_UDP                                           \
+    CASE_NET_IP_PROTO_GRE                                           \
+    CASE_NET_IP_PROTO_ICMPV6                                        \
+    CASE_NET_IP_PROTO_SCTP                                          \
+    CASE_NET_IP_PROTO_HOPOPT                                        \
+    CASE_NET_IP_PROTO_ROUTING                                       \
+    CASE_NET_IP_PROTO_FRAG                                          \
+    CASE_NET_IP_PROTO_ESP                                           \
+    CASE_NET_IP_PROTO_AH                                            \
+    CASE_NET_IP_PROTO_NONE                                          \
+    CASE_NET_IP_PROTO_DSTOPTS                                       \
+    CASE_NET_IP_PROTO_MOBILITY                                      \
+    CASE_NET_IP_PROTO_HOST_ID                                       \
+    CASE_NET_IP_PROTO_SHIM6                                         \
     default: next_proto = HE_UNKNOWN
 
 #define HE_IP6_FUNC(dst)                                                \
@@ -293,47 +487,6 @@ he_ip6(void *src_buf, int off, void *dst)
     }
 
     return ret;
-}
-
-/* Minimal IPv6 extension header to find out where the next header
- * starts */
-struct _ip6_ext {
-    uint8_t nh;                     /** Next protocol */
-    uint8_t len;                    /** Length of the extension header */
-    uint16_t pad0;                  /** Padding */
-};
-
-__intrinsic int
-he_ip6_ext_skip_fit(sz, off)
-{
-    ctassert(__is_ct_const(sz));
-    ctassert(sz >= sizeof(__packed struct _ip6_ext));
-    return (off + sizeof(__packed struct _ip6_ext)) <= sz;
-}
-
-__intrinsic unsigned int
-he_ip6_ext_skip(void *src_buf, int off)
-{
-    __gpr __packed struct _ip6_ext dst;
-    __gpr unsigned int next_proto;
-    __gpr unsigned int len;
-
-    ctassert(__is_in_lmem(src_buf));
-
-    dst = *(__lmem struct _ip6_ext *)(((__lmem char *)src_buf) + off);
-
-    switch(dst.nh) {
-        _IP6_PROTO_SWITCH;
-    }
-
-    /* IPv6 Frag header is just that, but otherwise the len field is
-     * the number of 8 octets + 8 */
-    if (next_proto == HE_IP6_FRAG)
-        len = sizeof(struct ip6_frag);
-    else
-        len = 8 + (dst.len * 8);
-
-    return HE_RES(next_proto, len);
 }
 
 #undef _IP6_PROTO_SWITCH
@@ -436,10 +589,10 @@ he_gre_fit(sz, off)
     flags = dst->flags;                                                 \
                                                                         \
     switch(dst->proto) {                                                \
-    case NET_ETH_TYPE_TEB: next_proto = HE_ETHER; break;                \
-    case NET_ETH_TYPE_IPV4: next_proto = HE_IP4; break ;                \
-    case NET_ETH_TYPE_IPV6: next_proto = HE_IP6; break ;                \
-    case NET_ETH_TYPE_MPLS: next_proto = HE_MPLS; break;                \
+    CASE_NET_ETH_TYPE_TEB                                               \
+    CASE_NET_ETH_TYPE_IPV4                                              \
+    CASE_NET_ETH_TYPE_IPV6                                              \
+    CASE_NET_ETH_TYPE_MPLS                                              \
     default: next_proto = HE_UNKNOWN;                                   \
     }
 

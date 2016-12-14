@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2015 Netronome, Inc.
+ * Copyright 2012-2016 Netronome, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,29 +124,33 @@
  * wants to skip them.
  */
 enum he_proto {
-    HE_NONE    = 0,      /**  0: No more headers, just data */
-    HE_ETHER,            /**  1: Ethernet header */
-    HE_8021Q,            /**  2: 802.1Q (VLAN) header */
-    HE_ARP,              /**  3: ARP header */
-    HE_IP4,              /**  4: IPv4 header */
-    HE_IP6,              /**  5: IPv6 header */
-    HE_TCP,              /**  6: TCP header */
-    HE_UDP,              /**  7: UDP header */
-    HE_GRE,              /**  8: GRE header */
-    HE_VXLAN,            /**  9: VXLAN header */
-    HE_ESP,              /** 10: ESP header */
-    HE_MPLS,             /** 11: MPLS header */
-    HE_ICMP,             /** 12: ICMP/ICMPV6 header */
-    HE_SCTP,             /** 13: SCTP header */
+    HE_NONE =        0x0,   /**  0: No more headers, just data */
+    HE_ETHER,               /**  1: Ethernet header */
+    HE_8021Q,               /**  2: 802.1Q (VLAN) header */
+    HE_ARP,                 /**  3: ARP header */
+    HE_IP4,                 /**  4: IPv4 header */
+    HE_IP6,                 /**  5: IPv6 header */
+    HE_TCP,                 /**  6: TCP header */
+    HE_UDP,                 /**  7: UDP header */
+    HE_GRE,                 /**  8: GRE header */
+    HE_VXLAN,               /**  9: VXLAN header */
+    HE_ESP,                 /** 10: ESP header */
+    HE_MPLS,                /** 11: MPLS header */
+    HE_ICMP,                /** 12: ICMP/ICMPV6 header */
+    HE_SCTP,                /** 13: SCTP header */
+    HE_AH,                  /** 14: AH header */
 
-    HE_IP6_EXT =  0x100, /** IPv6 Extension header */
-    HE_IP6_HBH =  0x101, /** IPv6 Hop-by-Hop Options header */
-    HE_IP6_RT =   0x102, /** IPv6 Routing Extension header */
-    HE_IP6_FRAG = 0x103, /** IPv6 Fragmentation header */
-    HE_IP6_NONE = 0x104, /** IPv6 No Next Header header */
-    HE_IP6_DST =  0x105, /** IPv6 Destination Options header */
+    HE_IP6_EXT =     0x100, /** IPv6 Extension header */
+    HE_IP6_HBH =     0x101, /** IPv6 Hop-by-Hop Options header */
+    HE_IP6_RT =      0x102, /** IPv6 Routing Extension header */
+    HE_IP6_FRAG =    0x103, /** IPv6 Fragmentation header */
+    HE_IP6_NONE =    0x104, /** IPv6 No Next Header header */
+    HE_IP6_DST =     0x105, /** IPv6 Destination Options header */
+    HE_IP6_MOB =     0x106, /** IPv6 Mobility Extension header */
+    HE_IP6_HOST_ID = 0x107, /** IPv6 Host Identity Extension header */
+    HE_IP6_SHIM6 =   0x108, /** IPv6 Shim6 Extension header */
 
-    HE_UNKNOWN = 0xffff, /** Unknown/unhandled header */
+    HE_UNKNOWN =     0xffff, /** Unknown/unhandled header */
 };
 
 
@@ -256,29 +260,6 @@ __intrinsic int he_ip6_fit(sz, off);
  * HE_IP6_NONE, HE_IP6_DST, or HE_UNKNOWN.
  */
 __intrinsic unsigned int he_ip6(void *src_buf, int off, void *dst);
-
-/**
- * Check if the a buffer of size @sz with current offset @off has
- * enough space to parse enough of an IPv6 extension header to skip
- * it.
- */
-__intrinsic int he_ip6_ext_skip_fit(sz, off);
-
-/**
- * Parse an IPv6 extension header and skip it.
- * @param src_buf  Source buffer
- * @param off      Byte offset within @src_buf where the IPv6 header starts
- * @return         Length and next protocol header indication.
- *
- * This function allows to skip past the IPv6 extension headers if
- * they are of no interest. Instead of extracting the extension header
- * it simply returns the next protocol and the length.
- *
- * The next protocol encoded in the return value is one of HE_TCP,
- * HE_UDP, HE_IP6_HBH, HE_IP6_RT, HE_IP6_FRAG, HE_IP6_NONE,
- * HE_IP6_DST, or HE_UNKNOWN.
- */
-__intrinsic unsigned int he_ip6_ext_skip(void *src_buf, int off);
 
 
 /**
