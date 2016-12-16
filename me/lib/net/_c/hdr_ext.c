@@ -23,7 +23,9 @@
 #include "arp.h"
 #include "eth.h"
 #include "hdr_ext.h"
+#include "icmp.h"
 #include "ip.h"
+#include "sctp.h"
 #include "tcp.h"
 #include "udp.h"
 #include "vxlan.h"
@@ -716,3 +718,70 @@ he_mpls(void *src_buf, int off, void *dst)
 
     return HE_RES(HE_NONE, sizeof(struct mpls_hdr));
 }
+
+
+__intrinsic int
+he_sctp_fit(sz, off)
+{
+    ctassert(__is_ct_const(sz));
+    ctassert(sz >= sizeof(struct sctp_hdr));
+    return (off + sizeof(struct sctp_hdr)) <= sz;
+}
+
+#define HE_SCTP_FUNC(dst)                                                    \
+    *dst = *(__lmem struct sctp_hdr *)(((__lmem char *)src_buf) + off);      \
+    ret = HE_RES(HE_NONE, sizeof(struct sctp_hdr));
+
+__intrinsic unsigned int
+he_sctp(void *src_buf, int off, void *dst)
+{
+    __gpr unsigned int ret;
+    ctassert(__is_in_lmem(src_buf));
+    ctassert(__is_in_reg_or_lmem(dst));
+
+    if (__is_in_lmem(dst)) {
+#define __HE_SCTP ((__lmem struct sctp_hdr *)dst)
+        HE_SCTP_FUNC(__HE_SCTP);
+#undef __HE_SCTP
+    } else {
+#define __HE_SCTP ((__gpr struct sctp_hdr *)dst)
+        HE_SCTP_FUNC(__HE_SCTP);
+#undef __HE_SCTP
+    }
+
+    return ret;
+}
+
+
+__intrinsic int
+he_icmp_fit(sz, off)
+{
+    ctassert(__is_ct_const(sz));
+    ctassert(sz >= sizeof(struct icmp_hdr));
+    return (off + sizeof(struct icmp_hdr)) <= sz;
+}
+
+#define HE_ICMP_FUNC(dst)                                                    \
+    *dst = *(__lmem struct icmp_hdr *)(((__lmem char *)src_buf) + off);      \
+    ret = HE_RES(HE_UNKNOWN, sizeof(struct icmp_hdr));
+
+__intrinsic unsigned int
+he_icmp(void *src_buf, int off, void *dst)
+{
+    __gpr unsigned int ret;
+    ctassert(__is_in_lmem(src_buf));
+    ctassert(__is_in_reg_or_lmem(dst));
+
+    if (__is_in_lmem(dst)) {
+#define __HE_ICMP ((__lmem struct icmp_hdr *)dst)
+        HE_ICMP_FUNC(__HE_ICMP);
+#undef __HE_ICMP
+    } else {
+#define __HE_ICMP ((__gpr struct icmp_hdr *)dst)
+        HE_ICMP_FUNC(__HE_ICMP);
+#undef __HE_ICMP
+    }
+
+    return ret;
+}
+

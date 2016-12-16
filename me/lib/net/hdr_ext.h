@@ -63,9 +63,11 @@
 #include <assert.h>
 
 #include <net/eth.h>
+#include <net/icmp.h>
 #include <net/ip.h>
 #include <net/udp.h>
 #include <net/tcp.h>
+#include <net/sctp.h>
 
 /*
  * All header extract functions follow the same pattern.  They all
@@ -380,5 +382,45 @@ __intrinsic int he_mpls_fit(sz, off);
  * The length encoded in the return value is: sizeof(struct mpls_hdr)
  */
 __intrinsic unsigned int he_mpls(void *src_buf, int off, void *dst);
+
+
+/**
+ * Check if the a buffer of size @sz with current offset @off has
+ * enough space to contain a SCTP header.
+ */
+__intrinsic int he_sctp_fit(sz, off);
+
+/**
+ * Extract an SCTP header starting from an offset in the buffer.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within the @src_buf where the SCTP
+ *                 header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
+ *
+ * @dst must point to a struct sctp_hdr or larger.
+ * The length encoded in the return value is: sizeof(struct sctp_hdr).
+ */
+__intrinsic unsigned int he_sctp(void *src_buf, int off, void *dst);
+
+
+/**
+ * Check if the a buffer of size @sz with current offset @off has
+ * enough space to contain a ICMP or ICMPv6 header.
+ */
+__intrinsic int he_icmp_fit(sz, off);
+
+/**
+ * Extract an ICMP or ICMPv6 header starting from an offset in the buffer.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within the @src_buf where the ICMP
+ *                 header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
+ *
+ * @dst must point to a struct icmp_hdr or larger.
+ * The length encoded in the return value is: sizeof(struct icmp_hdr).
+ */
+__intrinsic unsigned int he_icmp(void *src_buf, int off, void *dst);
 
 #endif /* _HDR_EXT_H_ */
