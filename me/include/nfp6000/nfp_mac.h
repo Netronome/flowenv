@@ -935,10 +935,10 @@
 #define     NFP_MAC_ETH_SEG_DEV_ABILITY_ACK_bit              (14)
 #define   NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT(x)        (((x) & 3) << 12)
 #define   NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT_of(x)     (((x) >> 12) & 3)
-#define     NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT_no error (0)
-#define     NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT_link failure (1)
+#define     NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT_no_error (0)
+#define     NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT_link_failure (1)
 #define     NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT_offline (2)
-#define     NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT_autonegotiation error (3)
+#define     NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT_autonegotiation_error (3)
 #define     NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT_bf      0, 13, 12
 #define     NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT_msk     (0x3)
 #define     NFP_MAC_ETH_SEG_DEV_ABILITY_REMOTE_FAULT_shf     (12)
