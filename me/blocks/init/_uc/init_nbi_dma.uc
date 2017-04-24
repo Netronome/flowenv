@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2017,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,7 +198,7 @@
         BLQ_SECONDARY(NBI_DMA_BP0_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP0_BLQ_TARGET),
         CTM_OFFSET,
-        NBI_DMA_BP_DROP_ENABLE
+        NBI_DMA_BP0_DROP_ENABLE
     )
     /* Buffer Pool 1: Packets <= 1984B */
     NbiDmaXpb_NbiDmaCsr_NbiDmaBPCfg(NBI_ID,
@@ -208,7 +208,7 @@
         BLQ_SECONDARY(NBI_DMA_BP1_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP1_BLQ_TARGET),
         CTM_OFFSET,
-        NBI_DMA_BP_DROP_ENABLE
+        NBI_DMA_BP1_DROP_ENABLE
     )
     /* Buffer Pool 2: Packets > 1984B */
     NbiDmaXpb_NbiDmaCsr_NbiDmaBPCfg(NBI_ID,
@@ -218,7 +218,7 @@
         BLQ_SECONDARY(NBI_DMA_BP2_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP2_BLQ_TARGET),
         CTM_OFFSET,
-        NBI_DMA_BP_DROP_ENABLE
+        NBI_DMA_BP2_DROP_ENABLE
     )
     /* Buffer Pool 3: Exceptiond Packets <= 192B */
     NbiDmaXpb_NbiDmaCsr_NbiDmaBPCfg(NBI_ID,
@@ -228,7 +228,7 @@
         BLQ_SECONDARY(NBI_DMA_BP3_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP3_BLQ_TARGET),
         CTM_OFFSET,
-        NBI_DMA_BP_DROP_ENABLE
+        NBI_DMA_BP3_DROP_ENABLE
     )
     /* Buffer Pool 4: Exceptiond Packets <= 1984B */
     NbiDmaXpb_NbiDmaCsr_NbiDmaBPCfg(NBI_ID,
@@ -238,7 +238,7 @@
         BLQ_SECONDARY(NBI_DMA_BP4_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP4_BLQ_TARGET),
         CTM_OFFSET,
-        NBI_DMA_BP_DROP_ENABLE
+        NBI_DMA_BP4_DROP_ENABLE
     )
     /* Buffer Pool 5: Exceptiond Packets > 1984B */
     NbiDmaXpb_NbiDmaCsr_NbiDmaBPCfg(NBI_ID,
@@ -248,7 +248,7 @@
         BLQ_SECONDARY(NBI_DMA_BP5_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP5_BLQ_TARGET),
         CTM_OFFSET,
-        NBI_DMA_BP_DROP_ENABLE
+        NBI_DMA_BP5_DROP_ENABLE
     )
     /* Buffer Pool 6: Unused */
     NbiDmaXpb_NbiDmaCsr_NbiDmaBPCfg(NBI_ID,
@@ -258,7 +258,7 @@
         BLQ_SECONDARY(NBI_DMA_BP6_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP6_BLQ_TARGET),
         CTM_OFFSET,
-        NBI_DMA_BP_DROP_ENABLE
+        NBI_DMA_BP6_DROP_ENABLE
     )
 
     #define NBI_DMA_BPE_NUM 32
@@ -489,7 +489,7 @@
         BLQ_SECONDARY(NBI_DMA_BP7_BLQ_TARGET),
         BLQ_PRIMARY(NBI_DMA_BP7_BLQ_TARGET),
         CTM_OFFSET,
-        NBI_DMA_BP_DROP_ENABLE
+        NBI_DMA_BP7_DROP_ENABLE
     )
 
     #undef NBI_DMA_LOOP

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2017,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,34 @@
  * frames when buffers are full */
 #ifndef NBI_DMA_BP_DROP_ENABLE
     #define NBI_DMA_BP_DROP_ENABLE 0
+#endif
+
+/* Define this to disable/enable the NBI DMA Buffer Pool drop behavior on a
+ * per-Buffer Pool basis; otherwise, the global NBI DMA Buffer Pool drop
+ * behavior will be used by default. */
+#ifndef NBI_DMA_BP0_DROP_ENABLE
+    #define NBI_DMA_BP0_DROP_ENABLE NBI_DMA_BP_DROP_ENABLE
+#endif
+#ifndef NBI_DMA_BP1_DROP_ENABLE
+    #define NBI_DMA_BP1_DROP_ENABLE NBI_DMA_BP_DROP_ENABLE
+#endif
+#ifndef NBI_DMA_BP2_DROP_ENABLE
+    #define NBI_DMA_BP2_DROP_ENABLE NBI_DMA_BP_DROP_ENABLE
+#endif
+#ifndef NBI_DMA_BP3_DROP_ENABLE
+    #define NBI_DMA_BP3_DROP_ENABLE NBI_DMA_BP_DROP_ENABLE
+#endif
+#ifndef NBI_DMA_BP4_DROP_ENABLE
+    #define NBI_DMA_BP4_DROP_ENABLE NBI_DMA_BP_DROP_ENABLE
+#endif
+#ifndef NBI_DMA_BP5_DROP_ENABLE
+    #define NBI_DMA_BP5_DROP_ENABLE NBI_DMA_BP_DROP_ENABLE
+#endif
+#ifndef NBI_DMA_BP6_DROP_ENABLE
+    #define NBI_DMA_BP6_DROP_ENABLE NBI_DMA_BP_DROP_ENABLE
+#endif
+#ifndef NBI_DMA_BP7_DROP_ENABLE
+    #define NBI_DMA_BP7_DROP_ENABLE NBI_DMA_BP_DROP_ENABLE
 #endif
 
 /* The allocation of Primary and Secondary Buffer List Queues targets amongst
