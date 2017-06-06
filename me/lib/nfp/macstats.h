@@ -152,11 +152,11 @@ struct macstats_port_accum {
     uint64_t RxCBFCPauseFramesReceived6;
     uint64_t RxCBFCPauseFramesReceived7;
     uint64_t RxMacCtlFramesReceived;
+    uint64_t RxMacHeadDrop;
     uint64_t unused0;
     uint64_t unused1;
     uint64_t unused2;
-    uint64_t unused3;
-    uint64_t unused4;
+    uint64_t TxQueueDrop;
     uint64_t TxPIfOutOctets;
     uint64_t TxPIfOutOctets_unused;
     uint64_t TxVlanTransmittedOK;
