@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2015-2017,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 
 #include <nfp6000/nfp_me.h>
+#include <nfp6000/nfp_nbi_tm.h>
 #include <assert.h>
 #include <nfp/xpb.h>
 #include <nfp/mem_bulk.h>
@@ -28,9 +29,16 @@
 #define MAX_NBI_NUMBER      1
 #define MAX_TM_QUEUE_NUM    1023
 
-/* Base XPB addresses to access the TMQ drop counters */
-#define TMQ_XPB_READ_BASE       0x08152000
-#define TMQ_XPB_READ_CLEAR_BASE 0x08153000
+/** Base addresses for the NBI TM queue registers. */
+#define TMQ_XPB_BASE(_nbi)  (NFP_NBI_TM_XPB_OFF(_nbi) | NFP_NBI_TM_QUEUE_REG)
+
+/** Address of the TM queue drop count register. */
+#define TMQ_DROP_READ_ADDR(_nbi, _qnum)                       \
+    (TMQ_XPB_BASE(_nbi) | NFP_NBI_TM_QUEUE_DROP_COUNT(_qnum))
+
+/** Address of the clear-on-read TM queue drop count register. */
+#define TMQ_DROP_READ_CLEAR_ADDR(_nbi, _qnum)                       \
+    (TMQ_XPB_BASE(_nbi) | NFP_NBI_TM_QUEUE_DROP_COUNT_CLEAR(_qnum))
 
 
 /* Reads, and optionally clears, a single queue drop counter. */
@@ -51,11 +59,9 @@ tmq_cnt_read(uint32_t nbi, __gpr uint32_t *counter, uint32_t qnum, int clear)
     }
 
     if (clear)
-        addr = TMQ_XPB_READ_CLEAR_BASE | (nbi << 24) |
-               (qnum << 2);
+        addr = TMQ_DROP_READ_CLEAR_ADDR(nbi, qnum);
     else
-        addr = TMQ_XPB_READ_BASE | (nbi << 24) |
-               (qnum << 2);
+        addr = TMQ_DROP_READ_ADDR(nbi, qnum);
 
     *counter = xpb_read(addr);
 
