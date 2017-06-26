@@ -14,6 +14,42 @@
  * Interface for the direct PCIe read/writes through a BAR
  */
 
+
+/**
+ * Calculate the CPP2PCIe bar value.
+ * @param addr_hi   High 32bit of host DMA address
+ * @param addr_lo   Low 32 bit of host DMA address
+ * @param req_id    Requester ID to use
+ *
+ * This computes the value to program a CPP2PCIe BAR for the  host
+ * address composed of @addr_hi and @addr_lo.
+ *
+ * Only the top 5 bits of addr_lo are used for the bar base.
+ *
+ * If @req_id is constant and 0, don't configure the Requester ID and
+ * use the device default instead.
+ */
+__intrinsic unsigned int pcie_c2p_barcfg_val(unsigned int addr_hi,
+                                             unsigned int addr_lo,
+                                             unsigned int req_id);
+
+
+/**
+ * Set a CPP2PCIe BAR to an explicit value.
+ * @param pcie_isl  PCIe Island to access
+ * @param bar_idx   CPP2PCIe BAR to configure
+ * @param bar_val   Value to program into the BAR
+ *
+ * This functions programs the CPP2PCIe BAR corresponding to @bar_idx
+ * with @bar_val.  @bar_val should be obtained by calling
+ * @pcie_c2p_barcfg_val().  It also performs a read-back of the CSR in
+ * order to ensure that the write completed.
+ */
+__intrinsic void pcie_c2p_barcfg_set_expl(unsigned int pcie_isl,
+                                          unsigned char bar_idx,
+                                          unsigned int bar_val);
+
+
 /**
  * Set a CPP2PCIe BAR.
  * @param pcie_isl  PCIe Island to access

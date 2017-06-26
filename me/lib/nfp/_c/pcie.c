@@ -28,21 +28,15 @@ struct _pcie_dma_cfg_word_access {
     };
 };
 
-__intrinsic void
-pcie_c2p_barcfg_set(unsigned int pcie_isl, unsigned char bar_idx,
-                    unsigned int addr_hi, unsigned int addr_lo,
-                    unsigned char req_id)
-{
-    unsigned int isl, bar_addr, tmp = 0;
-    __xwrite unsigned int wr_val;
-    __xread unsigned int rd_val;
-    SIGNAL wr_sig, rd_sig;
 
-    isl = pcie_isl << 30;
-    bar_addr = NFP_PCIE_BARCFG_C2P(bar_idx);
+__intrinsic unsigned int
+pcie_c2p_barcfg_val(unsigned int addr_hi, unsigned int addr_lo,
+                    unsigned int req_id)
+{
+    unsigned int tmp;
 
     __asm dbl_shf[tmp, addr_hi, addr_lo, >>27];
-    tmp &= NFP_PCIE_BARCFG_C2P_ADDR_msk;
+    tmp = tmp & NFP_PCIE_BARCFG_C2P_ADDR_msk;
 
     /* Configure RID if req_id is non-zero or not constant */
     if ((!__is_ct_const(req_id)) || (req_id != 0)) {
@@ -50,7 +44,46 @@ pcie_c2p_barcfg_set(unsigned int pcie_isl, unsigned char bar_idx,
         tmp |= NFP_PCIE_BARCFG_C2P_ARI(req_id);
     }
 
-    wr_val = tmp;
+    return tmp;
+}
+
+
+__intrinsic void
+pcie_c2p_barcfg_set_expl(unsigned int pcie_isl, unsigned char bar_idx,
+                         unsigned int bar_val)
+{
+    unsigned int isl, bar_addr;
+    __xwrite unsigned int wr_val;
+    __xread unsigned int rd_val;
+    SIGNAL wr_sig, rd_sig;
+
+    isl = pcie_isl << 30;
+    bar_addr = NFP_PCIE_BARCFG_C2P(bar_idx);
+
+    wr_val = bar_val;
+
+    __asm {
+        pcie[write_pci, wr_val, isl, <<8, bar_addr, 1], sig_done[wr_sig];
+        pcie[read_pci, rd_val, isl, <<8, bar_addr, 1], sig_done[rd_sig];
+    }
+    wait_for_all(&wr_sig, &rd_sig);
+}
+
+
+__intrinsic void
+pcie_c2p_barcfg_set(unsigned int pcie_isl, unsigned char bar_idx,
+                    unsigned int addr_hi, unsigned int addr_lo,
+                    unsigned char req_id)
+{
+    unsigned int isl, bar_addr;
+    __xwrite unsigned int wr_val;
+    __xread unsigned int rd_val;
+    SIGNAL wr_sig, rd_sig;
+
+    isl = pcie_isl << 30;
+    bar_addr = NFP_PCIE_BARCFG_C2P(bar_idx);
+
+    wr_val = pcie_c2p_barcfg_val(addr_hi, addr_lo, req_id);
 
     __asm {
         pcie[write_pci, wr_val, isl, <<8, bar_addr, 1], sig_done[wr_sig];
