@@ -513,6 +513,10 @@ pktio_rx_host(void)
         pkt.p_tx_l4_csum = 1;
 #endif
 
+    /* Tunnel packet */
+    if (nfd_rxd.flags & (PCIE_DESC_TX_ENCAP_VXLAN | PCIE_DESC_TX_ENCAP_GRE))
+        pkt.p_tunnel = 1;
+
     pkt.p_seq = nfd_in_get_seqn((__xread struct nfd_in_pkt_desc *)&nfd_rxd);
 
     /**
@@ -546,6 +550,9 @@ pktio_rx_host(void)
     if (nfd_rxd.flags & PCIE_DESC_TX_VLAN)
         pkt.p_vlan = nfd_rxd.vlan;
 #endif
+
+    /* Capture packet length */
+    pkt.p_data_len = nfd_rxd.data_len;
 
     if (nfd_rxd.invalid) {
         PKTIO_CNTR_INC(PKTIO_CNTR_ERR_FROM_HOST);

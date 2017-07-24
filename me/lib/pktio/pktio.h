@@ -301,6 +301,7 @@
  *   L3 - Layer 3 indication
  *   MPL - MPLS indication
  *   VLN - VLAN indication
+ *   CSUM - 16 bits csum value
  */
 struct pkt_mac_prepend {
     union {
@@ -310,7 +311,14 @@ struct pkt_mac_prepend {
             unsigned int csum_status:3; /**<  layer 4 checksum status */
             unsigned int resv1:7;       /**<  reserved */
             unsigned int l3_info:2;     /**<  layer 3 info */
-            unsigned int resv2:20;      /**<  reserved */
+            unsigned int mpls_count:2;  /**<  Number of MPLS labels
+                                         *    (3 = 3 or more) */
+            unsigned int vlans_count:2; /**<  Number of VLANs present
+                                         *    (3 = 3 or more) */
+            unsigned int csum:16;       /**<  16-bit L4 TCP/UDP checksum if
+                                         *    TCP/UDP is parse-able. If not
+                                         *    16-bit checksum for received
+                                         *    packet excluding CRC. */
         };
         uint32_t __raw[2];
     };
@@ -348,11 +356,8 @@ struct pkt_nbi_meta {
 
 #define PKT_NBI_META_STRUCT pkt_nbi_meta
 
-#ifdef PKTIO_VLAN_ENABLED
+/* VLAN lw also holds the packet length from nfd */
 #define PKTIO_NBI_META_LW_VLAN 1
-#else
-#define PKTIO_NBI_META_LW_VLAN 0
-#endif
 
 /*
  * LSO and MAC timestamp shares a 32-bit word
@@ -403,11 +408,13 @@ struct pktio_meta {
              * 2. For packets being sent out on the wire those flags are used
              *    to setup the MAC CSUM offload processing.
              */
-            unsigned int resv4:2;               /**< Reserved */
+            unsigned int p_tunnel:1;            /**< A tunnel packet */
+            unsigned int resv4:1;               /**< Reserved */
             unsigned int p_tx_l3_csum:1;        /**< Req L3 csum TX offload */
             unsigned int p_tx_l4_csum:1;        /**< Req L4 csum TX offload */
 #else
-            unsigned int resv4:4;               /**< Reserved */
+            unsigned int p_tunnel:1;            /**< A tunnel packet */
+            unsigned int resv4:3;               /**< Reserved */
 #endif
 
             union {
@@ -429,7 +436,10 @@ struct pktio_meta {
 #ifdef PKTIO_VLAN_ENABLED
             unsigned int p_vlan:16;             /**< VLAN id for RX and TX VLAN
                                                   *  offloading */
-            unsigned int resv5:16;              /**< Reserved */
+            unsigned int p_data_len:16;         /**< NFD packet length */
+#else
+            unsigned int resv3:16;              /**< Reserved */
+            unsigned int p_data_len:16;         /**< NFD packet length */
 #endif
         };
 
