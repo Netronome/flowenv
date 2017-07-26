@@ -246,6 +246,10 @@
  *       about the port to MAC channel mapping, please contact the appropriate
  *       support personnel for the platform.
  *
+ * Note: The user may configure the number of Traffic Manager queues in use by
+ *       defining PKTIO_MAX_TM_QUEUES. This value must be a power of 2. If not
+ *       set, the Traffic Manager queue number may get truncated by a mask based
+ *       default maximum.
  */
 
 #ifndef __PKTIO_H__
@@ -254,6 +258,23 @@
 #include <pkt/pkt.h>
 #include <nfp/mem_ring.h>
 
+#ifndef PKTIO_MAX_TM_QUEUES
+#define PKTIO_MAX_TM_QUEUES 256
+#endif /* PKTIO_MAX_TM_QUEUES */
+
+#if (PKTIO_MAX_TM_QUEUES & (PKTIO_MAX_TM_QUEUES - 1))
+#error "PKTIO_MAX_TM_QUEUES must be a power of 2"
+#endif
+
+#if PKTIO_MAX_TM_QUEUES > 1024
+#error "PKTIO_MAX_TM_QUEUES cannot be larger than 1024"
+#endif
+
+#if PKTIO_MAX_TM_QUEUES < 256
+/* we silently make sure we don't truncate to less than 8-bits */
+#undef PKTIO_MAX_TM_QUEUES
+#define PKTIO_MAX_TM_QUEUES 256
+#endif
 
 /* Received NBI with/without MAC prepend */
 #ifndef NBI_PKT_PREPEND_BYTES
@@ -504,7 +525,7 @@ enum {
 #define PKT_PORT_TYPE_of(_port)         (((_port) >> 13) & 0x7)
 #define PKT_PORT_SUBSYS_of(_port)       (((_port) >> 10) & 0x7)
 #define PKT_PORT_DROPTYPE_of(_port)     ((_port) & 0xff)
-#define PKT_PORT_QUEUE_of(_port)        ((_port) & 0xff)
+#define PKT_PORT_QUEUE_of(_port)        ((_port) & ((PKTIO_MAX_TM_QUEUES) - 1))
 #define PKT_PORT_VNIC_of(_port)         NFD_NATQ2VF((_port) & 0xff)
 #define PKT_PORT_WQNUM_of(_port)        ((_port) & 0x3ff)
 #define PKT_PORT_MUID_of(_port)         (((_port) >> 10) & 0x7)
