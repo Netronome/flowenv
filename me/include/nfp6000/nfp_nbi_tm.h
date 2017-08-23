@@ -697,6 +697,38 @@
 #define     NFP_NBI_TM_SCHEDULER_DEFICIT_DEFICIT_shf         (0)
 
 
+
+/*
+ * Register: SchedulerWeight
+ *   [23:0]    Weight
+ *
+ * Name(s):
+ * <base>.SchedulerWeight0...
+ */
+#define NFP_NBI_TM_L1_L2_SCHEDULER_WEIGHT(x)               (0x0000 + ((x) * 0x4))
+#define   NFP_NBI_TM_L1_L2_SCHEDULER_WEIGHT_WEIGHT(x)        (((x) & 0xffffff) << 0)
+#define   NFP_NBI_TM_L1_L2_SCHEDULER_WEIGHT_WEIGHT_of(x)     (((x) >> 0) & 0xffffff)
+#define     NFP_NBI_TM_L1_L2_SCHEDULER_WEIGHT_WEIGHT_bf      0, 23, 0
+#define     NFP_NBI_TM_L1_L2_SCHEDULER_WEIGHT_WEIGHT_msk     (0xffffff)
+#define     NFP_NBI_TM_L1_L2_SCHEDULER_WEIGHT_WEIGHT_shf     (0)
+
+
+
+/*
+ * Register: SchedulerDeficit
+ *   [24:0]    Deficit
+ *
+ * Name(s):
+ * <base>.SchedulerDeficit0...
+ */
+#define NFP_NBI_TM_L1_L2_SCHEDULER_DEFICIT(x)              (0x0000 + ((x) * 0x4))
+#define   NFP_NBI_TM_L1_L2_SCHEDULER_DEFICIT_DEFICIT(x)      (((x) & 0x1ffffff) << 0)
+#define   NFP_NBI_TM_L1_L2_SCHEDULER_DEFICIT_DEFICIT_of(x)   (((x) >> 0) & 0x1ffffff)
+#define     NFP_NBI_TM_L1_L2_SCHEDULER_DEFICIT_DEFICIT_bf    0, 24, 0
+#define     NFP_NBI_TM_L1_L2_SCHEDULER_DEFICIT_DEFICIT_msk   (0x1ffffff)
+#define     NFP_NBI_TM_L1_L2_SCHEDULER_DEFICIT_DEFICIT_shf   (0)
+
+
 /*
  * NBI Traffic Manager Shaper CSRs
  */
@@ -1140,6 +1172,38 @@ struct nfp_nbi_tm_scheduler_weight {
 };
 
 struct nfp_nbi_tm_scheduler_deficit {
+    union {
+        struct {
+#           ifdef BIGENDIAN
+            unsigned int __reserved_25:7;
+            unsigned int deficit:25;
+#           else
+            unsigned int deficit:25;
+            unsigned int __reserved_25:7;
+#           endif
+        };
+        unsigned int __raw;
+    };
+};
+
+
+struct nfp_nbi_tm_l1_l2_scheduler_weight {
+    union {
+        struct {
+#           ifdef BIGENDIAN
+            unsigned int __reserved_24:8;
+            unsigned int weight:24;
+#           else
+            unsigned int weight:24;
+            unsigned int __reserved_24:8;
+#           endif
+        };
+        unsigned int __raw;
+    };
+};
+
+
+struct nfp_nbi_tm_l1_l2_scheduler_deficit {
     union {
         struct {
 #           ifdef BIGENDIAN
