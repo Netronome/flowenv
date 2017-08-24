@@ -30,7 +30,7 @@
 #define MAX_TM_QUEUE_NUM    1023
 
 /** Base addresses for the NBI TM queue registers. */
-#define TMQ_XPB_BASE(_nbi)  (NFP_NBI_TM_XPB_OFF(_nbi) | NFP_NBI_TM_QUEUE_REG)
+#define TMQ_XPB_BASE(_nbi)  (NFP_NBI_TM_XPB_OFF(_nbi) + NFP_NBI_TM_QUEUE_REG)
 
 /** Address of the TM queue drop count register. */
 #define TMQ_DROP_READ_ADDR(_nbi, _qnum)                       \

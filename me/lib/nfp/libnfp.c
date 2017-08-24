@@ -41,6 +41,7 @@
 #include "_c/remote_me.c"
 #include "_c/tmq.c"
 #include "_c/xpb.c"
+#include "_c/tm_config.c"
 
 /*
  * The following code implements all the functionality in <nfp.h>.  It
