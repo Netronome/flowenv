@@ -514,7 +514,7 @@ pktio_rx_host(void)
 #endif
 
     /* Tunnel packet */
-    if (nfd_rxd.flags & (PCIE_DESC_TX_ENCAP_VXLAN | PCIE_DESC_TX_ENCAP_GRE))
+    if (nfd_rxd.flags & (PCIE_DESC_TX_ENCAP))
         pkt.p_tunnel = 1;
 
     pkt.p_seq = nfd_in_get_seqn((__xread struct nfd_in_pkt_desc *)&nfd_rxd);
