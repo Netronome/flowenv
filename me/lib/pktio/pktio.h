@@ -257,6 +257,9 @@
 
 #include <pkt/pkt.h>
 #include <nfp/mem_ring.h>
+#ifdef PKTIO_NFD_ENABLED
+#include <shared/nfd_common.h>
+#endif
 
 #ifndef PKTIO_MAX_TM_QUEUES
 #define PKTIO_MAX_TM_QUEUES 256
@@ -377,8 +380,11 @@ struct pkt_nbi_meta {
 
 #define PKT_NBI_META_STRUCT pkt_nbi_meta
 
-/* VLAN lw also holds the packet length from nfd */
-#define PKTIO_NBI_META_LW_VLAN 1
+#ifdef PKTIO_VLAN_ENABLED
+ #define PKTIO_NBI_META_LW_VLAN 1
+#else
+ #define PKTIO_NBI_META_LW_VLAN 0
+#endif
 
 /*
  * LSO and MAC timestamp shares a 32-bit word
@@ -457,10 +463,7 @@ struct pktio_meta {
 #ifdef PKTIO_VLAN_ENABLED
             unsigned int p_vlan:16;             /**< VLAN id for RX and TX VLAN
                                                   *  offloading */
-            unsigned int p_data_len:16;         /**< NFD packet length */
-#else
             unsigned int resv3:16;              /**< Reserved */
-            unsigned int p_data_len:16;         /**< NFD packet length */
 #endif
         };
 
@@ -513,8 +516,13 @@ enum {
     PKT_SET_PORT(PKT_PTYPE_WIRE, (_nbi), (_q))
 #define PKT_HOST_PORT_FROMQ(_pcie, _q) \
     PKT_SET_PORT(PKT_PTYPE_HOST, (_pcie), (_q))
-#define PKT_HOST_PORT(_pcie, _vf, _q) \
-    PKT_HOST_PORT_FROMQ(_pcie, NFD_BUILD_QID((_vf), (_q)))
+#if defined (NFD_VNIC_TYPE_VF) && defined (NFD_VNIC_TYPE_PF)
+#define PKT_HOST_PORT(_pcie, _vid, _q) \
+    PKT_HOST_PORT_FROMQ(_pcie, NFD_VID2QID((_vid), (_q)))
+#else
+#define PKT_HOST_PORT(_pcie, _vnic, _q) \
+    PKT_HOST_PORT_FROMQ(_pcie, NFD_BUILD_QID((_vnic), (_q)))
+#endif
 #define PKT_WQ_PORT(_muid, _q) \
     PKT_SET_PORT(PKT_PTYPE_WQ, _muid, _q)
 #define PKT_WQ_PORT_BYNAME(_name) \
@@ -526,7 +534,16 @@ enum {
 #define PKT_PORT_SUBSYS_of(_port)       (((_port) >> 10) & 0x7)
 #define PKT_PORT_DROPTYPE_of(_port)     ((_port) & 0xff)
 #define PKT_PORT_QUEUE_of(_port)        ((_port) & ((PKTIO_MAX_TM_QUEUES) - 1))
-#define PKT_PORT_VNIC_of(_port)         NFD_NATQ2VF((_port) & 0xff)
+#ifdef NFD_VNIC_TYPE_VF
+#define PKT_PORT_VFVNIC_of(_vf)         NFD_VF2VID(NFD_NATQ2VF((_vf)))
+#else
+#define PKT_PORT_VFVNIC_of(_vf)         NFD_NATQ2VF((_vf))
+#endif
+#ifdef NFD_VNIC_TYPE_PF
+#define PKT_PORT_PFVNIC_of(_pf_port)    NFD_PF2VID(NFD_NATQ2PF((_pf_port)))
+#else
+#define PKT_PORT_PFVNIC_of(_pf_port)    NFD_NATQ2PF((_pf_port))
+#endif
 #define PKT_PORT_WQNUM_of(_port)        ((_port) & 0x3ff)
 #define PKT_PORT_MUID_of(_port)         (((_port) >> 10) & 0x7)
 
@@ -581,13 +598,17 @@ __intrinsic void pktio_rx_wq(int ring_num, mem_ring_addr_t ring_addr);
  *
  * If an error occurs on tx, the packet is dropped.
  *
+ * @param app_nfd_flags Application supplied NFD flags to be ORed in
+ * @param meta_len      Length of meta data prepended to the packet
+ *
  * @return 0 if no error or:
  *      return -1 if no NFD credits
  *      return -2 if packet modifier script error
  *      return -3 if MAC port is paused (on wire)
  */
+__intrinsic int pktio_tx_with_meta(unsigned short app_nfd_flags,
+                                   unsigned short meta_len);
 __intrinsic int pktio_tx(void);
-
 
 /**
  * Drop a packet.

@@ -46,7 +46,6 @@
 #ifdef PKTIO_NFD_ENABLED
 #include <vnic/pci_in.h>
 #include <vnic/pci_out.h>
-#include <shared/nfd_common.h>
 #endif
 
 #ifdef PKTIO_GRO_ENABLED
@@ -170,7 +169,8 @@ struct pktio_handle {
  * Mapping between channel and TM queue
  */
 #ifndef CHANNEL_TO_TMQ(y)
-#define CHANNEL_TO_TMQ(y) (y << 3)
+ #define CHANNEL_TO_TMQ(y) (y << 3)
+ #warning "CHANNEL_TO_TMQ(y) is undefined!"
 #endif
 
 
@@ -500,17 +500,20 @@ pktio_rx_host(void)
 
     pkt.p_src = PKT_HOST_PORT_FROMQ(nfd_rxd.intf, NFD_BMQ2NATQ(nfd_rxd.q_num));
 
-    /* Checksum offloads */
-    /* L3 csum */
-    /* Packet arriving from the host already have the IPv4 header checksum
-     * set by the kernel so no offload required of L3 csum.
-     * The flag "pkt.p_p_tx_l3_csum" is already clear at this point. */
-
-    /* L4 csum */
 #ifdef MAC_EGRESS_PREPEND_ENABLE
-    if ((nfd_rxd.flags & PCIE_DESC_TX_CSUM) &&
-        (nfd_rxd.flags & (PCIE_DESC_TX_TCP_CSUM | PCIE_DESC_TX_UDP_CSUM)))
-        pkt.p_tx_l4_csum = 1;
+    /* Checksum offloads */
+    if (nfd_rxd.flags & PCIE_DESC_TX_CSUM) {
+        if (nfd_rxd.flags & PCIE_DESC_TX_ENCAP) {
+            pkt.p_tx_l3_csum = 1;
+            pkt.p_tx_l4_csum = 1;
+        } else {
+            if (nfd_rxd.flags & PCIE_DESC_TX_IP4_CSUM)
+                pkt.p_tx_l3_csum = 1;
+            if (nfd_rxd.flags &
+                (PCIE_DESC_TX_TCP_CSUM | PCIE_DESC_TX_UDP_CSUM))
+                pkt.p_tx_l4_csum = 1;
+        }
+    }
 #endif
 
     /* Tunnel packet */
@@ -541,7 +544,11 @@ pktio_rx_host(void)
     if (nfd_rxd.flags & PCIE_DESC_TX_LSO) {
         pkt.p_tx_lso = 1;
         pkt.p_tx_lso_end = nfd_rxd.lso_end;
+#ifdef NFP_NET_CFG_CTRL_LSO2
+        pkt.p_tx_lso_seq = nfd_rxd.lso_seq_cnt;
+#else
         pkt.p_tx_lso_seq = nfd_rxd.l4_offset;
+#endif
         pkt.p_tx_mss = nfd_rxd.mss;
     }
 #endif
@@ -550,9 +557,6 @@ pktio_rx_host(void)
     if (nfd_rxd.flags & PCIE_DESC_TX_VLAN)
         pkt.p_vlan = nfd_rxd.vlan;
 #endif
-
-    /* Capture packet length */
-    pkt.p_data_len = nfd_rxd.data_len;
 
     if (nfd_rxd.invalid) {
         PKTIO_CNTR_INC(PKTIO_CNTR_ERR_FROM_HOST);
@@ -609,7 +613,7 @@ pktio_rx_wq(int ring_num, mem_ring_addr_t ring_addr)
 }
 
 __intrinsic int
-pktio_tx(void)
+pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
 {
     __addr40 void *ctm_ptr;
     SIGNAL info_sig;
@@ -741,27 +745,30 @@ pktio_tx(void)
                                   0,
                                   pkt.p_ctm_size,
                                   pkt.p_offset,
-                                  0);
+                                  meta_len);
                 nfd_out_check_ctm_only(&noi);
 
                 /* populate RX offload flags if present */
                 flags = PCIE_DESC_RX_EOP;
                 if (pkt.p_rx_ipv4_csum_present) {
-                    flags |= PCIE_DESC_RX_I_IP4_CSUM;
+                    flags |= PCIE_DESC_RX_IP4_CSUM;
                     if (pkt.p_rx_ipv4_csum_ok)
-                        flags |= PCIE_DESC_RX_I_IP4_CSUM_OK;
+                        flags |= PCIE_DESC_RX_IP4_CSUM_OK;
                 }
                 if (pkt.p_rx_l4_csum_present) {
                     if (pkt.p_rx_l4_tcp) {
-                        flags |= PCIE_DESC_RX_I_TCP_CSUM;
+                        flags |= PCIE_DESC_RX_TCP_CSUM;
                         if (pkt.p_rx_l4_csum_ok)
-                            flags |= PCIE_DESC_RX_I_TCP_CSUM_OK;
+                            flags |= PCIE_DESC_RX_TCP_CSUM_OK;
                     } else {
-                        flags |= PCIE_DESC_RX_I_UDP_CSUM;
+                        flags |= PCIE_DESC_RX_UDP_CSUM;
                         if (pkt.p_rx_l4_csum_ok)
-                            flags |= PCIE_DESC_RX_I_UDP_CSUM_OK;
+                            flags |= PCIE_DESC_RX_UDP_CSUM_OK;
                     }
                 }
+                /* OR in the flags supplied from the app, those might include
+                   inner checksum flags */
+                flags |= app_nfd_flags;
 
 #ifdef PKTIO_VLAN_ENABLED
                 if (pkt.p_vlan)
@@ -836,6 +843,11 @@ done:
     return ret;
 }
 
+__intrinsic int
+pktio_tx(void)
+{
+    return pktio_tx_with_meta(0, 0);
+}
 
 void
 pktio_tx_drop(void)
