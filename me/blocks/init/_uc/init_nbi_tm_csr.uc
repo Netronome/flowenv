@@ -66,12 +66,12 @@
  * @param DROPRATERANGESELECT    Select the Drop Rate Range set to use for this queue.
  */
 #macro Nbi_TrafficManager_TMQueueReg_QueueConfig(NBI_ID,QUEUE_NUM,QUEUEENABLE,DROPENABLE,REDENABLE,DMAPACKETTHRESHOLD,QUEUESIZE,DROPRATERANGESELECT)
-    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM/**/.QueueEnable           QUEUEENABLE         const
-    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM/**/.DropEnable            DROPENABLE          const
-    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM/**/.REDEnable             REDENABLE           const
-    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM/**/.DMAPacketThreshold    DMAPACKETTHRESHOLD  const
-    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM/**/.QueueSize             QUEUESIZE           const
-    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM/**/.DropRateRangeSelect   DROPRATERANGESELECT const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.QueueEnable           QUEUEENABLE         const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.DropEnable            DROPENABLE          const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.REDEnable             REDENABLE           const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.DMAPacketThreshold    DMAPACKETTHRESHOLD  const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.QueueSize             QUEUESIZE           const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.DropRateRangeSelect   DROPRATERANGESELECT const
 
 #endm
 
@@ -84,7 +84,7 @@
  * @param QUEUE_NUM              Queue number
  */
 #macro Nbi_TrafficManager_TMQueueReg_QueueDropCountClear(NBI_ID,QUEUE_NUM)
-    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueDropCountClear/**/QUEUE_NUM/**/               0xFFFFFFFF          invalid
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueDropCountClear/**/QUEUE_NUM               0xFFFFFFFF          invalid
 #endm
 
 
@@ -106,10 +106,10 @@
  * @param RATE_ADJ    Amount of bytes to ignore from each packet
  */
 #macro Nbi_TrafficManager_TMShaperReg_ShaperEntry(NBI_ID,SHAPER_NUM,RATE,THRESHOLD,OVERSHOOT,RATE_ADJ)
-    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperRate/**/SHAPER_NUM/**/.Rate                  RATE                const
-    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperThreshold/**/SHAPER_NUM/**/.Threshold        THRESHOLD           const
-    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperMaxOvershoot/**/SHAPER_NUM/**/.MaxOvershoot  OVERSHOOT           const
-    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperRateAdjust/**/SHAPER_NUM/**/.RateAdjust      RATE_ADJ            const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperRate/**/SHAPER_NUM.Rate                  RATE                const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperThreshold/**/SHAPER_NUM.Threshold        THRESHOLD           const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperMaxOvershoot/**/SHAPER_NUM.MaxOvershoot  OVERSHOOT           const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMShaperReg.ShaperRateAdjust/**/SHAPER_NUM.RateAdjust      RATE_ADJ            const
 #endm
 
 
@@ -123,8 +123,8 @@
  * @param HEADPOINTER       14-bit Descriptor Queue Head Pointer.
  */
 #macro NBITMCPP_TMHeadTailSram_TMHeadTailEntry(NBI_ISLAND_ID,HEAD_TAIL_ENTRY,TAILPOINTER,HEADPOINTER)
-    .init_csr nbi:i/**/NBI_ISLAND_ID/**/.NBITMCPP.TMHeadTailSram.TMHeadTailEntry/**/HEAD_TAIL_ENTRY/**/.TailPointer     TAILPOINTER     const
-    .init_csr nbi:i/**/NBI_ISLAND_ID/**/.NBITMCPP.TMHeadTailSram.TMHeadTailEntry/**/HEAD_TAIL_ENTRY/**/.HeadPointer     HEADPOINTER     const
+    .init_csr nbi:i/**/NBI_ISLAND_ID.NBITMCPP.TMHeadTailSram.TMHeadTailEntry/**/HEAD_TAIL_ENTRY.TailPointer     TAILPOINTER     const
+    .init_csr nbi:i/**/NBI_ISLAND_ID.NBITMCPP.TMHeadTailSram.TMHeadTailEntry/**/HEAD_TAIL_ENTRY.HeadPointer     HEADPOINTER     const
 
 #endm
 

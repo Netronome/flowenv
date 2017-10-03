@@ -88,25 +88,25 @@
     .alloc_resource BLM_NBI9_BLQ3_EMU_QID BLQ_EMU_RINGS+7 global 1
 
     /* allocate memory for NBI8 EMU Ring Qdescriptors */
-    .alloc_mem _BLM_NBI8_BLQ0_EMU_QD_BASE   i/**/BLM_NBI8_BLQ0_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
-    .alloc_mem _BLM_NBI8_BLQ1_EMU_QD_BASE   i/**/BLM_NBI8_BLQ1_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
-    .alloc_mem _BLM_NBI8_BLQ2_EMU_QD_BASE   i/**/BLM_NBI8_BLQ2_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
-    .alloc_mem _BLM_NBI8_BLQ3_EMU_QD_BASE   i/**/BLM_NBI8_BLQ3_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
+    .alloc_mem _BLM_NBI8_BLQ0_EMU_QD_BASE   i/**/BLM_NBI8_BLQ0_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE   global  16                      16
+    .alloc_mem _BLM_NBI8_BLQ1_EMU_QD_BASE   i/**/BLM_NBI8_BLQ1_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE   global  16                      16
+    .alloc_mem _BLM_NBI8_BLQ2_EMU_QD_BASE   i/**/BLM_NBI8_BLQ2_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE   global  16                      16
+    .alloc_mem _BLM_NBI8_BLQ3_EMU_QD_BASE   i/**/BLM_NBI8_BLQ3_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE   global  16                      16
     /* allocate memory for NBI9 EMU Ring Qdescriptors */
-    .alloc_mem _BLM_NBI9_BLQ0_EMU_QD_BASE   i/**/BLM_NBI9_BLQ0_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
-    .alloc_mem _BLM_NBI9_BLQ1_EMU_QD_BASE   i/**/BLM_NBI9_BLQ1_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
-    .alloc_mem _BLM_NBI9_BLQ2_EMU_QD_BASE   i/**/BLM_NBI9_BLQ2_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
-    .alloc_mem _BLM_NBI9_BLQ3_EMU_QD_BASE   i/**/BLM_NBI9_BLQ3_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
+    .alloc_mem _BLM_NBI9_BLQ0_EMU_QD_BASE   i/**/BLM_NBI9_BLQ0_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  16                      16
+    .alloc_mem _BLM_NBI9_BLQ1_EMU_QD_BASE   i/**/BLM_NBI9_BLQ1_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  16                      16
+    .alloc_mem _BLM_NBI9_BLQ2_EMU_QD_BASE   i/**/BLM_NBI9_BLQ2_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  16                      16
+    .alloc_mem _BLM_NBI9_BLQ3_EMU_QD_BASE   i/**/BLM_NBI9_BLQ3_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  16                      16
     /* allocate memory for NBI8 EMU Rings */
-    .alloc_mem _BLM_NBI8_BLQ0_EMU_Q_BASE    i/**/BLM_NBI8_BLQ0_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI8_BLQ0_Q_SIZE    BLM_NBI8_BLQ0_Q_SIZE
-    .alloc_mem _BLM_NBI8_BLQ1_EMU_Q_BASE    i/**/BLM_NBI8_BLQ1_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI8_BLQ1_Q_SIZE    BLM_NBI8_BLQ1_Q_SIZE
-    .alloc_mem _BLM_NBI8_BLQ2_EMU_Q_BASE    i/**/BLM_NBI8_BLQ2_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI8_BLQ2_Q_SIZE    BLM_NBI8_BLQ2_Q_SIZE
-    .alloc_mem _BLM_NBI8_BLQ3_EMU_Q_BASE    i/**/BLM_NBI8_BLQ3_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI8_BLQ3_Q_SIZE    BLM_NBI8_BLQ3_Q_SIZE
+    .alloc_mem _BLM_NBI8_BLQ0_EMU_Q_BASE    i/**/BLM_NBI8_BLQ0_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI8_BLQ0_Q_SIZE    BLM_NBI8_BLQ0_Q_SIZE
+    .alloc_mem _BLM_NBI8_BLQ1_EMU_Q_BASE    i/**/BLM_NBI8_BLQ1_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI8_BLQ1_Q_SIZE    BLM_NBI8_BLQ1_Q_SIZE
+    .alloc_mem _BLM_NBI8_BLQ2_EMU_Q_BASE    i/**/BLM_NBI8_BLQ2_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI8_BLQ2_Q_SIZE    BLM_NBI8_BLQ2_Q_SIZE
+    .alloc_mem _BLM_NBI8_BLQ3_EMU_Q_BASE    i/**/BLM_NBI8_BLQ3_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI8_BLQ3_Q_SIZE    BLM_NBI8_BLQ3_Q_SIZE
     /* allocate memory for NBI9 EMU Rings */
-    .alloc_mem _BLM_NBI9_BLQ0_EMU_Q_BASE    i/**/BLM_NBI9_BLQ0_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI9_BLQ0_Q_SIZE    BLM_NBI9_BLQ0_Q_SIZE
-    .alloc_mem _BLM_NBI9_BLQ1_EMU_Q_BASE    i/**/BLM_NBI9_BLQ1_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI9_BLQ1_Q_SIZE    BLM_NBI9_BLQ1_Q_SIZE
-    .alloc_mem _BLM_NBI9_BLQ2_EMU_Q_BASE    i/**/BLM_NBI9_BLQ2_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI9_BLQ2_Q_SIZE    BLM_NBI9_BLQ2_Q_SIZE
-    .alloc_mem _BLM_NBI9_BLQ3_EMU_Q_BASE    i/**/BLM_NBI9_BLQ3_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI9_BLQ3_Q_SIZE    BLM_NBI9_BLQ3_Q_SIZE
+    .alloc_mem _BLM_NBI9_BLQ0_EMU_Q_BASE    i/**/BLM_NBI9_BLQ0_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI9_BLQ0_Q_SIZE    BLM_NBI9_BLQ0_Q_SIZE
+    .alloc_mem _BLM_NBI9_BLQ1_EMU_Q_BASE    i/**/BLM_NBI9_BLQ1_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI9_BLQ1_Q_SIZE    BLM_NBI9_BLQ1_Q_SIZE
+    .alloc_mem _BLM_NBI9_BLQ2_EMU_Q_BASE    i/**/BLM_NBI9_BLQ2_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI9_BLQ2_Q_SIZE    BLM_NBI9_BLQ2_Q_SIZE
+    .alloc_mem _BLM_NBI9_BLQ3_EMU_Q_BASE    i/**/BLM_NBI9_BLQ3_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI9_BLQ3_Q_SIZE    BLM_NBI9_BLQ3_Q_SIZE
 
     #define_eval _NBI_  8
     #define_eval _RING_ 0
@@ -189,15 +189,15 @@
     #define _BLM_NBI9_BLQ3_EMU_Q_BASE      _BLM_NBI8_BLQ3_EMU_Q_BASE
 
     /* allocate memory for NBI8 EMU Ring Qdescriptors */
-    .alloc_mem _BLM_NBI8_BLQ0_EMU_QD_BASE   i/**/BLM_NBI8_BLQ0_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
-    .alloc_mem _BLM_NBI8_BLQ1_EMU_QD_BASE   i/**/BLM_NBI8_BLQ1_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
-    .alloc_mem _BLM_NBI8_BLQ2_EMU_QD_BASE   i/**/BLM_NBI8_BLQ2_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
-    .alloc_mem _BLM_NBI8_BLQ3_EMU_QD_BASE   i/**/BLM_NBI8_BLQ3_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  16                      16
+    .alloc_mem _BLM_NBI8_BLQ0_EMU_QD_BASE   i/**/BLM_NBI8_BLQ0_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  16                      16
+    .alloc_mem _BLM_NBI8_BLQ1_EMU_QD_BASE   i/**/BLM_NBI8_BLQ1_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  16                      16
+    .alloc_mem _BLM_NBI8_BLQ2_EMU_QD_BASE   i/**/BLM_NBI8_BLQ2_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  16                      16
+    .alloc_mem _BLM_NBI8_BLQ3_EMU_QD_BASE   i/**/BLM_NBI8_BLQ3_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  16                      16
     /* allocate memory for NBI8 EMU Rings */
-    .alloc_mem _BLM_NBI8_BLQ0_EMU_Q_BASE    i/**/BLM_NBI8_BLQ0_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI8_BLQ0_Q_SIZE    BLM_NBI8_BLQ0_Q_SIZE
-    .alloc_mem _BLM_NBI8_BLQ1_EMU_Q_BASE    i/**/BLM_NBI8_BLQ1_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI8_BLQ1_Q_SIZE    BLM_NBI8_BLQ1_Q_SIZE
-    .alloc_mem _BLM_NBI8_BLQ2_EMU_Q_BASE    i/**/BLM_NBI8_BLQ2_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI8_BLQ2_Q_SIZE    BLM_NBI8_BLQ2_Q_SIZE
-    .alloc_mem _BLM_NBI8_BLQ3_EMU_Q_BASE    i/**/BLM_NBI8_BLQ3_EMU_Q_ISLAND/**/./**/BLM_BLQ_EMEM_TYPE/**/   global  BLM_NBI8_BLQ3_Q_SIZE    BLM_NBI8_BLQ3_Q_SIZE
+    .alloc_mem _BLM_NBI8_BLQ0_EMU_Q_BASE    i/**/BLM_NBI8_BLQ0_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI8_BLQ0_Q_SIZE    BLM_NBI8_BLQ0_Q_SIZE
+    .alloc_mem _BLM_NBI8_BLQ1_EMU_Q_BASE    i/**/BLM_NBI8_BLQ1_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI8_BLQ1_Q_SIZE    BLM_NBI8_BLQ1_Q_SIZE
+    .alloc_mem _BLM_NBI8_BLQ2_EMU_Q_BASE    i/**/BLM_NBI8_BLQ2_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI8_BLQ2_Q_SIZE    BLM_NBI8_BLQ2_Q_SIZE
+    .alloc_mem _BLM_NBI8_BLQ3_EMU_Q_BASE    i/**/BLM_NBI8_BLQ3_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI8_BLQ3_Q_SIZE    BLM_NBI8_BLQ3_Q_SIZE
 
     #define_eval _NBI_  8
     #define_eval _RING_ 0

@@ -47,11 +47,11 @@
 /* Mem Reserved for BLM use */
 .alloc_mem BLM_INFO_SECTION_BASE        i0.ctm                 island   64 8
 #ifdef NULL_RECYCLE_FROM_EMU
-    .alloc_mem BLM_INGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID/**/    i24.emem             global  128 64
-    .alloc_mem BLM_EGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID/**/     i24.emem             global  128 64
+    .alloc_mem BLM_INGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID    i24.emem             global  128 64
+    .alloc_mem BLM_EGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID     i24.emem             global  128 64
 #else
-    .alloc_mem BLM_INGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID/**/    i0.ctm                 island  128 8
-    .alloc_mem BLM_EGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID/**/     i0.ctm                 island  128 8
+    .alloc_mem BLM_INGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID    i0.ctm                 island  128 8
+    .alloc_mem BLM_EGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID     i0.ctm                 island  128 8
 #endif
 
 /* Allocate BLM Stats memory for 4 BLQ's in each BLM instance Island. */
@@ -484,8 +484,8 @@
 .begin
     .reg _addr
     .reg _offset
-    move(_addr, ((BLM_EGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID/**/ >>8) & 0xFF000000))
-    move(_offset, ((BLM_EGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID/**/) & 0xFFFFFFFF))
+    move(_addr, ((BLM_EGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID >>8) & 0xFF000000))
+    move(_offset, ((BLM_EGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID) & 0xFFFFFFFF))
     #if (__REVISION_MIN < __REVISION_B0)
         #define_eval _MAX_PULL_DATA_LEN     2
     #else
@@ -510,8 +510,8 @@
 .begin
     .reg _addr
     .reg _offset
-    move(_addr, ((BLM_INGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID/**/ >>8) & 0xFF000000))
-    move(_offset, ((BLM_INGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID/**/) & 0xFFFFFFFF))
+    move(_addr, ((BLM_INGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID >>8) & 0xFF000000))
+    move(_offset, ((BLM_INGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID) & 0xFFFFFFFF))
     blm_push_mem2dma(NbiNum, blq, _addr, _offset, n, 1)
 .end
 #endm /* blm_ingress_null_buffer_recycle */
@@ -754,10 +754,10 @@ end_cache_fill#:
     #endif
 
     /* Setup the DMA's BLQueCtrl register */
-   .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBufferList.BLQueCtrl/**/BLQ_NUM/**/ (_TAIL_PTR_ | (_HEAD_PTR_ << 12) | (_SIZE_ << 36)) const
+   .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBufferList.BLQueCtrl/**/BLQ_NUM (_TAIL_PTR_ | (_HEAD_PTR_ << 12) | (_SIZE_ << 36)) const
 
     /* Setup the TM's  BLQueCtrl register */
-   .init_csr nbi:i/**/NBI_NUM/**/.NBITMCPP.TMBufferList.BLQueCtrl/**/BLQ_NUM/**/ (_HEAD_PTR_ | (_HEAD_PTR_ << 12) | (_SIZE_ << 36)) const
+   .init_csr nbi:i/**/NBI_NUM.NBITMCPP.TMBufferList.BLQueCtrl/**/BLQ_NUM (_HEAD_PTR_ | (_HEAD_PTR_ << 12) | (_SIZE_ << 36)) const
 
     #undef _TAIL_PTR_
     #undef _HEAD_PTR_
@@ -919,7 +919,7 @@ end_cache_fill#:
     #while (TOTAL_BUFS_LEFT > 0)
         #for _MEM_REGION_ [IMEM0, IMEM1, EMEM0_CACHE, EMEM1_CACHE, EMEM2_CACHE, EMEM0, EMEM1, EMEM2]
 
-            #if (/**/_MEM_REGION_/**/_BUFS_LEFT > 0)
+            #if (_MEM_REGION_/**/_BUFS_LEFT > 0)
 
                 #if (streq('_MEM_REGION_', 'IMEM0'))
                     #define_eval DENSITY IMEM0_DENSITY
@@ -939,7 +939,7 @@ end_cache_fill#:
                     #define_eval DENSITY EMEM2_DENSITY
                 #endif
 
-                #while ((/**/_MEM_REGION_/**/_BUFS_LEFT > 0) && (DENSITY > 0))
+                #while ((_MEM_REGION_/**/_BUFS_LEFT > 0) && (DENSITY > 0))
 
 
                     #if (streq('R_TYPE', 'EMU'))
@@ -964,21 +964,21 @@ end_cache_fill#:
                         #define_eval R_OFF (R_OFF + 4)
                     #else
                         #if (streq('_MEM_REGION_', 'IMEM0'))
-                            .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr (((IMEM0_BASE + IMEM0_BUFS_OFF) | (1 <<23)) >> 11) const
+                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr (((IMEM0_BASE + IMEM0_BUFS_OFF) | (1 <<23)) >> 11) const
                         #elif (streq('_MEM_REGION_', 'IMEM1'))
-                            .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr (((IMEM1_BASE + IMEM1_BUFS_OFF) | (1 <<23)) >> 11) const
+                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr (((IMEM1_BASE + IMEM1_BUFS_OFF) | (1 <<23)) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM0_CACHE'))
-                            .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr ((EMEM0_CACHE_BASE + EMEM0_CACHE_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM0_CACHE_BASE + EMEM0_CACHE_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM1_CACHE'))
-                            .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr ((EMEM1_CACHE_BASE + EMEM1_CACHE_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM1_CACHE_BASE + EMEM1_CACHE_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM2_CACHE'))
-                            .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr ((EMEM2_CACHE_BASE + EMEM2_CACHE_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM2_CACHE_BASE + EMEM2_CACHE_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM0'))
-                            .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr ((EMEM0_BASE + EMEM0_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM0_BASE + EMEM0_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM1'))
-                            .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr ((EMEM1_BASE + EMEM1_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM1_BASE + EMEM1_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM2'))
-                            .init_csr nbi:i/**/NBI_NUM/**/.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF/**/.MuAddr ((EMEM2_BASE + EMEM2_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM2_BASE + EMEM2_BUFS_OFF) >> 11) const
                         #endif
 
                         #define_eval R_OFF (R_OFF + 1)
