@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2012-2017,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -453,4 +453,35 @@ mem_test_sub(__xrw void *data, __mem void *addr, size_t size)
 
     __mem_test_sub(data, addr, size, size, sig_done, &sig_pair);
     __wait_for_all(&sig_pair);
+}
+
+__intrinsic void
+__mem_meter(__xrw uint32_t *meter_data, __mem void *addr, enum meter_mode mode,
+            enum meter_color color, SIGNAL_PAIR *sig_pair)
+{
+    uint32_t addr_hi;
+    uint32_t addr_lo;
+
+    try_ctassert(__is_aligned(addr, 8));
+    try_ctassert(color <= METER_COLOR_RED);
+    try_ctassert((mode == METER_MODE_PEAK) || (mode == METER_MODE_EXCESS));
+
+    addr_hi  = ((uint64_t)addr >> 8) & 0xFF000000;
+    addr_lo  =  (uint64_t)addr       & 0xFFFFFFF8;
+    addr_lo |= ((color & 0x3) << 2) | (mode & 0x1);
+
+    __asm mem[meter, *meter_data, addr_hi, <<8, addr_lo], sig_done[*sig_pair];
+}
+
+__intrinsic enum meter_color
+mem_meter(uint32_t meter_amt, __mem void *addr, enum meter_mode mode,
+          enum meter_color color)
+{
+    SIGNAL_PAIR sig_pair;
+    __xrw uint32_t meter_data = meter_amt;
+
+    __mem_meter(&meter_data, addr, mode, color, &sig_pair);
+    __wait_for_all(&sig_pair);
+
+    return meter_data;
 }
