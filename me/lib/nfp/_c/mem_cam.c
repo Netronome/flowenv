@@ -68,7 +68,7 @@ __mem_cam_lookup(__xrw void *data, __mem void *addr,
             __asm mem[cam256_lookup24, *data, addr_hi, <<8, addr_lo], \
                 sig_done[*__ct_sig_pair(sigpair)];
         else
-            __asm mem[cam256_lookup32, *data, addr_hi, <<8, addr_lo, 0], \
+            __asm mem[cam256_lookup32, *data, addr_hi, <<8, addr_lo], \
                 sig_done[*__ct_sig_pair(sigpair)];
 
     } else {
@@ -170,7 +170,7 @@ __mem_cam_lookup_add(__xrw void *data, __mem void *addr,
             __asm mem[cam256_lookup24_add, *data, addr_hi, <<8, addr_lo], \
                 sig_done[*__ct_sig_pair(sigpair)];
         else
-            __asm mem[cam256_lookup32_add, *data, addr_hi, <<8, addr_lo, 0], \
+            __asm mem[cam256_lookup32_add, *data, addr_hi, <<8, addr_lo], \
                 sig_done[*__ct_sig_pair(sigpair)];
 
     } else {
