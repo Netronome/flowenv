@@ -67,6 +67,9 @@
 #define SHAPER_RATE_ADJ(t,u,v,w,x,y,z)   z
 #define SHAPER_CFG_PARAMS(t,u,v,w,x,y,z) u,v,w,x,y,z
 
+/* Macro to help parse TM Scheduler configurations */
+#define ENABLE_SCHED(m,n,o,p,q,r,s,t,u,v,w,x,y,z)         m
+#define SCHED_CFG_PARAMS(m,n,o,p,q,r,s,t,u,v,w,x,y,z)     n,o,p,q,r,s,t,u,v,w,x,y,z
 
 /** Nbi_TrafficManager_QCfg
  *
@@ -142,6 +145,83 @@
     #undef TM_Q
 #endm
 
+/** Nbi_TrafficManager_L2L1_SchedulerCfg
+ *
+ * Configures L2 and L1 schedulers. See the NFP-6xxx Databook section on the NBI Traffic Manager
+ *
+ * @param NBI_ID      The NBI number, can be 0 or 1
+ * @param START_SCHED L2 (0 to 127) or L1 (128 to 143) start scheduler number
+ * @param END_SCHED   L2 (0 to 127) or L1 (128 to 143) end scheduler number
+ * @param SP0         Strict Priority Zero Enable bit. Set this bit to enable
+ *                    scheduler port 0 as the strict priority 0 port. SP0 will
+ *                    have priority over all other ports, including SP1.
+ * @param SP1         Strict Priority One Enable bit. Set this bit to enable
+ *                    scheduler port 1 as the strict priority 1 port. SP1 will
+ *                    have priority over all other ports except for SP0.
+ * @param DWRR_EN     Deficit Weighted Round Robin Enable bit. Set this bit to
+ *                    enable deficit weighted round operation for the particular
+ *                    scheduler.
+ * @param DWRR[0..7]  Scheduler weight value to configure the relative
+ *                    bandwidth for each scheduler port.
+ */
+#macro Nbi_TrafficManager_L2L1_SchedulerCfg(NBI_ID, START_SCHED, END_SCHED, SP0, SP1, DWRR_EN, DWRR0, DWRR1, DWRR2, DWRR3, DWRR4, DWRR5, DWRR6, DWRR7)
+    #if (NBI_ID < 0) || (NBI_ID > 1)
+        #error "NBI_ID can only be 0 or 1"
+    #endif
+    #if (START_SCHED < 0) || (START_SCHED > 143)
+        #error "START_SCHED can only be between 0 and 143"
+    #endif
+    #if (END_SCHED < 0) || (END_SCHED > 143)
+        #error "END_SCHED can only be between 0 and 143"
+    #endif
+    #if START_SCHED > END_SCHED
+        #error "START_SHAPER cannot be higher than END_SHAPER"
+    #endif
+    #if (SP0 < 0) || (SP0 > 1)
+        #error "SP0 can only be 0 or 1"
+    #endif
+    #if (SP1 < 0) || (SP1 > 1)
+        #error "SP1 can only be 0 or 1"
+    #endif
+    #if (SP0 == 0) && (SP1 == 1)
+        #error "SP0 = 0 and SP1 = 1 is not a valid configuration"
+    #endif
+    #if (DWRR0 < 0) || (DWRR0 > 0xffffff)
+        #error "DWRR0 can only be between 0 and 0xffffff"
+    #endif
+    #if (DWRR1 < 0) || (DWRR1 > 0xffffff)
+        #error "DWRR1 can only be between 0 and 0xffffff"
+    #endif
+    #if (DWRR2 < 0) || (DWRR2 > 0xffffff)
+        #error "DWRR2 can only be between 0 and 0xffffff"
+    #endif
+    #if (DWRR3 < 0) || (DWRR3 > 0xffffff)
+        #error "DWRR3 can only be between 0 and 0xffffff"
+    #endif
+    #if (DWRR4 < 0) || (DWRR4 > 0xffffff)
+        #error "DWRR4 can only be between 0 and 0xffffff"
+    #endif
+    #if (DWRR5 < 0) || (DWRR5 > 0xffffff)
+        #error "DWRR5 can only be between 0 and 0xffffff"
+    #endif
+    #if (DWRR6 < 0) || (DWRR6 > 0xffffff)
+        #error "DWRR6 can only be between 0 and 0xffffff"
+    #endif
+    #if (DWRR7 < 0) || (DWRR7 > 0xffffff)
+        #error "DWRR7 can only be between 0 and 0xffffff"
+    #endif
+
+    #define_eval SCHED (START_SCHED)
+    #while (SCHED <= END_SCHED)
+        Nbi_TrafficManager_TMSchedulerReg_L2L1SchedulerEntry(NBI_ID, SCHED,
+                                                            SP0, SP1, DWRR_EN,
+                                                            DWRR0, DWRR1, DWRR2,
+                                                            DWRR3, DWRR4, DWRR5,
+                                                            DWRR6, DWRR7)
+        #define_eval SCHED (SCHED + 1)
+    #endloop
+    #undef SCHED
+#endm
 
 /** Nbi_TrafficManager_ShaperCfg
  *
@@ -453,7 +533,207 @@
     #endif
 #endm
 
+/** Nbi_TrafficManager_Init_L2L1_Schedulers
+ *
+ * Traffic Manager L2/L1 scheduler initialization
+ */
+#macro Nbi_TrafficManager_Init_L2L1_Schedulers()
 
+        /* NBI 0 TM L2 L1 Scheduler Config Range #0*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE0)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE0))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #1*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE1)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE1))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #2*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE2)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE2))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #3*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE3)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE3))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #4*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE4)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE4))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #5*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE5)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE5))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #6*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE6)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE6))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #7*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE7)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE7))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #8*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE8)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE8))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #9*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE9)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE9))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #10*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE10)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE10))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #11*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE11)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE11))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #12*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE12)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE12))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #13*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE13)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE13))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #14*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE14)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE14))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #15*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE15)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE15))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #16*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE16)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE16))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #17*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE17)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE17))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #18*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE18)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE18))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #19*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE19)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE19))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #20*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE20)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE20))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #21*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE21)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE21))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #22*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE22)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE22))
+    #endif
+    /* NBI 0 TM L2 L1 Scheduler Config Range #23*/
+    #if ENABLE_SCHED(NBI0_TM_L2L1_SCHED_CFG_RANGE23)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(0, SCHED_CFG_PARAMS(NBI0_TM_L2L1_SCHED_CFG_RANGE23))
+    #endif
+
+    /* NBI 1 TM L2 L1 Scheduler Config Range #0*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE0)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE0))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #1*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE1)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE1))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #2*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE2)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE2))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #3*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE3)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE3))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #4*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE4)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE4))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #5*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE5)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE5))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #6*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE6)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE6))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #7*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE7)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE7))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #8*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE8)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE8))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #9*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE9)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE9))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #10*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE10)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE10))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #11*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE11)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE11))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #12*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE12)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE12))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #13*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE13)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE13))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #14*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE14)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE14))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #15*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE15)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE15))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #16*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE16)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE16))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #17*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE17)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE17))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #18*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE18)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE18))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #19*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE19)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE19))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #20*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE20)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE20))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #21*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE21)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE21))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #22*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE22)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE22))
+    #endif
+    /* NBI 1 TM L2 L1 Scheduler Config Range #23*/
+    #if ENABLE_SCHED(NBI1_TM_L2L1_SCHED_CFG_RANGE23)
+        Nbi_TrafficManager_L2L1_SchedulerCfg(1, SCHED_CFG_PARAMS(NBI1_TM_L2L1_SCHED_CFG_RANGE23))
+    #endif
+
+#endm
 /** Nbi_TrafficManager_Init
  *
  * Traffic Manager initialisation
@@ -1122,6 +1402,9 @@
 
     /* Initialize all of the rate shapers */
     Nbi_TrafficManager_Init_Shapers()
+
+    /* Initialize the L2 and L1 schedulers */
+    Nbi_TrafficManager_Init_L2L1_Schedulers()
 
     #define_eval NBI_ID (0)
     #while (NBI_ID < NBI_COUNT)

@@ -176,5 +176,103 @@
 
 #endm
 
+/** Nbi_TrafficManager_TMSchedulerReg_L2L1SchedulerEntry
+ *
+ * Configures L2 and L1 schedulers. See the NFP-6xxx Databook section on the NBI Traffic Manager
+ *
+ * @param NBI_ID      The NBI number, can be 0 or 1
+ * @param SCHED_NUM   L2 (0 to 127) or L1 (128 to 143) scheduler number
+ * @param SP0         Strict Priority Zero Enable bit. Set this bit to enable
+ *                    scheduler port 0 as the strict priority 0 port. SP0 will
+ *                    have priority over all other ports, including SP1.
+ * @param SP1         Strict Priority One Enable bit. Set this bit to enable
+ *                    scheduler port 1 as the strict priority 1 port. SP1 will
+ *                    have priority over all other ports except for SP0.
+ * @param DWRR_EN     Deficit Weighted Round Robin Enable bit. Set this bit to
+ *                    enable deficit weighted round operation for the particular
+ *                    scheduler.
+ * @param DWRR[0..7]  Scheduler weight value to configure the relative
+ *                    bandwidth for each scheduler port.
+ */
+#macro Nbi_TrafficManager_TMSchedulerReg_L2L1SchedulerEntry(NBI_ID, SCHED_NUM, SP0, SP1, DWRR_EN, DWRR0, DWRR1, DWRR2, DWRR3, DWRR4, DWRR5, DWRR6, DWRR7)
+
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMSchedulerReg.SchedulerConfig/**/SCHED_NUM.SP1Enable     SP0     const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMSchedulerReg.SchedulerConfig/**/SCHED_NUM.SP0Enable     SP1     const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMSchedulerReg.SchedulerConfig/**/SCHED_NUM.DWRREnable    DWRR_EN const
+    #if (DWRR_EN == 1)
+        #if (SCHED_NUM < 128)
+            #define_eval S_W_OFFS (SCHED_NUM * 8)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR0   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS ((SCHED_NUM * 8) + 1)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR1   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS ((SCHED_NUM * 8) + 2)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR2   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS ((SCHED_NUM * 8) + 3)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR3   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS ((SCHED_NUM * 8) + 4)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR4   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS ((SCHED_NUM * 8) + 5)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR5   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS ((SCHED_NUM * 8) + 6)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR6   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS ((SCHED_NUM * 8) + 7)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR7   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL2Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #undef S_W_OFFS
+
+        #elif (SCHED_NUM < 143)
+             #define_eval S_W_OFFS ((128 - SCHED_NUM) * 8)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR0   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS (((128 - SCHED_NUM) * 8) + 1)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR1   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS (((128 - SCHED_NUM) * 8) + 2)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR2   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS (((128 - SCHED_NUM) * 8) + 3)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR3   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS (((128 - SCHED_NUM) * 8) + 4)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR4   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS (((128 - SCHED_NUM) * 8) + 5)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR5   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS (((128 - SCHED_NUM) * 8) + 6)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR6   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #define_eval S_W_OFFS (((128 - SCHED_NUM) * 8) + 7)
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Weight.SchedulerWeight/**/S_W_OFFS.Weight   DWRR7   const
+            .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.SchedulerL1Deficit.SchedulerDeficit/**/S_W_OFFS.Deficit   0   const
+
+            #undef S_W_OFFS
+        #endif
+
+    #endif
+
+#endm
 
 #endif /* _INIT_NBI_TM_CSR_UC_ */
