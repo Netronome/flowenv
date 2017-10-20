@@ -44,6 +44,7 @@
 
 /* Blocks */
 #ifdef PKTIO_NFD_ENABLED
+#include <shared/nfp_net_ctrl.h>
 #include <vnic/pci_in.h>
 #include <vnic/pci_out.h>
 #endif
