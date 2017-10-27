@@ -250,7 +250,7 @@ PKTIO_META_TYPE struct pktio_meta pkt;
  * win just to compute the CTM size manually.
  */
 __intrinsic static void
-compute_ctm_size(__xread struct PKT_NBI_META_STRUCT *rxd)
+compute_ctm_size(__xread struct pktio_nbi_meta *rxd)
 {
     /* if SPLIT_LEN == 0, assume initialized to 0 already */
 #if SPLIT_LENGTH > 0
@@ -368,21 +368,27 @@ drop_packet()
 
 #endif
 
+__intrinsic void
+pktio_rx_wire_issue(__xread void *nbi_meta, size_t nbi_meta_size, sync_t sync,
+                    SIGNAL *sig)
+{
+    __pkt_nbi_recv_with_hdrs(nbi_meta, nbi_meta_size, PKT_NBI_OFFSET,
+                             sync, sig);
+}
 
 __intrinsic int
-pktio_rx_wire(void)
+pktio_rx_wire_process(__xread void *nbi_meta)
 {
-    __xread struct PKT_NBI_META_STRUCT nbi_rxd;
+    __xread struct pktio_nbi_meta *nbi_rxd = nbi_meta;
 
-    pkt_nbi_recv_with_hdrs(&nbi_rxd, sizeof(nbi_rxd), PKT_NBI_OFFSET);
     reg_zero((void *)pkt.__raw, sizeof(pkt));
     pkt.p_offset = PKT_NBI_OFFSET + NBI_PKT_PREPEND_BYTES;
-    pkt.p_nbi = nbi_rxd.nbi.pkt_info;
+    pkt.p_nbi = nbi_rxd->nbi.pkt_info;
     pkt.p_len -= NBI_PKT_PREPEND_BYTES;
     pkt.p_orig_len = pkt.p_len;
-    pkt.p_src = PKT_WIRE_PORT(nbi_rxd.nbi.meta_type,
-                              PORT_TO_CHANNEL(nbi_rxd.nbi.port));
-    compute_ctm_size(&nbi_rxd);
+    pkt.p_src = PKT_WIRE_PORT(nbi_rxd->nbi.meta_type,
+                              PORT_TO_CHANNEL(nbi_rxd->nbi.port));
+    compute_ctm_size(nbi_rxd);
 
     /**
      * If sequencer > 0, we set the reorder context.
@@ -397,22 +403,22 @@ pktio_rx_wire(void)
      * Sequencer 0 is for unsequenced packets, leave reorder context at 0 for
      * no reordering
      */
-    pkt.p_seq = nbi_rxd.nbi.seq;
-    if (nbi_rxd.nbi.seqr) {
+    pkt.p_seq = nbi_rxd->nbi.seq;
+    if (nbi_rxd->nbi.seqr) {
         __critical_path();
         /* map NBI seqr's to GRO or map NBI seqr's to NBI if GRO disabled */
-        pkt.p_ro_ctx = PKTIO_NBI_SEQD_MAP_SEQR(nbi_rxd.nbi.seqr);
+        pkt.p_ro_ctx = PKTIO_NBI_SEQD_MAP_SEQR(nbi_rxd->nbi.seqr);
 #ifdef PKTIO_GRO_ENABLED
-        pkt.p_is_gro_seq = PKTIO_NBI_SEQD_MAP_ISGRO(nbi_rxd.nbi.seqr);
+        pkt.p_is_gro_seq = PKTIO_NBI_SEQD_MAP_ISGRO(nbi_rxd->nbi.seqr);
 #endif
     }
 
 #if NBI_PKT_PREPEND_BYTES >= 8
     /* Set the MAC prepend checksum info for layer 3*/
-    if (nbi_rxd.mac.l3_info == NFP_MAC_RX_CSUM_L3_IPV4_OK) {
+    if (nbi_rxd->mac.l3_info == NFP_MAC_RX_CSUM_L3_IPV4_OK) {
         pkt.p_rx_ipv4_csum_ok = 1;
         pkt.p_rx_ipv4_csum_present = 1;
-    } else if (nbi_rxd.mac.l3_info == NFP_MAC_RX_CSUM_L3_IPV4_FAIL) {
+    } else if (nbi_rxd->mac.l3_info == NFP_MAC_RX_CSUM_L3_IPV4_FAIL) {
         pkt.p_rx_ipv4_csum_ok = 0;
         pkt.p_rx_ipv4_csum_present = 1;
     } else {
@@ -420,57 +426,64 @@ pktio_rx_wire(void)
     }
 
     /* Set the MAC prepend checksum info for layer 4*/
-    if (nbi_rxd.mac.csum_status == NFP_MAC_RX_CSUM_L4_TCP_OK) {
+    if (nbi_rxd->mac.csum_status == NFP_MAC_RX_CSUM_L4_TCP_OK) {
         __critical_path();
         pkt.p_rx_l4_tcp = 1;
         pkt.p_rx_l4_csum_ok = 1;
         pkt.p_rx_l4_csum_present = 1;
-    } else if (nbi_rxd.mac.csum_status == NFP_MAC_RX_CSUM_L4_TCP_FAIL) {
+    } else if (nbi_rxd->mac.csum_status == NFP_MAC_RX_CSUM_L4_TCP_FAIL) {
         pkt.p_rx_l4_tcp = 1;
         pkt.p_rx_l4_csum_ok = 0;
         pkt.p_rx_l4_csum_present = 1;
-    } else if (nbi_rxd.mac.csum_status == NFP_MAC_RX_CSUM_L4_UDP_OK) {
+    } else if (nbi_rxd->mac.csum_status == NFP_MAC_RX_CSUM_L4_UDP_OK) {
         /* Note UDP_OK is also returned when
          * the checksum is not populated (=0) */
         pkt.p_rx_l4_csum_ok = 1;
         pkt.p_rx_l4_csum_present = 1;
-    } else if (nbi_rxd.mac.csum_status == NFP_MAC_RX_CSUM_L4_UDP_FAIL) {
+    } else if (nbi_rxd->mac.csum_status == NFP_MAC_RX_CSUM_L4_UDP_FAIL) {
         pkt.p_rx_l4_csum_ok = 0;
         pkt.p_rx_l4_csum_present = 1;
     }
 
-    pkt.p_timestamp = nbi_rxd.mac.timestamp;
+    pkt.p_timestamp = nbi_rxd->mac.timestamp;
 #endif
 
 #ifdef NBI_MAC_MATCHED
-    pkt.p_rx_mac_matched = NBI_MAC_MATCHED(nbi_rxd.nbi);
+    pkt.p_rx_mac_matched = NBI_MAC_MATCHED(nbi_rxd->nbi);
 #endif
 
     /* Check for metadata invalid. */
-    if (nbi_rxd.nbi.meta_valid == 0) {
+    if (nbi_rxd->nbi.meta_valid == 0) {
         PKTIO_CNTR_INC(PKTIO_CNTR_INVALID_METADATA_FROM_WIRE);
         return -1;
     }
 
-    if (NBI_METADATA_ERR_CHECK(nbi_rxd.nbi)) {
-        HANDLE_NBI_METADATA_ERR(nbi_rxd);
+    if (NBI_METADATA_ERR_CHECK(nbi_rxd->nbi)) {
+        HANDLE_NBI_METADATA_ERR(*nbi_rxd);
     }
 
     PKTIO_CNTR_INC(PKTIO_CNTR_RX_FROM_WIRE);
     return 0;
 }
 
+__intrinsic int
+pktio_rx_wire(void)
+{
+    SIGNAL sig;
+    __xread struct pktio_nbi_meta nbi_rxd;
+
+    pktio_rx_wire_issue(&nbi_rxd, sizeof(nbi_rxd), ctx_swap, &sig);
+
+    return pktio_rx_wire_process(&nbi_rxd);
+}
+
+
 #ifdef PKTIO_NFD_ENABLED
 __intrinsic int
-pktio_rx_host(void)
+pktio_rx_host_issue(__xread struct nfd_in_pkt_desc *nfd_rxd, sync_t sync,
+                    SIGNAL *sig)
 {
-    __xread struct nfd_in_pkt_desc nfd_rxd;
     uint32_t ctm_pnum;
-    uint16_t i, cpy_end, cpy_start;
-    __xread uint64_t buf_xr[8];
-    __xwrite uint64_t buf_xw[8];
-    __addr40 void *ctm_ptr;
-    __addr40 void *mu_ptr;
 
     /* First allocate a CTM, this is where TM looks for the buffer
      * metadata and beginning of the packet.  To minimise the amount
@@ -485,12 +498,23 @@ pktio_rx_host(void)
     }
 
     /* now receive the next packet from host */
-    nfd_in_recv(0, NFD_IN_WQ, &nfd_rxd);
+    __nfd_in_recv(0, NFD_IN_WQ, nfd_rxd, sync, sig);
+
+    return ctm_pnum;
+}
+
+__intrinsic int
+pktio_rx_host_process(__xread struct nfd_in_pkt_desc *nfd_rxd, int ctm_pnum)
+{
+    uint16_t i, cpy_end, cpy_start;
+    __xread uint64_t buf_xr[8];
+    __xwrite uint64_t buf_xw[8];
+    __addr40 void *ctm_ptr;
+    __addr40 void *mu_ptr;
 
     reg_zero((void *)pkt.__raw, sizeof(pkt));
     /* nbi_meta (pkt_info) is located in the first two words of pktio_meta */
-    nfd_in_fill_meta((void *)&pkt.p_nbi,
-                     (__xread struct nfd_in_pkt_desc *)&nfd_rxd);
+    nfd_in_fill_meta((void *)&pkt.p_nbi, nfd_rxd);
 
     pkt.p_isl = __ISLAND;
     pkt.p_pnum = ctm_pnum;
@@ -499,18 +523,19 @@ pktio_rx_host(void)
     pkt.p_orig_len = pkt.p_len;
     pkt.p_ctm_size = NFD_CTM_TYPE;
 
-    pkt.p_src = PKT_HOST_PORT_FROMQ(nfd_rxd.intf, NFD_BMQ2NATQ(nfd_rxd.q_num));
+    pkt.p_src = PKT_HOST_PORT_FROMQ(nfd_rxd->intf,
+                                    NFD_BMQ2NATQ(nfd_rxd->q_num));
 
 #ifdef MAC_EGRESS_PREPEND_ENABLE
     /* Checksum offloads */
-    if (nfd_rxd.flags & PCIE_DESC_TX_CSUM) {
-        if (nfd_rxd.flags & PCIE_DESC_TX_ENCAP) {
+    if (nfd_rxd->flags & PCIE_DESC_TX_CSUM) {
+        if (nfd_rxd->flags & PCIE_DESC_TX_ENCAP) {
             pkt.p_tx_l3_csum = 1;
             pkt.p_tx_l4_csum = 1;
         } else {
-            if (nfd_rxd.flags & PCIE_DESC_TX_IP4_CSUM)
+            if (nfd_rxd->flags & PCIE_DESC_TX_IP4_CSUM)
                 pkt.p_tx_l3_csum = 1;
-            if (nfd_rxd.flags &
+            if (nfd_rxd->flags &
                 (PCIE_DESC_TX_TCP_CSUM | PCIE_DESC_TX_UDP_CSUM))
                 pkt.p_tx_l4_csum = 1;
         }
@@ -518,10 +543,10 @@ pktio_rx_host(void)
 #endif
 
     /* Tunnel packet */
-    if (nfd_rxd.flags & (PCIE_DESC_TX_ENCAP))
+    if (nfd_rxd->flags & (PCIE_DESC_TX_ENCAP))
         pkt.p_tunnel = 1;
 
-    pkt.p_seq = nfd_in_get_seqn((__xread struct nfd_in_pkt_desc *)&nfd_rxd);
+    pkt.p_seq = nfd_in_get_seqn(nfd_rxd);
 
     /**
      * Map NFD seqr to GRO or NBI or no reordering
@@ -534,32 +559,33 @@ pktio_rx_host(void)
      * to GRO or NBI.
      * Leave reorder context at 0 for no reordering
      */
-    pkt.p_ro_ctx = PKTIO_NFD_SEQD_MAP_SEQR(NFD_IN_SEQR_NUM(nfd_rxd.q_num));
+    pkt.p_ro_ctx = PKTIO_NFD_SEQD_MAP_SEQR(NFD_IN_SEQR_NUM(nfd_rxd->q_num));
 
 #ifdef PKTIO_GRO_ENABLED
-    pkt.p_is_gro_seq = PKTIO_NFD_SEQD_MAP_ISGRO(NFD_IN_SEQR_NUM(nfd_rxd.q_num));
+    pkt.p_is_gro_seq =
+            PKTIO_NFD_SEQD_MAP_ISGRO(NFD_IN_SEQR_NUM(nfd_rxd->q_num));
 #endif
 
 #ifdef PKTIO_LSO_ENABLED
     /* Setup the LSO flags if requested */
-    if (nfd_rxd.flags & PCIE_DESC_TX_LSO) {
+    if (nfd_rxd->flags & PCIE_DESC_TX_LSO) {
         pkt.p_tx_lso = 1;
-        pkt.p_tx_lso_end = nfd_rxd.lso_end;
+        pkt.p_tx_lso_end = nfd_rxd->lso_end;
 #ifdef NFP_NET_CFG_CTRL_LSO2
-        pkt.p_tx_lso_seq = nfd_rxd.lso_seq_cnt;
+        pkt.p_tx_lso_seq = nfd_rxd->lso_seq_cnt;
 #else
-        pkt.p_tx_lso_seq = nfd_rxd.l4_offset;
+        pkt.p_tx_lso_seq = nfd_rxd->l4_offset;
 #endif
-        pkt.p_tx_mss = nfd_rxd.mss;
+        pkt.p_tx_mss = nfd_rxd->mss;
     }
 #endif
 
 #ifdef PKTIO_VLAN_ENABLED
-    if (nfd_rxd.flags & PCIE_DESC_TX_VLAN)
-        pkt.p_vlan = nfd_rxd.vlan;
+    if (nfd_rxd->flags & PCIE_DESC_TX_VLAN)
+        pkt.p_vlan = nfd_rxd->vlan;
 #endif
 
-    if (nfd_rxd.invalid) {
+    if (nfd_rxd->invalid) {
         PKTIO_CNTR_INC(PKTIO_CNTR_ERR_FROM_HOST);
         return -1;
     }
@@ -567,12 +593,12 @@ pktio_rx_host(void)
     __critical_path();
 
     cpy_start = NFD_IN_DATA_OFFSET & ~0x3F;
-    if ((nfd_rxd.data_len + NFD_IN_DATA_OFFSET) > NFD_CTM_SIZE) {
+    if ((nfd_rxd->data_len + NFD_IN_DATA_OFFSET) > NFD_CTM_SIZE) {
         pkt.p_is_split = 1;
         cpy_end = NFD_CTM_SIZE;
     } else {
         pkt.p_is_split = 0;
-        cpy_end = nfd_rxd.data_len + NFD_IN_DATA_OFFSET;
+        cpy_end = nfd_rxd->data_len + NFD_IN_DATA_OFFSET;
     }
 
     /* TODO - investigate use of CTM DMA to do data copy or other
@@ -593,7 +619,20 @@ pktio_rx_host(void)
      * is done only when transmit on wire. If tx is to host (PCIe),
      * then we skip this step. */
     PKTIO_CNTR_INC(PKTIO_CNTR_RX_FROM_HOST);
+
     return 0;
+}
+
+__intrinsic int
+pktio_rx_host(void)
+{
+    SIGNAL sig;
+    __xread struct nfd_in_pkt_desc nfd_rxd;
+    int ctm_pnum;
+
+    ctm_pnum = pktio_rx_host_issue(&nfd_rxd, ctx_swap, &sig);
+
+    return pktio_rx_host_process(&nfd_rxd, ctm_pnum);
 }
 #endif
 

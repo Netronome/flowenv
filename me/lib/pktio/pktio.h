@@ -90,6 +90,58 @@
  *
  *      pktio_tx();
  *   }
+ * It is possible to use the "issue" and "process" variants of the rx
+ * calls to use the same thread for different packet sources. For example:
+ *
+ *   for (;;) {
+ *       if (!nfd_in_progress) {
+ *           pkt_num = pktio_rx_host_issue(..., sig_done, &sig_nfd);
+ *           nfd_in_progress = 1;
+ *       }
+ *       if (!nbi_in_progress) {
+ *          pktio_rx_wire_issue(..., sig_done, &sig_nbi);
+ *          nbi_in_progress = 1;
+ *       }
+ *       for (;;) {
+ *           // this gives nbi priority, round robin is recommended
+ *           if (signal_test(&sig_nfd)) {
+ *               to_process = NBI;
+ *               break;
+ *           }
+ *           if (signal_test(&sig_nbi)) {
+ *               to_process = NFD;
+ *               break;
+ *           }
+ *           wait_for_any(&sig_nfd, &sig_nbi);
+ *       }
+ *       if (to_process == NBI) {
+ *           pktio_rx_wire_process(...);
+ *           nbi_in_progress = 0;
+ *       } else {
+ *           pktio_rx_wire_process(...)
+ *           nfd_in_progress = 0;
+ *       }
+ *
+ *       # PACKET PROCESSING HERE
+ *
+ *       pktio_tx();
+ *   }
+ *
+ * Note that implementation a scheme as above will require global transfer
+ * registers to be allocated for both the NBI and NFD issue commands. Doing
+ * so might only be practical for designs using 4 context mode. One should
+ * expect a reasonable performance increase with having all threads servicing
+ * both traffic types.
+ *
+ * It is important to note that receiving from two or more sources at the same
+ * time can also lead to suboptimal situations a thread can receive a packet
+ * but not be ready to process it due to its current processing. This can occur
+ * while other threads may be waiting idle for a packet. Furthermore, improper
+ * processing of multiple sources can lead to deadlock.  For example, two
+ * threads could each be waiting to submit their packet to reordering (while
+ * the reorder queue is full) while each thread has the packet blocking
+ * reordering progress for the other's queue waiting in their transfer
+ * registers.
  *
  * There is no reason that the choice for a thread to receive from the
  * wire versus the host must be based on the thread number (ctx()), but
@@ -117,7 +169,7 @@
  * that manages packetized PCIe access or on NFP-managed rings all use
  * "work queues".  Work queues simplify ordering assurances and decrease
  * polling and code store requirements in the system compared with
- * vanilla memory rings.  They are also the ONLY possiblity for
+ * vanilla memory rings.  They are also the ONLY possibility for
  * receiving traffic from the wire due to the hardware design (and NFD
  * is also not trivial to change).
  *
@@ -327,7 +379,7 @@
  *   VLN - VLAN indication
  *   CSUM - 16 bits csum value
  */
-struct pkt_mac_prepend {
+struct pktio_mac_prepend {
     union {
         struct {
             unsigned int timestamp:32;
@@ -352,11 +404,11 @@ struct pkt_mac_prepend {
  * NBI metadata struct comprised of 24 bytes of catamaran metadata as well
  * as 8 bytes of prepended MAC metadata (pkt/pkt.h).
  */
-struct pkt_nbi_meta {
+struct pktio_nbi_meta {
     union {
         struct {
             struct nbi_meta_catamaran   nbi;
-            struct pkt_mac_prepend      mac;
+            struct pktio_mac_prepend    mac;
         };
         uint32_t __raw[8];
     };
@@ -377,8 +429,6 @@ struct pkt_nbi_meta {
 };
 #endif /* NBI_PKT_PREPEND_BYTES >= 8 */
 
-
-#define PKT_NBI_META_STRUCT pkt_nbi_meta
 
 #ifdef PKTIO_VLAN_ENABLED
  #define PKTIO_NBI_META_LW_VLAN 1
@@ -557,7 +607,6 @@ enum {
 /* Thread-local pkt metadata */
 extern PKTIO_META_TYPE struct pktio_meta pkt;
 
-
 /**
  * Receive a packet from the wire and populate the packet metadata.
  *
@@ -569,6 +618,38 @@ extern PKTIO_META_TYPE struct pktio_meta pkt;
 __intrinsic int pktio_rx_wire(void);
 
 /**
+ * Issue a request for a wire packet. This should be followed by a
+ * pktio_rx_wire_process call once the request is signalled complete.
+ * Note that 'nbi_meta' must be at least the size of the 'pktio_nbi_meta'.
+ * It may also be up to 128 bytes. All data beyond the size of 'pktio_nbi_meta'
+ * will be packet data copied from the offset PKT_NBI_OFFSET. Note that
+ * if the MAC prepend is enabled, the prepend data will be included in the
+ * 'pktio_nbi_meta' data and the effective packet data offset will be
+ * sizeof(pktio_nbi_meta.nbi) + NBI_PKT_PREPEND_BYTES
+ *
+ * @param nbi_meta       Pointer to NBI metadata read transfer buffer to use
+ * @param nbi_meta_size  Size of the NBI metadata buffer
+ * @param sync           Type of synchronisation (sig_done or ctx_swap)
+ * @param sig            Signal to use
+ *
+ */
+__intrinsic void
+pktio_rx_wire_issue(__xread void *nbi_meta, size_t nbi_meta_size,
+                    sync_t sync, SIGNAL *sig);
+
+/**
+ * Process the result of an NBI RX issue. This should be preceded by a
+ * pktio_rx_wire_issue call.
+ *
+ * @param nfd_meta  Pointer to NBI metadata read transfer buffer to use
+ *
+ * @return -1 on error and 0 otherwise
+ *
+ */
+__intrinsic int
+pktio_rx_wire_process(__xread void *nbi_meta);
+
+/**
  * Receive a packet from the host and populate the packet metadata
  *
  * @return -1 on error and 0 otherwise
@@ -577,6 +658,34 @@ __intrinsic int pktio_rx_wire(void);
  * packet buffers.
  */
 __intrinsic int pktio_rx_host(void);
+
+/**
+ * Claim a host packet buffer and issue a request for a host packet. This should
+ * be followed by a pktio_rx_host_process call once the request is signalled
+ * complete.
+ *
+ * @param nbi_rxd   Pointer to NFD metadata read transfer buffer to use
+ * @param sync      Type of synchronisation (sig_done or ctx_swap)
+ * @param sig       Signal to use
+ *
+ * @return the claimed CTM packet number
+ */
+__intrinsic int
+pktio_rx_host_issue(__xread struct nfd_in_pkt_desc *nfd_rxd, sync_t sync,
+                    SIGNAL *sig);
+
+/**
+ * Process the result of a host RX issue. This should be preceded by a
+ * pktio_rx_host_issue call
+ *
+ * @param nfd_rxd   Pointer to NFD metadata read transfer buffer to use
+ * @param ctm_pnum  Previously claimed CTM packet number
+ *
+ * @return -1 on error and 0 otherwise
+ *
+ */
+__intrinsic int
+pktio_rx_host_process(__xread struct nfd_in_pkt_desc *nfd_rxd, int ctm_pnum);
 
 /**
  * Receive a packet from a work queue
