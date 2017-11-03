@@ -442,4 +442,23 @@ __intrinsic int he_esp_fit(sz, off);
  */
 __intrinsic unsigned int he_esp(void *src_buf, int off, void *dst);
 
+/**
+ * Check if the buffer of size @sz with current offset @off has
+ * enough space to contain a AH header.
+ */
+__intrinsic int he_ah_fit(sz, off);
+
+/**
+ * Extract an AH header starting from an offset in the buffer.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within the @src_buf where the AH
+ *                 header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
+ *
+ * @dst must point to a struct ah_hdr or larger.
+ * The length encoded in the return value is: sizeof(struct ah_hdr).
+ */
+__intrinsic unsigned int he_ah(void *src_buf, int off, void *dst);
+
 #endif /* _HDR_EXT_H_ */

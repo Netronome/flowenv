@@ -29,6 +29,7 @@
 #include "tcp.h"
 #include "udp.h"
 #include "esp.h"
+#include "ah.h"
 #include "vxlan.h"
 
 /*
@@ -814,6 +815,39 @@ he_esp(void *src_buf, int off, void *dst)
 #define __HE_ESP ((__gpr struct esp_hdr *)dst)
         HE_ESP_FUNC(__HE_ESP);
 #undef __HE_ESP
+    }
+
+    return ret;
+}
+
+
+__intrinsic int
+he_ah_fit(sz, off)
+{
+    ctassert(__is_ct_const(sz));
+    ctassert(sz >= sizeof(struct ah_hdr));
+    return (off + sizeof(struct ah_hdr)) <= sz;
+}
+
+#define HE_AH_FUNC(dst)                                                    \
+    *dst = *(__lmem struct ah_hdr *)(((__lmem char *)src_buf) + off);      \
+    ret = HE_RES(HE_UNKNOWN, sizeof(struct ah_hdr));
+
+__intrinsic unsigned int
+he_ah(void *src_buf, int off, void *dst)
+{
+    __gpr unsigned int ret;
+    ctassert(__is_in_lmem(src_buf));
+    ctassert(__is_in_reg_or_lmem(dst));
+
+    if (__is_in_lmem(dst)) {
+#define __HE_AH ((__lmem struct ah_hdr *)dst)
+        HE_AH_FUNC(__HE_AH);
+#undef __HE_AH
+    } else {
+#define __HE_AH ((__gpr struct ah_hdr *)dst)
+        HE_AH_FUNC(__HE_AH);
+#undef __HE_AH
     }
 
     return ret;
