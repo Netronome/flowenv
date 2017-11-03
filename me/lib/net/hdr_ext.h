@@ -154,7 +154,13 @@ enum he_proto {
 
     HE_NON_PROTO =   0x8000, /** Start of non-proto return vals */
 
-    HE_ERROR =       0xe000, /** Start of error codes */
+    HE_ERROR =              0xe000, /** General error */
+    HE_ERROR_IP4_BAD_VER =  0xe001, /** Invalid IP version */
+    HE_ERROR_IP4_BAD_HL =   0xe002, /** Invalid header length */
+    HE_ERROR_IP4_BAD_TTL =  0xe003, /** Invalid TTL */
+
+    HE_ERROR_IP6_BAD_VER =          0xe010, /** Invalid IP version */
+    HE_ERROR_IP6_BAD_HOP_LIMIT =    0xe011, /** Invalid Hop Limit */
 
     HE_UNKNOWN =     0xffff, /** Unknown/unhandled header */
 

@@ -386,6 +386,18 @@ he_ip4_fit(sz, off)
     return (off + sizeof(struct ip4_hdr)) <= sz;
 }
 
+#ifdef ADD_NET_IP4_CHECK
+#define HE_IP4_CHECK(_dst)                                              \
+    if (_dst->ver != 4)                                                 \
+        next_proto = HE_ERROR_IP4_BAD_VER;                              \
+    if (_dst->hl < 5)                                                   \
+        next_proto = HE_ERROR_IP4_BAD_HL;                               \
+    if (_dst->ttl <= 1)                                                 \
+        next_proto = HE_ERROR_IP4_BAD_TTL;
+#else
+#define HE_IP4_CHECK(_dst)
+#endif
+
 #define HE_IP4_FUNC(dst)                                                \
     *dst = *(__lmem struct ip4_hdr *)(((__lmem char *)src_buf) + off);  \
                                                                         \
@@ -399,6 +411,8 @@ he_ip4_fit(sz, off)
     CASE_NET_IP_PROTO_SCTP                                              \
     default: next_proto = HE_UNKNOWN;                                   \
     }                                                                   \
+                                                                        \
+    HE_IP4_CHECK(dst)                                                   \
                                                                         \
     if (dst->frag & NET_IP_FLAGS_MF)                                    \
         next_proto = HE_UNKNOWN;                                        \
@@ -439,6 +453,16 @@ he_ip6_fit(sz, off)
     return (off + sizeof(struct ip6_hdr)) <= sz;
 }
 
+#ifdef ADD_NET_IP6_CHECK
+#define HE_IP6_CHECK(_dst)                                              \
+    if (_dst->ver != 6)                                                 \
+        next_proto = HE_ERROR_IP6_BAD_VER;                              \
+    if (_dst->hl <= 1)                                                  \
+        next_proto = HE_ERROR_IP6_BAD_HOP_LIMIT;
+#else
+#define HE_IP6_CHECK(_dst)
+#endif
+
 /* We use this portion of the switch statement in several places for
  * parsing IPv6 and extension header. Define it as a macro to avoid
  * code duplication.*/
@@ -465,6 +489,9 @@ he_ip6_fit(sz, off)
     switch(dst->nh) {                                                   \
         _IP6_PROTO_SWITCH;                                              \
     }                                                                   \
+                                                                        \
+    HE_IP6_CHECK(dst)                                                   \
+                                                                        \
     ret = HE_RES(next_proto, sizeof(struct ip6_hdr));
 
 __intrinsic unsigned int
