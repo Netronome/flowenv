@@ -152,9 +152,24 @@ enum he_proto {
     HE_IP6_HOST_ID = 0x107, /** IPv6 Host Identity Extension header */
     HE_IP6_SHIM6 =   0x108, /** IPv6 Shim6 Extension header */
 
+    HE_NON_PROTO =   0x8000, /** Start of non-proto return vals */
+
+    HE_ERROR =       0xe000, /** Start of error codes */
+
     HE_UNKNOWN =     0xffff, /** Unknown/unhandled header */
+
+    /* MAX he_proto value is 16 bits */
 };
 
+#define HE_RESULT_IS_PROTO(res)         (((res) & 0x80000000) == 0)
+#define HE_RESULT_IS_ERROR(res)         (((res) >> 28) == 0xe)
+#define HE_RESULT_IS_UNKNOWN(res)       (((res) >> 28) == 0xf)
+#define HE_RESULT_IS_UNK_OR_ERR(res)    (((res) >> 29) == 0x7)
+
+#define HE_PROTO_IS_PROTO(proto)        (((proto) & 0x8000) == 0)
+#define HE_PROTO_IS_ERROR(proto)        (((proto) >> 12) == 0xe)
+#define HE_PROTO_IS_UNKNOWN(proto)      (((proto) >> 12) == 0xf)
+#define HE_PROTO_IS_UNK_OR_ERR(proto)   (((proto) >> 13) == 0x7)
 
 /**
  * Check if the buffer of size @sz with current offset @off has
