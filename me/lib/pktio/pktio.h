@@ -309,6 +309,24 @@
 
 #include <pkt/pkt.h>
 #include <nfp/mem_ring.h>
+
+/*
+ * 35 == offset of 3 MU address bits in C0 40-bit addressing
+ *   Those 3 bits are:
+ *      1b0 | 2bxx for IMU island 28+xx
+ *      1b1 | 2bxx for EMU island 24+xx
+ * 8 == the right shift of that address in a mem_ring_addr_t
+ * 24 == the base island of EMUs in B0
+ * 28 == the base island of IMUs in B0
+ */
+/* XXX MEM_RING_ADDR_TO_MUID does not support emem_cache symbols currently */
+#define MEM_RING_ADDR_TO_MUID(_x) (((_x) >> (35 - 8)) & 0x7)
+#define ISL_TO_MUID(_x) \
+    (((_x) <= 26) ? (((_x) - 24) | 4) : ((_x) - 28))
+#define MUID_TO_MEM_RING_ADDR(_x) ((_x) << (35 - 8))
+#define MUID_TO_ISL(_x) \
+    (((_x) < 4) ? ((_x) + 28) : (((_x) & 0x3) + 24))
+
 #ifdef PKTIO_NFD_ENABLED
 #include <shared/nfd_common.h>
 #endif
