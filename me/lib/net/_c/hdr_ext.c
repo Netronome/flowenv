@@ -28,6 +28,7 @@
 #include "sctp.h"
 #include "tcp.h"
 #include "udp.h"
+#include "esp.h"
 #include "vxlan.h"
 
 /*
@@ -780,6 +781,39 @@ he_icmp(void *src_buf, int off, void *dst)
 #define __HE_ICMP ((__gpr struct icmp_hdr *)dst)
         HE_ICMP_FUNC(__HE_ICMP);
 #undef __HE_ICMP
+    }
+
+    return ret;
+}
+
+
+__intrinsic int
+he_esp_fit(sz, off)
+{
+    ctassert(__is_ct_const(sz));
+    ctassert(sz >= sizeof(struct esp_hdr));
+    return (off + sizeof(struct esp_hdr)) <= sz;
+}
+
+#define HE_ESP_FUNC(dst)                                                    \
+    *dst = *(__lmem struct esp_hdr *)(((__lmem char *)src_buf) + off);      \
+    ret = HE_RES(HE_UNKNOWN, sizeof(struct esp_hdr));
+
+__intrinsic unsigned int
+he_esp(void *src_buf, int off, void *dst)
+{
+    __gpr unsigned int ret;
+    ctassert(__is_in_lmem(src_buf));
+    ctassert(__is_in_reg_or_lmem(dst));
+
+    if (__is_in_lmem(dst)) {
+#define __HE_ESP ((__lmem struct esp_hdr *)dst)
+        HE_ESP_FUNC(__HE_ESP);
+#undef __HE_ESP
+    } else {
+#define __HE_ESP ((__gpr struct esp_hdr *)dst)
+        HE_ESP_FUNC(__HE_ESP);
+#undef __HE_ESP
     }
 
     return ret;

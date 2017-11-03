@@ -1,4 +1,4 @@
-/*
+    /*
  * Copyright 2012-2016 Netronome, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -157,7 +157,7 @@ enum he_proto {
 
 
 /**
- * Check if the a buffer of size @sz with current offset @off has
+ * Check if the buffer of size @sz with current offset @off has
  * enough space to contain a Ethernet header.
  */
 __intrinsic int he_eth_fit(sz, off);
@@ -178,7 +178,7 @@ __intrinsic int he_eth_fit(sz, off);
 __intrinsic unsigned int he_eth(void *src_buf, int off, void *dst);
 
 /**
- * Check if the a buffer of size @sz with current offset @off has
+ * Check if the buffer of size @sz with current offset @off has
  * enough space to contain a 802.1Q (VLAN) header.
  */
 __intrinsic int he_vlan_fit(sz, off);
@@ -218,7 +218,7 @@ __intrinsic unsigned int he_arp(void *src_buf, int off, void *dst);
 
 
 /**
- * Check if the a buffer of size @sz with current offset @off has
+ * Check if the buffer of size @sz with current offset @off has
  * enough space to contain a IPv4 header.
  */
 __intrinsic int he_ip4_fit(sz, off);
@@ -243,7 +243,7 @@ __intrinsic unsigned int he_ip4(void *src_buf, int off, void *dst);
 
 
 /**
- * Check if the a buffer of size @sz with current offset @off has
+ * Check if the buffer of size @sz with current offset @off has
  * enough space to contain a IPv6 header.
  */
 __intrinsic int he_ip6_fit(sz, off);
@@ -265,7 +265,7 @@ __intrinsic unsigned int he_ip6(void *src_buf, int off, void *dst);
 
 
 /**
- * Check if the a buffer of size @sz with current offset @off has
+ * Check if the buffer of size @sz with current offset @off has
  * enough space to contain a TCP header.
  */
 __intrinsic int he_tcp_fit(sz, off);
@@ -285,7 +285,7 @@ __intrinsic unsigned int he_tcp(void *src_buf, int off, void *dst);
 
 
 /**
- * Check if the a buffer of size @sz with current offset @off has
+ * Check if the buffer of size @sz with current offset @off has
  * enough space to contain a UDP header.
  */
 __intrinsic int he_udp_fit(sz, off);
@@ -385,7 +385,7 @@ __intrinsic unsigned int he_mpls(void *src_buf, int off, void *dst);
 
 
 /**
- * Check if the a buffer of size @sz with current offset @off has
+ * Check if the buffer of size @sz with current offset @off has
  * enough space to contain a SCTP header.
  */
 __intrinsic int he_sctp_fit(sz, off);
@@ -405,7 +405,7 @@ __intrinsic unsigned int he_sctp(void *src_buf, int off, void *dst);
 
 
 /**
- * Check if the a buffer of size @sz with current offset @off has
+ * Check if the buffer of size @sz with current offset @off has
  * enough space to contain a ICMP or ICMPv6 header.
  */
 __intrinsic int he_icmp_fit(sz, off);
@@ -422,5 +422,24 @@ __intrinsic int he_icmp_fit(sz, off);
  * The length encoded in the return value is: sizeof(struct icmp_hdr).
  */
 __intrinsic unsigned int he_icmp(void *src_buf, int off, void *dst);
+
+/**
+ * Check if the buffer of size @sz with current offset @off has
+ * enough space to contain a ESP header.
+ */
+__intrinsic int he_esp_fit(sz, off);
+
+/**
+ * Extract an ESP header starting from an offset in the buffer.
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within the @src_buf where the ESP
+ *                 header starts
+ * @param dst      Pointer to buffer in to which to return the extracted header
+ * @return         Length and next protocol header indication.
+ *
+ * @dst must point to a struct esp_hdr or larger.
+ * The length encoded in the return value is: sizeof(struct esp_hdr).
+ */
+__intrinsic unsigned int he_esp(void *src_buf, int off, void *dst);
 
 #endif /* _HDR_EXT_H_ */
