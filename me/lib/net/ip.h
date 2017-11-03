@@ -86,6 +86,8 @@
     (NET_IP_IS_MCAST(_addr) || NET_IP_IS_BCAST(_addr))
 
 
+#define NET_IP6_MCAST_ADDR      0xFF
+
 #if defined(__NFP_LANG_MICROC)
 
 #include <nfp.h>
@@ -193,6 +195,28 @@ __packed struct ip6_dst {
     uint32_t opt_or_pad1;               /** Options or padding */
     /* Potentially followed by more options */
 };
+
+/**
+ * Check if IPv6 address is Multicast
+ *
+ * @param a     pointer for buffer containing IPv6 address to be evaluated
+ *
+ * @return      True or False
+ */
+__intrinsic static int
+net_ipv6_is_mc_addr(void *a)
+{
+    int is_mc_addr;
+    ctassert(__is_in_reg_or_lmem(a));
+    if (__is_in_lmem(a)) {
+        is_mc_addr = (((__lmem struct in6_addr *)a)->s6_addr[0] ==
+                      NET_IP6_MCAST_ADDR);
+    } else {
+        is_mc_addr = (((__gpr struct in6_addr *)a)->s6_addr[0] ==
+                      NET_IP6_MCAST_ADDR);
+    }
+    return is_mc_addr;
+}
 
 #endif /* __NFP_LANG_MICROC */
 
