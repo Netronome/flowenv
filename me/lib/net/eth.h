@@ -188,6 +188,27 @@ net_eth_is_uc_addr(void *_a)
 
 #endif /* MicroC code */
 
+
+/**
+ * Copy eth addr from source to dest
+ *
+ * @param d destination MAC addr
+ * @param s source MAC addr
+ */
+__intrinsic static void
+net_eth_cp_addr(void *d, void *s)
+{
+    ctassert(__is_in_reg_or_lmem(d));
+    ctassert(__is_in_reg_or_lmem(s));
+    if (__is_in_lmem(s)) {
+        ctassert(__is_in_lmem(d));
+        *(__lmem struct eth_addr *)d = *(__lmem struct eth_addr *)s;
+    } else {
+        ctassert(__is_in_reg(d));
+        *(__gpr struct eth_addr *)d = *(__gpr struct eth_addr *)s;
+    }
+}
+
 #endif /* _NET_ETH_H_ */
 
 /* -*-  Mode:C; c-basic-offset:4; tab-width:4 -*- */
