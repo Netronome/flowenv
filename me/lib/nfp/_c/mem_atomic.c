@@ -155,6 +155,77 @@ do {                                                                           \
     __asm { mem[cmdname, --, addr_hi, <<8, addr_lo, 1], indirect_ref }         \
 } while(0)
 
+#define _MEM_ATOMIC_CMD_BMASK(cmdname, data, addr, bmask, size, max_size,      \
+                              sync, sig)                                       \
+do {                                                                           \
+    struct nfp_mecsr_prev_alu ind;                                             \
+    unsigned int count = size >> 2;                                            \
+    unsigned int max_count = max_size >> 2;                                    \
+    unsigned int addr_hi, addr_lo;                                             \
+                                                                               \
+    try_ctassert(size != 0);                                                   \
+    ctassert(__is_ct_const(max_size));                                         \
+    ctassert(__is_ct_const(sync));                                             \
+    ctassert(sync == sig_done || sync == ctx_swap);                            \
+    try_ctassert(count <= 8);                                                  \
+                                                                               \
+    /* This code is inefficient if addr is >256B aligned, */                   \
+    /* but will work for 40bit or 32bit pointers. */                           \
+                                                                               \
+    addr_hi = ((unsigned long long int)addr >> 8) & 0xff000000;                \
+    addr_lo = (unsigned long long int)addr & 0xffffffff;                       \
+                                                                               \
+    /* Setup byte mask and length in PrevAlu for the indirect */               \
+    ind.__raw = 0;                                                             \
+    ind.ove_data = 6;                                                          \
+    ind.ov_len = 1;                                                            \
+    ind.length = (1 << 3) | (count - 1);                                       \
+    ind.data16 = bmask & 0xff;                                                 \
+                                                                               \
+    if (sync == sig_done) {                                                    \
+        __asm { alu[--, --, B, ind.__raw] }                                    \
+        __asm { mem[cmdname, *data, addr_hi, <<8, addr_lo,                     \
+                    __ct_const_val(max_count)], sig_done[*sig], indirect_ref } \
+    } else {                                                                   \
+        __asm { alu[--, --, B, ind.__raw] }                                    \
+        __asm { mem[cmdname, *data, addr_hi, <<8, addr_lo,                     \
+                    __ct_const_val(max_count)], ctx_swap[*sig], indirect_ref } \
+    }                                                                          \
+} while (0)
+
+#define _MEM_ATOMIC_CMD_BMASK_TEST(cmdname, data, addr, bmask, size, max_size, \
+                                   sync, sig_pair)                             \
+do {                                                                           \
+    struct nfp_mecsr_prev_alu ind;                                             \
+    unsigned int count = size >> 2;                                            \
+    unsigned int max_count = max_size >> 2;                                    \
+    unsigned int addr_hi, addr_lo;                                             \
+                                                                               \
+    try_ctassert(size != 0);                                                   \
+    ctassert(__is_ct_const(max_size));                                         \
+    ctassert(__is_ct_const(sync));                                             \
+    ctassert(sync == sig_done);                                                \
+    try_ctassert(count <= 8);                                                  \
+                                                                               \
+    /* This code is inefficient if addr is >256B aligned, */                   \
+    /* but will work for 40bit or 32bit pointers. */                           \
+                                                                               \
+    addr_hi = ((unsigned long long int)addr >> 8) & 0xff000000;                \
+    addr_lo = (unsigned long long int)addr & 0xffffffff;                       \
+                                                                               \
+    /* Setup byte mask and length in PrevAlu for the indirect */               \
+    ind.__raw = 0;                                                             \
+    ind.ove_data = 6;                                                          \
+    ind.ov_len = 1;                                                            \
+    ind.length = (1 << 3) | (count - 1);                                       \
+    ind.data16 = bmask & 0xff;                                                 \
+                                                                               \
+    __asm { alu[--, --, B, ind.__raw] }                                        \
+    __asm { mem[cmdname, *data, addr_hi, <<8, addr_lo,                         \
+                __ct_const_val(max_count)], sig_done[*sig_pair],               \
+                indirect_ref }                                                 \
+} while (0)
+
 __intrinsic void
 __mem_read_atomic(__xread void *data, __mem void *addr,
                   size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
@@ -376,6 +447,26 @@ mem_bitclr(__xwrite void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
+__mem_cmp_write(__xwrite void *data, __mem void *addr, unsigned int byte_mask,
+                size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
+{
+    ctassert(__is_write_reg(data));
+    try_ctassert(size <= 32);
+
+    _MEM_ATOMIC_CMD_BMASK(mask_compare_write, data, addr, byte_mask, size,
+                          max_size, sync, sig);
+}
+
+__intrinsic void
+mem_cmp_write(__xwrite void *data, __mem void *addr, unsigned int byte_mask,
+              size_t size)
+{
+    SIGNAL sig;
+
+    __mem_cmp_write(data, addr, byte_mask, size, size, ctx_swap, &sig);
+}
+
+__intrinsic void
 __mem_test_set(__xrw void *data, __mem void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
@@ -448,6 +539,28 @@ mem_test_sub(__xrw void *data, __mem void *addr, size_t size)
     SIGNAL_PAIR sig_pair;
 
     __mem_test_sub(data, addr, size, size, sig_done, &sig_pair);
+    __wait_for_all(&sig_pair);
+}
+
+__intrinsic void
+__mem_test_cmp_write(__xrw void *data, __mem void *addr,
+                     unsigned int byte_mask, size_t size,
+                     const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
+{
+    try_ctassert(size <= 32);
+
+    _MEM_ATOMIC_CMD_BMASK_TEST(test_mask_compare_write, data, addr, byte_mask,
+                               size, max_size, sync, sig_pair);
+}
+
+__intrinsic void
+mem_test_cmp_write(__xrw void *data, __mem void *addr, unsigned int byte_mask,
+                   size_t size)
+{
+    SIGNAL_PAIR sig_pair;
+
+    __mem_test_cmp_write(data, addr, byte_mask, size, size, sig_done,
+                         &sig_pair);
     __wait_for_all(&sig_pair);
 }
 

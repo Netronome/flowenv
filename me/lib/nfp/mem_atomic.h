@@ -176,6 +176,40 @@ __intrinsic void mem_bitclr(__xwrite void *data,
                             __mem void *addr, size_t size);
 
 /**
+ * Atomic compare and conditional write of one or more 32-bit values.
+ * @param data       Pointer to sufficient transfer registers for the op.
+ * @param addr       40-bit pointer to the first value in memory.
+ * @param byte_mask  Byte mask to use for the comparison (from 0x1 to 0xF).
+ * @param size       Size of the op, must be a multiple of 4.
+ * @param max_size   Used to determine largest op, if size is not a constant.
+ * @param sync       Type of synchronisation (sig_done or ctx_swap).
+ * @param sig        Signal to use.
+ *
+ * @note Setting bit X in the byte_mask means that byte X should be compared.
+ * @note Largest supported size is 32 bytes.
+ * @note Largest supported max_size is 32 bytes; must be a multiple of 4.
+ *
+ * These functions provide an atomic comparison of the original masked memory
+ * contents with the masked transfer register value, along with a conditional
+ * write of the unmasked transfer register value to the memory location if the
+ * comparison succeeds.  This atomic operation can be represented as follows:
+ *     mask = (((byte_mask & 0x1) ? 0x000000ff : 0) |
+ *             ((byte_mask & 0x2) ? 0x0000ff00 : 0) |
+ *             ((byte_mask & 0x4) ? 0x00ff0000 : 0) |
+ *             ((byte_mask & 0x8) ? 0xff000000 : 0));
+ *     for (n = 0; n < size; ++n)
+ *         if ((memory[addr + n] & mask) == (data[n] & mask))
+ *             memory[addr + n] = data[n];
+ */
+__intrinsic void __mem_cmp_write(__xwrite void *data, __mem void *addr,
+                                 unsigned int byte_mask, size_t size,
+                                 const size_t max_size, sync_t sync,
+                                 SIGNAL *sig);
+
+__intrinsic void mem_cmp_write(__xwrite void *data, __mem void *addr,
+                               unsigned int byte_mask, size_t size);
+
+/**
  * Atomic test and set/clr bits in multiple of 4B values (EMEM, IMEM, or CTM).
  * @param data      Pointer to sufficient RW transfer registers for the op
  * @param addr      40-bit pointer to the first value in memory
@@ -230,6 +264,43 @@ __intrinsic void __mem_test_sub(__xrw void *data, __mem void *addr,
 
 __intrinsic void mem_test_sub(__xrw void *data, __mem void *addr,
                               size_t size);
+
+/**
+ * Atomic test, compare and conditional write of one or more 32-bit values.
+ * @param data       Pointer to sufficient RW transfer registers for the op.
+ * @param addr       40-bit pointer to the first value in memory.
+ * @param byte_mask  Byte mask to use for the comparison (from 0x1 to 0xF).
+ * @param size       Size of the op, must be a multiple of 4.
+ * @param max_size   Used to determine largest op, if size is not a constant.
+ * @param sync       Type of synchronization (must be sig_done)
+ * @param sig_pair   Signal pair to use
+ *
+ * @note Setting bit X in the byte_mask means that byte X should be compared.
+ * @note Largest supported size is 32 bytes.
+ * @note Largest supported max_size is 32 bytes; must be a multiple of 4.
+ *
+ * These functions will store the original memory content in the RW transfer
+ * register, then provide an atomic comparison of the original masked memory
+ * contents with the masked transfer register value, along with a conditional
+ * write of the unmasked transfer register value to the memory location if the
+ * comparison succeeds.  This atomic operation can be represented as follows:
+ *     mask = (((byte_mask & 0x1) ? 0x000000ff : 0) |
+ *             ((byte_mask & 0x2) ? 0x0000ff00 : 0) |
+ *             ((byte_mask & 0x4) ? 0x00ff0000 : 0) |
+ *             ((byte_mask & 0x8) ? 0xff000000 : 0));
+ *     for (n = 0; n < size; ++n) {
+ *         data.read[n] = memory[addr + n];
+ *         if ((memory[addr + n] & mask) == (data.write[n] & mask))
+ *             memory[addr + n] = data.write[n];
+ *     }
+ */
+__intrinsic void __mem_test_cmp_write(__xrw void *data, __mem void *addr,
+                                      unsigned int byte_mask, size_t size,
+                                      const size_t max_size, sync_t sync,
+                                      SIGNAL_PAIR *sig_pair);
+
+__intrinsic void mem_test_cmp_write(__xrw void *data, __mem void *addr,
+                                    unsigned int byte_mask, size_t size);
 
 /*
  * The NFP MU atomic engine provides support for metering.  This metering can
