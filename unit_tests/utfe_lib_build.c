@@ -47,9 +47,7 @@
 #include <lu/cam_hash.h>
 
 // /* libblm related header files */
-// #include <blm/blm.h>
-
-
+#include <blm/blm.h>
 
 
 /*
@@ -99,8 +97,6 @@ tests:
 </yaml>
 */
 
-
-
 /* prototypes */
 int32_t utfe_lib_build_compile(void);
 
@@ -109,15 +105,22 @@ int32_t utfe_lib_build_compile(void);
     #define UTFE_LIB_BUILD_COMPILE
 #endif
 
-//     #define NBI_PKT_PREPEND_BYTES 0
+// these defines are needed by libpktio.c and libpktio.c
+#define NBI_PKT_PREPEND_BYTES       0
+#define SPLIT_LENGTH                3
+#define CHANNEL_TO_TMQ(y)           (y << 3)
+#define PORT_TO_CHANNEL(x)          (x << 4)
+#define PKT_NBI_OFFSET              64
+#define PKTIO_NBI_SEQD_MAP_SEQR
 
+// the purpose of this test is just to compile the library files, no specific test is done
 #include "../me/lib/lu/liblu.c"
 #include "../me/lib/modscript/libmodscript.c"
 #include "../me/lib/net/libnet.c"
 #include "../me/lib/nfp/libnfp.c"
 #include "../me/lib/pkt/libpkt.c"
-// #include "../me/lib/pktdma/libpktdma.c"      // TODO fix warnings
-// #include "../me/lib/pktio/libpktio.c"        // TODO fix errors/warnings?
+#include "../me/lib/pktdma/libpktdma.c"      // TODO fix warnings
+#include "../me/lib/pktio/libpktio.c"
 #include "../me/lib/std/libstd.c"
 
 
@@ -178,11 +181,9 @@ void main(void)
 */
 int32_t utfe_lib_build_compile(void)
 {
+    // The purpose of this test is just to compile the library files, no specific test is done
+    
     // PASS
     return 0;
 }
-
-
-
-
 

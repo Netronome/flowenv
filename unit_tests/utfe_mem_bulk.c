@@ -1,11 +1,10 @@
 
-/** @file test_nfp_mem_readwrite8.c
-* Copyright (C) 2008-2013 Netronome Systems, Inc.  All rights reserved.
-*/
-
 #include <nfp.h>
-#include <nfp/me.h>
 #include <assert.h>
+#include <nfp/me.h>
+#include <nfp/mem_bulk.h>
+#include <pkt/pkt.h>
+
 
 /*
 <yaml>
@@ -61,7 +60,7 @@ tests:
 int32_t utfe_mem_bulk_write_read_64(void);
 int32_t utfe_mem_bulk_write_read_32(void);
 
-#ifdef PS // Programmer studio
+#ifdef ALL_TEST
     #define UTFE_MEM_BULK_WRITE_READ_64
     #define UTFE_MEM_BULK_WRITE_READ_32
 #endif
@@ -69,15 +68,15 @@ int32_t utfe_mem_bulk_write_read_32(void);
 
 
 /* globals */
+#define MAX_SIZE    16
 
-__xread uint32_t global_read_reg[16];
-__xwrite uint32_t global_write_reg[16];
+__xread uint32_t global_read_reg[MAX_SIZE];
+__xwrite uint32_t global_write_reg[MAX_SIZE];
 
 uint32_t test_value = 0x33221100;
-uint32_t alternate_test_value = 0x12345600;
+
 
 /* main test loop */
-
 void main(void)
 {
     uint32_t tests_passed = 0;
@@ -91,7 +90,7 @@ void main(void)
     }
     
     // setup write registers
-    for (i = 0; i <= 15; i++)
+    for (i = 0; i < MAX_SIZE; i++)
     {
         global_write_reg[i] = test_value + i;
     }
@@ -129,52 +128,25 @@ void main(void)
         local_csr_write(local_csr_mailbox0, 1);     // ERROR
     }
 
-#ifdef PS
+#ifdef ALL_TEST
     local_csr_write(local_csr_mailbox2, tests_passed);                  // number of test passed
     local_csr_write(local_csr_mailbox3, tests_failed + tests_passed);   // number of test excuted
 #endif
 
-#ifndef PS
-    for (i = 0; i < 10; i++)
-    {
-        __asm nop;
-    }
+    for (;;)
+        ;
 
-    /* Force a breakpoint at the end of the test */
-    __asm ctx_arb[bpt]
-#endif
+
+// #ifndef ALL_TEST
+//     for (i = 0; i < 10; i++)
+//     {
+//         __asm nop;
+//     }
+// 
+//     /* Force a breakpoint at the end of the test */
+//     __asm ctx_arb[bpt]
+// #endif
 }
-
-
-/*
- * This operation is supplied as a function and not a macro because
- * experience with the 'nfcc' compiler has shown that a simple,
- * single expression will not compile correctly and that the type
- * casting for the intermediate values must be done carefully.
- *
- * A 40-bit packet-address mode pointer in CTM is built as follows:
- *
- *  Bits[2;38] -- Must be 0b10 for "direct access"
- *  Bits[6;32] -- The island of the CTM. (can use '0' for the local island)
- *  Bits[1;31] -- Must be set to 1 to enable packet-addressing mode
- *  Bits[6;25] -- reserved
- *  Bits[9;16] -- The packet number of the CTM buffer
- *  Bits[2;14] -- reserved
- *  Bits[14;0] -- The offset within the CTM buffer
- *
- * Unfortunately, this is only partly documented in the NFP DB.
- */
-__intrinsic __addr40 void *pkt_ctm_ptr40(uint32_t isl, unsigned int pnum, unsigned int off)
-{
-    __gpr unsigned int lo;
-    __gpr unsigned int hi;
-
-    hi = 0x80 | isl;
-    lo = 0x80000000u | (pnum << 16) | off;
-
-    return (__addr40 void *)(((unsigned long long)hi << 32) | (unsigned long long)lo);
-}
-
 
 
 
@@ -190,25 +162,23 @@ __intrinsic __addr40 void *pkt_ctm_ptr40(uint32_t isl, unsigned int pnum, unsign
 int32_t utfe_mem_bulk_write_read_64(void)
 {
     __addr40 uint8_t   *paddr = (__addr40 uint8_t*)0x100;
-    uint32_t            count = 32;
 
-    mem_write64((void*)global_write_reg, paddr, count);
-    mem_read64((void*)global_read_reg, paddr, count);
+    mem_write64((void*)global_write_reg, paddr, sizeof(global_write_reg));
+    mem_read64((void*)global_read_reg, paddr, sizeof(global_read_reg));
 
     // Verify that first word
-    if (global_read_reg[0] != test_value)
+    if (global_read_reg[MAX_SIZE - 1] != test_value + MAX_SIZE - 1)
     {
         // FAIL
-        local_csr_write(local_csr_mailbox1, __LINE__);                // line nr
-        local_csr_write(local_csr_mailbox2, test_value );           // expected
-        local_csr_write(local_csr_mailbox3, global_read_reg[0]);       // actual
+        local_csr_write(local_csr_mailbox1, __LINE__);                      // line nr
+        local_csr_write(local_csr_mailbox2, (test_value + MAX_SIZE - 1));   // expected
+        local_csr_write(local_csr_mailbox3, global_read_reg[MAX_SIZE - 1]); // actual
         return 1;
     }
 
     // PASS
     return 0;
 }
-
 
 
 /*
@@ -222,34 +192,29 @@ int32_t utfe_mem_bulk_write_read_64(void)
 */
 int32_t utfe_mem_bulk_write_read_32(void)
 {
+    __gpr uint32_t test_val = 0x1234abc0;   // some random test value
     __addr40 void *pbuf;
-    __xwrite uint32_t xcmd = 0x1234abcd;
+    __xwrite uint32_t xcmd = test_val;
     __xread uint32_t result;
     SIGNAL sig;
-    uint32_t off = 64;
+    uint32_t off = 0;
 
-
-//     __RT_ASSERT(off >= 20);
-//     pbuf = pkt_ctm_ptr40(__ME(), 128, 0);   // 24
-    pbuf = pkt_ctm_ptr40(24, 128, 0);   // 24: emem0
-
-//     local_csr_write(local_csr_mailbox2, (uint32_t)(((uint64_t)pbuf)>>32));
-//     local_csr_write(local_csr_mailbox3, (uint32_t)((uint64_t)pbuf + off));
-
-//     __intrinsic void __mem_write32(__xwrite void *data, __mem void *addr, size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
-//     __mem_write32(xcmd, (__addr40 uint8_t *) pbuf + off - 4, sizeof(*xcmd), sizeof(*xcmd), sync, sig);
-    __mem_write32(&xcmd, (__addr40 uint8_t *)pbuf + off, sizeof(xcmd), sizeof(xcmd), ctx_swap, &sig);
-
-//     mem_read32(__xread void *data, __mem void *addr, const size_t size)
+    // 0: ctm on this island, 1: addr 0x0001_0000, 4: addr offset
+    pbuf = pkt_ctm_ptr40(0, 1, 4);
+    mem_write32(&xcmd, (__addr40 uint8_t *)pbuf + off, sizeof(xcmd));
     mem_read32(&result, (__addr40 uint8_t *)pbuf + off, sizeof(result));
 
+    // nfp-mem -v -l32 i32.ctm:0x00010000'
+    // 0x0000010000:  0x00000000 0x1234abc0 0x00000000 0x00000000
+    // 0x0000010010:  0x00000000 0x00000000 0x00000000 0x00000000
+
     // Verify
-    if (result != 0x1234abcd)
+    if (result != test_val)
     {
         // FAIL
-        local_csr_write(local_csr_mailbox1, __LINE__);          // line nr
-        local_csr_write(local_csr_mailbox2, 0x1234abcd);        // expected
-        local_csr_write(local_csr_mailbox3, result);            // actual
+        local_csr_write(local_csr_mailbox1, __LINE__);      // line nr
+        local_csr_write(local_csr_mailbox2, test_val);      // expected
+        local_csr_write(local_csr_mailbox3, result);        // actual
         return 1;
     }
 
