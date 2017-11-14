@@ -380,7 +380,6 @@ __mem_test_set(__xrw void *data, __mem void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
     try_ctassert(size <= 32);
-    ctassert(__is_ct_const(size));
 
     _MEM_ATOMIC_CMD_TEST(test_set, data, addr, size, max_size, sync, sig_pair,
                          2, _MEM_ATOMIC_32_CMD);
@@ -400,7 +399,6 @@ __mem_test_clr(__xrw void *data, __mem void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
     try_ctassert(size <= 32);
-    ctassert(__is_ct_const(size));
 
     _MEM_ATOMIC_CMD_TEST(test_clr, data, addr, size, max_size, sync, sig_pair,
                          2, _MEM_ATOMIC_32_CMD);
@@ -420,7 +418,6 @@ __mem_test_add(__xrw void *data, __mem void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
     try_ctassert(size <= 16);
-    ctassert(__is_ct_const(size));
 
     _MEM_ATOMIC_CMD_TEST(test_add, data, addr, size, max_size, sync, sig_pair,
                          2, _MEM_ATOMIC_32_CMD);
@@ -440,7 +437,6 @@ __mem_test_sub(__xrw void *data, __mem void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
     try_ctassert(size <= 16);
-    ctassert(__is_ct_const(size));
 
     _MEM_ATOMIC_CMD_TEST(test_sub, data, addr, size, max_size, sync, sig_pair,
                          2, _MEM_ATOMIC_32_CMD);
