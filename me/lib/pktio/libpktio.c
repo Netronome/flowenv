@@ -507,8 +507,7 @@ pktio_rx_host_process(__xread struct nfd_in_pkt_desc *nfd_rxd, int ctm_pnum)
     pkt.p_orig_len = pkt.p_len;
     pkt.p_ctm_size = NFD_CTM_TYPE;
 
-    pkt.p_src = PKT_HOST_PORT_FROMQ(nfd_rxd->intf,
-                                    NFD_BMQ2NATQ(nfd_rxd->q_num));
+    pkt.p_src = PKT_HOST_PORT_FROMQ(nfd_rxd->intf, nfd_rxd->q_num);
 
 #ifdef MAC_EGRESS_PREPEND_ENABLE
     /* Checksum offloads */
