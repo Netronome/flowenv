@@ -35,6 +35,7 @@
 #include "_c/mem_atomic.c"
 #include "_c/mem_bulk.c"
 #include "_c/mem_cam.c"
+#include "_c/mem_lkup.c"
 #include "_c/mem_pe.c"
 #include "_c/mem_ring.c"
 #include "_c/pcie.c"
