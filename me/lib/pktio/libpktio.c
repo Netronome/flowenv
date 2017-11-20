@@ -391,9 +391,11 @@ pktio_rx_wire_process(__xread void *nbi_meta)
     if (nbi_rxd->nbi.seqr) {
         __critical_path();
         /* map NBI seqr's to GRO or map NBI seqr's to NBI if GRO disabled */
-        pkt.p_ro_ctx = PKTIO_NBI_SEQD_MAP_SEQR(nbi_rxd->nbi.seqr);
+        pkt.p_ro_ctx = PKTIO_NBI_SEQD_MAP_SEQR(nbi_rxd->nbi.meta_type,
+                                               nbi_rxd->nbi.seqr);
 #ifdef PKTIO_GRO_ENABLED
-        pkt.p_is_gro_seq = PKTIO_NBI_SEQD_MAP_ISGRO(nbi_rxd->nbi.seqr);
+        pkt.p_is_gro_seq = PKTIO_NBI_SEQD_MAP_ISGRO(nbi_rxd->nbi.meta_type,
+                                                    nbi_rxd->nbi.seqr);
 #endif
     }
 
@@ -542,11 +544,13 @@ pktio_rx_host_process(__xread struct nfd_in_pkt_desc *nfd_rxd, int ctm_pnum)
      * to GRO or NBI.
      * Leave reorder context at 0 for no reordering
      */
-    pkt.p_ro_ctx = PKTIO_NFD_SEQD_MAP_SEQR(NFD_IN_SEQR_NUM(nfd_rxd->q_num));
+    pkt.p_ro_ctx = PKTIO_NFD_SEQD_MAP_SEQR(nfd_rxd->intf,
+                                           NFD_IN_SEQR_NUM(nfd_rxd->q_num));
 
 #ifdef PKTIO_GRO_ENABLED
     pkt.p_is_gro_seq =
-            PKTIO_NFD_SEQD_MAP_ISGRO(NFD_IN_SEQR_NUM(nfd_rxd->q_num));
+            PKTIO_NFD_SEQD_MAP_ISGRO(nfd_rxd->intf,
+                                     NFD_IN_SEQR_NUM(nfd_rxd->q_num));
 #endif
 
 #ifdef PKTIO_LSO_ENABLED

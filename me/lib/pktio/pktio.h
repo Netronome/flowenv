@@ -302,6 +302,25 @@
  *       defining PKTIO_MAX_TM_QUEUES. This value must be a power of 2. If not
  *       set, the Traffic Manager queue number may get truncated by a mask based
  *       default maximum.
+ *
+ * SEQUENCERS AND GLOBAL REORDER (GRO)
+ *
+ * Packets receive a sequence number when they are received, from a sequencer
+ * associated with the ingress port.  They are reordered based on the sequence
+ * number before they egress, either by the NBI hardware or in software by GRO.
+ * Library users must specify their desired mapping from ingress sequencers to
+ * egress sequencers.  The following macros returning the egress sequencer
+ * should be defined:
+ * PKTIO_NBI_SEQD_MAP_SEQR(_nbi, _seqr), _nbi is 0 or 1
+ * PKTIO_NFD_SEQD_MAP_SEQR(_pci, _seqr), _pci is in 0..3
+ *
+ * If GRO is used, the following macros should also be defined, returning 1
+ * if GRO should be used for this sequencer and 0 otherwise:
+ * PKTIO_NBI_SEQD_MAP_ISGRO(_nbi, _seqr)
+ * PKTIO_NFD_SEQD_MAP_ISGRO(_pci, _seqr)
+ *
+ * If only one PCI island or NBI is used, the _pci or _nbi parameter in the
+ * macros above can be unused in the actual definition.
  */
 
 #ifndef __PKTIO_H__
