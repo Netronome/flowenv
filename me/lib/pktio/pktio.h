@@ -258,9 +258,22 @@
  *     numbers.
  *
  *   - PKT_HOST_PORT() builds a destination from a PCIe island number
- *     (0..3), a VNIC number and a queue number within that VNIC.  In
- *     most NFP hardware, the queue number will be 0 as the NFP can not
- *     support multi-queue VF VNICs at this time.
+ *     (0..3), a VNIC reference and a queue number within that VNIC.  Two
+ *     styles of VNIC references are supported: <vid> and <vtype, vnic>.
+ *     <vid> references a VNIC as an index withing all the VNICs on a PCIe
+ *     island.  <vtype, vnic> references a VNIC as a type (NFD_VNIC_TYPE_PF,
+ *     NFD_VNIC_TYPE_VF, or NFD_VNIC_TYPE_CTRL) and an index within the
+ *     VNICs of that type.  By default PKT_HOST_PORT() wraps
+ *     PKT_HOST_PORT_VID(), but it can be redefined by the user to wrap
+ *     PKT_HOST_PORT_VNIC().
+ *
+ *     The choice of whether to use <vid> or <vtype, vnic> APIs depends
+ *     on a user's current and future needs.  If only one type of vNIC
+ *     is required, or if the state of all vNICs is stored in a single
+ *     large table, <vid> would be preferable.  If multiple types of
+ *     vNICs are used, and the processing and state for each is
+ *     significantly different, the <vtype, vnic> APIs would be
+ *     preferable.
  *
  *   - PKT_WQ_PORT_BYNAME() builds a work queue destination given the
  *     symbol name used to create the work queue (see mem_ring.h).
@@ -604,8 +617,13 @@ enum {
 #define PKT_HOST_PORT_FROMQ(_pcie, _q) \
     PKT_SET_PORT(PKT_PTYPE_HOST, (_pcie), (_q))
 #if defined (NFD_VNIC_TYPE_VF) && defined (NFD_VNIC_TYPE_PF)
-#define PKT_HOST_PORT(_pcie, _vid, _q) \
-    PKT_HOST_PORT_FROMQ(_pcie, NFD_VID2QID((_vid), (_q)))
+#define PKT_HOST_PORT_VNIC(_pcie, _vtype, _vnic, _q)                \
+    PKT_HOST_PORT_FROMQ(_pcie, NFD_BUILD_QID(_vtype, _vnic, _q))
+#define PKT_HOST_PORT_VID(_pcie, _vid, _q) \
+    PKT_HOST_PORT_FROMQ(_pcie, NFD_VID2QID(_vid, _q))
+#ifndef PKT_HOST_PORT
+#define PKT_HOST_PORT(_pcie, _vid, _q) PKT_HOST_PORT_VID(_pcie, _vid, _q)
+#endif
 #else
 #define PKT_HOST_PORT(_pcie, _vnic, _q) \
     PKT_HOST_PORT_FROMQ(_pcie, NFD_BUILD_QID((_vnic), (_q)))
@@ -621,6 +639,12 @@ enum {
 #define PKT_PORT_SUBSYS_of(_port)       (((_port) >> 10) & 0x7)
 #define PKT_PORT_DROPTYPE_of(_port)     ((_port) & 0xff)
 #define PKT_PORT_QUEUE_of(_port)        ((_port) & ((PKTIO_MAX_TM_QUEUES) - 1))
+#if defined (NFD_VNIC_TYPE_VF) && defined (NFD_VNIC_TYPE_PF)
+#define PKT_PORT_EXTRACT_VNIC(_vtype, _vnic, _vqn, _port) \
+    NFD_EXTRACT_QID(_vtype, _vnic, _vqn, PKT_PORT_QUEUE_of(_port))
+#define PKT_PORT_EXTRACT_VID(_vid, _vqn, _port) \
+    NFD_QID2VID(_vid, _vqn, PKT_PORT_QUEUE_of(_port))
+#endif
 #ifdef NFD_VNIC_TYPE_VF
 #define PKT_PORT_VFVNIC_of(_vf)         NFD_VF2VID(NFD_NATQ2VF((_vf)))
 #else
