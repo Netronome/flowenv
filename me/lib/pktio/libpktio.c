@@ -585,7 +585,7 @@ pktio_rx_host_process(__xread struct nfd_in_pkt_desc *nfd_rxd, int ctm_pnum)
         cpy_end = NFD_CTM_SIZE;
     } else {
         pkt.p_is_split = 0;
-        cpy_end = nfd_rxd->data_len + NFD_IN_DATA_OFFSET;
+        cpy_end = pkt.p_len + NFD_IN_DATA_OFFSET;
     }
 
     /* TODO - investigate use of CTM DMA to do data copy or other
