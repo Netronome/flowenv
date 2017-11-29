@@ -105,6 +105,10 @@ struct pktio_handle {
         #error "PKTIO_NFD_SEQD_MAP_ISGRO must be defined to configure GRO reordering for NFD"
         #endif
     #endif
+
+    #ifndef PKTIO_NFD_CPY_START
+        #define PKTIO_NFD_CPY_START (NFD_IN_DATA_OFFSET & ~0x3F)
+    #endif
 #endif
 
 
@@ -579,7 +583,8 @@ pktio_rx_host_process(__xread struct nfd_in_pkt_desc *nfd_rxd, int ctm_pnum)
 
     __critical_path();
 
-    cpy_start = NFD_IN_DATA_OFFSET & ~0x3F;
+    ctassert(__is_aligned(PKTIO_NFD_CPY_START, 64));
+    cpy_start = PKTIO_NFD_CPY_START;
     cpy_end = pkt.p_len + NFD_IN_DATA_OFFSET;
     if (cpy_end > NFD_CTM_SIZE) {
         pkt.p_is_split = 1;

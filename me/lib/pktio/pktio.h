@@ -334,6 +334,12 @@
  *
  * If only one PCI island or NBI is used, the _pci or _nbi parameter in the
  * macros above can be unused in the actual definition.
+ *
+ * OPTIONAL DEFINES
+ *
+ * PKTIO_NFD_CPY_START      Specifies the offset to start copying host packet
+ *                          data from in MU into CTM.  Must be 64B aligned.
+ *                          Defaults to "NFD_IN_DATA_OFFSET & ~0x3F".
  */
 
 #ifndef __PKTIO_H__
