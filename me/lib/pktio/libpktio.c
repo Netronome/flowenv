@@ -580,12 +580,12 @@ pktio_rx_host_process(__xread struct nfd_in_pkt_desc *nfd_rxd, int ctm_pnum)
     __critical_path();
 
     cpy_start = NFD_IN_DATA_OFFSET & ~0x3F;
-    if ((nfd_rxd->data_len + NFD_IN_DATA_OFFSET) > NFD_CTM_SIZE) {
+    cpy_end = pkt.p_len + NFD_IN_DATA_OFFSET;
+    if (cpy_end > NFD_CTM_SIZE) {
         pkt.p_is_split = 1;
         cpy_end = NFD_CTM_SIZE;
     } else {
         pkt.p_is_split = 0;
-        cpy_end = pkt.p_len + NFD_IN_DATA_OFFSET;
     }
 
     /* TODO - investigate use of CTM DMA to do data copy or other
