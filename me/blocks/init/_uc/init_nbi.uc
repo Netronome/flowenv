@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,9 @@
         #define_eval NBI_ID (NBI_ID + 1)
     #endloop
 
+    #ifndef NBI_TM_INIT_SKIP
     Nbi_TrafficManager_Init(NBI_COUNT)
+    #endif
 
 #endm
 
