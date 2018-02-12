@@ -26,7 +26,7 @@
 #include <nfp/me.h>
 #include <nfp/mem_atomic.h>
 #include <nfp/mem_bulk.h>
-#include <gro_cli.h>
+#include <gro/gro_cli.h>
 
 
 #define GRO_DIRECT_ACCESS       0x80
