@@ -186,9 +186,6 @@ net_eth_is_uc_addr(void *_a)
     return is_uc_addr;
 }
 
-#endif /* MicroC code */
-
-
 /**
  * Copy eth addr from source to dest
  *
@@ -208,6 +205,8 @@ net_eth_cp_addr(void *d, void *s)
         *(__gpr struct eth_addr *)d = *(__gpr struct eth_addr *)s;
     }
 }
+
+#endif /* MicroC code */
 
 #endif /* _NET_ETH_H_ */
 
