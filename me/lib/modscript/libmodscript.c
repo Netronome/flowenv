@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Netronome Systems, Inc. All rights reserved.
+ * Copyright (C) 2017-2018 Netronome Systems, Inc. All rights reserved.
  *
  * @file          lib/modscript/libmodscript.c
  * @brief         Interface to the packet modifier script
@@ -61,7 +61,7 @@
 */
 
 __intrinsic struct pkt_ms_info
-__modscript_write(__addr40  void *pbuf,
+__modscript_write(__mem40  void *pbuf,
         unsigned char off, __xwrite modscript_struct_t *pwrite,
         __xread uint32_t *rdback, SIGNAL *sig1,
         SIGNAL *sig2)
@@ -70,7 +70,7 @@ __modscript_write(__addr40  void *pbuf,
     __xread modscript_struct_t rd_xfer;
     __gpr uint32_t script_idx = off - PKTIO_MIN_NBI_TX_OFFSET;
     __gpr struct pkt_ms_info msi;
-    __addr40 unsigned char *mem_ptr;
+    __mem40 unsigned char *mem_ptr;
 
     msi.off_enc = 0;
     script_idx = script_idx/1;
@@ -95,11 +95,11 @@ __modscript_write(__addr40  void *pbuf,
 
         reg_cp(&pwrite->value[0], &rd_xfer.value[0], sizeof(rd_xfer));
 
-        mem_ptr = (__addr40 unsigned char *)pbuf + rd_xfer.prepend_offset;
+        mem_ptr = (__mem40 unsigned char *)pbuf + rd_xfer.prepend_offset;
 
-        __mem_write32(&pwrite->value[0], (__addr40 void *)mem_ptr,
+        __mem_write32(&pwrite->value[0], (__mem40 void *)mem_ptr,
                       rd_xfer.prepend_len0 << 2, 4 << 2, sig_done, sig1);
-        __mem_read32(rdback, (__addr40 void *)mem_ptr, 1 << 2,
+        __mem_read32(rdback, (__mem40 void *)mem_ptr, 1 << 2,
                     1 << 2, sig_done, sig2);
 
         /* Set the length adjustment to point to the start of packet. */
@@ -109,7 +109,7 @@ __modscript_write(__addr40  void *pbuf,
 }
 
 __intrinsic struct pkt_ms_info
-modscript_write(__addr40 void *pbuf, unsigned char off)
+modscript_write(__mem40 void *pbuf, unsigned char off)
 {
     SIGNAL wr_sig,  rd_sig;
     __gpr struct pkt_ms_info msi;

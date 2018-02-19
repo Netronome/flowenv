@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
 SEM_CLS_DECLARE(libpktdma_sem, DMA_CMDS_PER_CTM);
 
 __intrinsic void
-__pktdma_mu_to_ctm(__ctm void* ctm_addr, __mem void* mem_addr, size_t size,
+__pktdma_mu_to_ctm(__ctm40 void* ctm_addr, __mem40 void* mem_addr, size_t size,
                    uint32_t poll_int)
 {
     SEM_WAIT(libpktdma_sem, poll_int);
@@ -42,13 +42,13 @@ __pktdma_mu_to_ctm(__ctm void* ctm_addr, __mem void* mem_addr, size_t size,
 }
 
 __intrinsic void
-pktdma_mu_to_ctm(__ctm void* ctm_addr, __mem void* mem_addr, size_t size)
+pktdma_mu_to_ctm(__ctm40 void* ctm_addr, __mem40 void* mem_addr, size_t size)
 {
     __pktdma_mu_to_ctm(ctm_addr, mem_addr, size, SYNCH_SEM_DEFAULT_POLL);
 }
 
 __intrinsic void
-__pktdma_ctm_to_mu(__mem void* mem_addr, __ctm void* ctm_addr, size_t size,
+__pktdma_ctm_to_mu(__mem40 void* mem_addr, __ctm40 void* ctm_addr, size_t size,
                    uint32_t poll_int)
 {
     SEM_WAIT(libpktdma_sem, poll_int);
@@ -59,7 +59,7 @@ __pktdma_ctm_to_mu(__mem void* mem_addr, __ctm void* ctm_addr, size_t size,
 }
 
 __intrinsic void
-pktdma_ctm_to_mu(__mem void* mem_addr, __ctm void* ctm_addr, size_t size)
+pktdma_ctm_to_mu(__mem40 void* mem_addr, __ctm40 void* ctm_addr, size_t size)
 {
     __pktdma_ctm_to_mu(mem_addr, ctm_addr, size, SYNCH_SEM_DEFAULT_POLL);
 }

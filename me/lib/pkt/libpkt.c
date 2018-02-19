@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@
  *
  * Unfortunately, this is only partly documented in the NFP DB.
  */
-__intrinsic __addr40 void *
+__intrinsic __mem40 void *
 pkt_ctm_ptr40(unsigned char isl, unsigned int pnum, unsigned int off)
 {
     __gpr unsigned int lo;
@@ -69,7 +69,7 @@ pkt_ctm_ptr40(unsigned char isl, unsigned int pnum, unsigned int off)
     hi = 0x80 | isl;
     lo = 0x80000000u | (pnum << 16) | off;
 
-    return (__addr40 void *)
+    return (__mem40 void *)
         (((unsigned long long)hi << 32) | (unsigned long long)lo);
 }
 
@@ -89,10 +89,10 @@ pkt_ctm_ptr40(unsigned char isl, unsigned int pnum, unsigned int off)
  * command that uses this address, this type of address can only refer
  * to a packet in ones local CTM memory.
  */
-__intrinsic __addr32 void *
+__intrinsic __mem32 void *
 pkt_ctm_ptr32(unsigned int pnum, unsigned int off)
 {
-    return (__addr32 void *)((1 << 31) | (pnum << 16) | off);
+    return (__mem32 void *)((1 << 31) | (pnum << 16) | off);
 }
 
 
@@ -205,7 +205,7 @@ pkt_emem_data_size(unsigned int pkt_len, unsigned int pkt_offset,
 
 
 __intrinsic void
-__pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
+__pkt_mac_egress_cmd_write(__mem40 void *pbuf, unsigned char off,
                            int l3_csum_ins, int l4_csum_ins,
                            __xwrite uint32_t *xcmd, sync_t sync, SIGNAL *sig)
 {
@@ -216,7 +216,7 @@ __pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
     (*xcmd) = (l3_csum_ins ? MAC_EGR_CMD_L3_CSUM_EN : 0)
               | (l4_csum_ins ? MAC_EGR_CMD_L4_CSUM_EN : 0);
 
-    __mem_write32(xcmd, (__addr40 uint8_t *) pbuf + off - 4, sizeof(*xcmd),
+    __mem_write32(xcmd, (__mem40 uint8_t *) pbuf + off - 4, sizeof(*xcmd),
                   sizeof(*xcmd), sync, sig);
 
     return;
@@ -224,7 +224,7 @@ __pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
 
 
 __intrinsic void
-pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
+pkt_mac_egress_cmd_write(__mem40 void *pbuf, unsigned char off,
                          int l3_csum_ins, int l4_csum_ins)
 {
     SIGNAL sig;
@@ -236,7 +236,7 @@ pkt_mac_egress_cmd_write(__addr40 void *pbuf, unsigned char off,
 }
 
 __intrinsic struct pkt_ms_info
-__pkt_msd_write(__addr40 void *pbuf, unsigned char off,
+__pkt_msd_write(__mem40 void *pbuf, unsigned char off,
                 __xwrite uint32_t xms[2], size_t size, sync_t sync,
                 SIGNAL *sig)
 {
@@ -254,7 +254,7 @@ __pkt_msd_write(__addr40 void *pbuf, unsigned char off,
                   NBI_PM_OPCODE(NBI_PKT_MS_INSTRUCT_NOOP, 0, 0));
         xms[1] = 0;
 
-        __mem_write64(xms, (__addr40 unsigned char *)pbuf + off - 8, size,
+        __mem_write64(xms, (__mem40 unsigned char *)pbuf + off - 8, size,
                       size, sync, sig);
     } else {
         /* Determine a starting offset for the 8-byte modification script that
@@ -273,7 +273,7 @@ __pkt_msd_write(__addr40 void *pbuf, unsigned char off,
                                 off - ms_off - 8, 0));
         xms[1] = 0;
 
-        __mem_write64(xms, (__addr40 unsigned char *) pbuf + ms_off, size,
+        __mem_write64(xms, (__mem40 unsigned char *) pbuf + ms_off, size,
                       size, sync, sig);
     }
 
@@ -285,7 +285,7 @@ __pkt_msd_write(__addr40 void *pbuf, unsigned char off,
 
 
 __intrinsic struct pkt_ms_info
-pkt_msd_write(__addr40 void *pbuf, unsigned char off)
+pkt_msd_write(__mem40 void *pbuf, unsigned char off)
 {
     SIGNAL sig;
     __xwrite uint32_t ms[2];

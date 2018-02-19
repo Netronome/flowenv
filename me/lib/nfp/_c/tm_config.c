@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2017-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -808,7 +808,7 @@ out:
 
 static __inline int
 nbi_tm_l0_scheduler_config__(uint32_t nbi,
-                             __mem struct nfp_nbi_tm_l0_scheduler *l0_sched)
+                             __mem40 struct nfp_nbi_tm_l0_scheduler *l0_sched)
 {
     __xread struct nfp_nbi_tm_scheduler_config config_xr;
     __xread struct nfp_nbi_tm_scheduler_weight weight_xr[CMD_BURST_SZ];
@@ -975,7 +975,7 @@ nbi_tm_shaper_config__(uint32_t nbi, uint32_t shaper,
 
 int
 nfp_nbi_tm_config_schedulers(uint32_t nbi,
-__mem struct nfp_nbi_tm_l1l2_scheduler_cluster \
+__mem40 struct nfp_nbi_tm_l1l2_scheduler_cluster \
 tm_scheduler_cluster[TM_INIT_MAX_SCHEDULER_CLUSTERS])
 {
 
@@ -1017,7 +1017,7 @@ out:
 
 int
 nfp_nbi_tm_config_l0_scheduler(unsigned int nbi,
-                               __mem struct nfp_nbi_tm_l0_scheduler \
+                               __mem40 struct nfp_nbi_tm_l0_scheduler \
                                *tm_l0_scheduler)
 {
     __xread int in_use_xr;
@@ -1041,7 +1041,7 @@ out:
 }
 
 int nbi_tm_config_shapers(uint32_t nbi,
-__mem struct nfp_nbi_tm_shaper_cluster \
+__mem40 struct nfp_nbi_tm_shaper_cluster \
 tm_shaper_cluster[TM_INIT_MAX_SCHEDULER_CLUSTERS])
 {
 
@@ -1082,7 +1082,7 @@ out:
 
 int
 nfp_nbi_tm_config_queues(uint32_t nbi,
-        __mem struct nfp_nbi_tm_queue_cluster \
+        __mem40 struct nfp_nbi_tm_queue_cluster \
         tm_queue_cluster[TM_INIT_MAX_Q_CLUSTERS])
 {
 
@@ -1174,4 +1174,3 @@ nfp_nbi_tm_config(uint32_t nbi,
 out:
     return ret;
 }
-

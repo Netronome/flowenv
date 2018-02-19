@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2017-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@
  *         entry_data_xw[3] = lkup_data[3] >> key_shf;
  *
  *         mem_write32(entry_data_xw,
- *                     (__mem void *) &(lkup_table[table_idx].lookup_key0),
+ *                     (__mem40 void *) &(lkup_table[table_idx].lookup_key0),
  *                     sizeof(lkup_table));
  *
  *     3.) Looking up an entry:
@@ -66,7 +66,7 @@
  *         int entry_found = 0;
  *
  *         reg_cp(lkup_data_xrw, lkup_data, sizeof(lkup_data));
- *         mem_lkup_cam128_64B(lkup_data_xrw, (__mem void *) lkup_table,
+ *         mem_lkup_cam128_64B(lkup_data_xrw, (__mem40 void *) lkup_table,
  *                             DATA_OFFSET, sizeof(lkup_data_xrw),
  *                             sizeof(lkup_table));
  *         if (lkup_data_xrw[0])
@@ -155,12 +155,12 @@ struct mem_lkup_cam128_64B_table_bucket_entry {
  * @note The lookup key passed in through 'data' is padded with extra 0's, in
  *       the event that the operation requires more bits than is provided.
  */
-__intrinsic void __mem_lkup_cam32_16B(__xrw void *data, __mem void *addr,
+__intrinsic void __mem_lkup_cam32_16B(__xrw void *data, __mem40 void *addr,
                                       unsigned int data_offset,
                                       size_t data_size, size_t table_size,
                                       sync_t sync, SIGNAL_PAIR *sig_pair);
 
-__intrinsic void mem_lkup_cam32_16B(__xrw void *data, __mem void *addr,
+__intrinsic void mem_lkup_cam32_16B(__xrw void *data, __mem40 void *addr,
                                     unsigned int data_offset,
                                     size_t data_size, size_t table_size);
 
@@ -189,12 +189,12 @@ __intrinsic void mem_lkup_cam32_16B(__xrw void *data, __mem void *addr,
  * @note The lookup key passed in through 'data' is padded with extra 0's, in
  *       the event that the operation requires more bits than is provided.
  */
-__intrinsic void __mem_lkup_cam128_64B(__xrw void *data, __mem void *addr,
+__intrinsic void __mem_lkup_cam128_64B(__xrw void *data, __mem40 void *addr,
                                        unsigned int data_offset,
                                        size_t data_size, size_t table_size,
                                        sync_t sync, SIGNAL_PAIR *sig_pair);
 
-__intrinsic void mem_lkup_cam128_64B(__xrw void *data, __mem void *addr,
+__intrinsic void mem_lkup_cam128_64B(__xrw void *data, __mem40 void *addr,
                                      unsigned int data_offset,
                                      size_t data_size, size_t table_size);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2015 Netronome, Inc.
+ * Copyright 2012-2018 Netronome, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@
  * It will compute the hash values, perform a lookup in the hash table
  * and compare any matching keys.
  */
-__intrinsic int32_t camht_lookup(__mem void *hash_tbl, __mem void *key_tbl,
+__intrinsic int32_t camht_lookup(__mem40 void *hash_tbl, __mem40 void *key_tbl,
                                  int32_t entries, size_t entry_sz,
                                  void *key, size_t key_sz);
 
@@ -154,7 +154,7 @@ __intrinsic int32_t camht_lookup(__mem void *hash_tbl, __mem void *key_tbl,
  * compare the key.  Use this function if a hash table entry contains
  * additional information apart from the hash key itself.
  */
-__intrinsic int32_t camht_lookup_idx(__mem void *hash_tbl, int32_t entries,
+__intrinsic int32_t camht_lookup_idx(__mem40 void *hash_tbl, int32_t entries,
                                      void *key, size_t key_sz);
 
 
@@ -179,7 +179,8 @@ __intrinsic int32_t camht_lookup_idx(__mem void *hash_tbl, int32_t entries,
  * If the entry was not found but the add has failed (CAM was full) -1 will
  * be returned.
  */
-__intrinsic int32_t camht_lookup_idx_add(__mem void *hash_tbl, int32_t entries,
+__intrinsic int32_t camht_lookup_idx_add(__mem40 void *hash_tbl,
+                                         int32_t entries,
                                          void *key, size_t key_sz,
                                          int32_t* added);
 

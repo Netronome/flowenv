@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2017-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -499,8 +499,8 @@ pktio_rx_host_process(__xread struct nfd_in_pkt_desc *nfd_rxd, int ctm_pnum)
     uint16_t i, cpy_end, cpy_start;
     __xread uint64_t buf_xr[8];
     __xwrite uint64_t buf_xw[8];
-    __addr40 void *ctm_ptr;
-    __addr40 void *mu_ptr;
+    __mem40 void *ctm_ptr;
+    __mem40 void *mu_ptr;
 
     reg_zero((void *)pkt.__raw, sizeof(pkt));
     /* nbi_meta (pkt_info) is located in the first two words of pktio_meta */
@@ -598,7 +598,7 @@ pktio_rx_host_process(__xread struct nfd_in_pkt_desc *nfd_rxd, int ctm_pnum)
      * Also might want to overlap next read with previous write I/O. */
     for (i = cpy_start; i < cpy_end; i += sizeof(buf_xr)) {
         /* get a handle to both the mu and ctm pkt pointers */
-        mu_ptr = (__addr40 void *)(((uint64_t)pkt.p_muptr << 11) | i);
+        mu_ptr = (__mem40 void *)(((uint64_t)pkt.p_muptr << 11) | i);
         ctm_ptr = pkt_ctm_ptr40(__ISLAND, ctm_pnum, i);
 
         mem_read64(buf_xr, mu_ptr, sizeof(buf_xr));
@@ -633,7 +633,7 @@ pktio_rx_wq(int ring_num, mem_ring_addr_t ring_addr)
 {
     __xread struct pktio_handle xph;
     __xread struct pktio_meta xpm;
-    __addr40 void *p;
+    __mem40 void *p;
 
     mem_workq_add_thread(ring_num, ring_addr, &xph, sizeof(xph));
     p = pkt_ctm_ptr40(xph.ph_isl, xph.ph_pnum, 0);
@@ -647,7 +647,7 @@ pktio_rx_wq(int ring_num, mem_ring_addr_t ring_addr)
 __intrinsic int
 pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
 {
-    __addr40 void *ctm_ptr;
+    __mem40 void *ctm_ptr;
     SIGNAL info_sig;
     SIGNAL mac_write_sig;
     SIGNAL pms_sig1;

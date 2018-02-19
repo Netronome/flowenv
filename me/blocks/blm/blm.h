@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ typedef unsigned int blm_buf_handle_t;
 /**
  * Convert a blm buffer handle to a 40 bit address
  */
-#define blm_buf_handle2ptr(_bh) (__addr40 __mem void *) \
+#define blm_buf_handle2ptr(_bh) (__mem40 void *) \
                                 ((unsigned long long)(_bh) << 11)
 
 /**

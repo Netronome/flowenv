@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -606,7 +606,7 @@ __intrinsic void pkt_nbi_recv(__xread void *meta, size_t msize);
  * @param pnum  The CTM packet number
  * @param off   The offset within the CTM buffer
  */
-__intrinsic __addr40 void *pkt_ctm_ptr40(unsigned char isl, unsigned int pnum,
+__intrinsic __mem40 void *pkt_ctm_ptr40(unsigned char isl, unsigned int pnum,
                                          unsigned int off);
 
 /**
@@ -617,7 +617,7 @@ __intrinsic __addr40 void *pkt_ctm_ptr40(unsigned char isl, unsigned int pnum,
  * @param pnum  The CTM packet number
  * @param off   The offset within the CTM buffer
  */
-__intrinsic __addr32 void *pkt_ctm_ptr32(unsigned int pnum, unsigned int off);
+__intrinsic __mem32 void *pkt_ctm_ptr32(unsigned int pnum, unsigned int off);
 
 
 /**
@@ -749,10 +749,10 @@ __intrinsic size_t pkt_emem_data_size(unsigned int pkt_len,
  *       command word as part of the packet data.
  */
 __intrinsic void __pkt_mac_egress_cmd_write(
-    __addr40 void *pbuf, unsigned char off, int l3_csum_ins, int l4_csum_ins,
+    __mem40 void *pbuf, unsigned char off, int l3_csum_ins, int l4_csum_ins,
     __xwrite uint32_t *xcmd, sync_t sync, SIGNAL *sig);
 
-__intrinsic void pkt_mac_egress_cmd_write(__addr40 void *pbuf,
+__intrinsic void pkt_mac_egress_cmd_write(__mem40 void *pbuf,
                                           unsigned char off, int l3_csum_ins,
                                           int l4_csum_ins);
 
@@ -772,13 +772,13 @@ __intrinsic void pkt_mac_egress_cmd_write(__addr40 void *pbuf,
  * must be at least 16 bytes between this pointer and the beginning of
  * the CTM buffer.
  */
-__intrinsic struct pkt_ms_info __pkt_msd_write(__addr40 void *pbuf,
+__intrinsic struct pkt_ms_info __pkt_msd_write(__mem40 void *pbuf,
                                                unsigned char off,
                                                __xwrite uint32_t xms[2],
                                                size_t size, sync_t sync,
                                                SIGNAL *sig);
 
-__intrinsic struct pkt_ms_info pkt_msd_write(__addr40 void *pbuf,
+__intrinsic struct pkt_ms_info pkt_msd_write(__mem40 void *pbuf,
                                              unsigned char off);
 
 

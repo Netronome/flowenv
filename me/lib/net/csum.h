@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2015 Netronome, Inc.
+ * Copyright 2012-2018 Netronome, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ __intrinsic uint32_t ones_sum_warr(__xread uint32_t *buf, uint32_t len);
  * @param len   The length (in bytes) of the memory region, can be arbitrary
  * @return A 32 bits sum of the entire array
  */
-__intrinsic uint32_t ones_sum_mem(__addr40 void *mem, int32_t len);
+__intrinsic uint32_t ones_sum_mem(__mem40 void *mem, int32_t len);
 
 /**
  * Recalculate the checksum based on a single 16 bit value change.
@@ -117,7 +117,7 @@ __intrinsic uint16_t net_csum_mod(uint32_t orig_csum, uint32_t orig_val,
  * In the case of checksum verification 0 will be returned if the checksum
  * value in the IP header is correct.
  */
-__intrinsic uint16_t net_csum_ipv4(void *ip, __addr40 void *pkt_ptr);
+__intrinsic uint16_t net_csum_ipv4(void *ip, __mem40 void *pkt_ptr);
 
 /**
  * Calculate the IPv4 header checksum.
@@ -143,7 +143,7 @@ __intrinsic uint16_t net_csum_ipv4(void *ip, __addr40 void *pkt_ptr);
  * In the case of checksum verification 0 will be returned if the checksum
  * value in the IP header is correct.
  */
-__intrinsic uint16_t __net_csum_ipv4(void *ip, __addr40 void *pkt_ptr,
+__intrinsic uint16_t __net_csum_ipv4(void *ip, __mem40 void *pkt_ptr,
                                      const uint32_t test_ip_opt);
 
 /**
@@ -186,8 +186,8 @@ __intrinsic uint16_t __net_csum_ipv4(void *ip, __addr40 void *pkt_ptr,
  */
 __intrinsic uint16_t net_csum_l4_ip(uint32_t ip_type, uint32_t protocol,
                                     void *ip, void *l4_hdr,
-                                    __addr40 void* pkt_ctm, uint32_t ctm_len,
-                                    __addr40 void* pkt_mem, uint32_t mem_len);
+                                    __mem40 void* pkt_ctm, uint32_t ctm_len,
+                                    __mem40 void* pkt_mem, uint32_t mem_len);
 
 /**
  * Calculate the checksum of an IPv4 UDP packet.
@@ -219,9 +219,9 @@ __intrinsic uint16_t net_csum_l4_ip(uint32_t ip_type, uint32_t protocol,
  * was called for checksum calculation (rather than just verification).
  */
 __intrinsic uint16_t net_csum_ipv4_udp(void *ip, void *udp,
-                                       __addr40 void *pkt_ctm,
+                                       __mem40 void *pkt_ctm,
                                        uint32_t ctm_len,
-                                       __addr40 void *pkt_mem,
+                                       __mem40 void *pkt_mem,
                                        uint32_t mem_len);
 
 /**
@@ -254,9 +254,9 @@ __intrinsic uint16_t net_csum_ipv4_udp(void *ip, void *udp,
  * fields.
  */
 __intrinsic uint16_t net_csum_ipv4_tcp(void *ip, void *tcp,
-                                       __addr40 void *pkt_ctm,
+                                       __mem40 void *pkt_ctm,
                                        uint32_t ctm_len,
-                                       __addr40 void *pkt_mem,
+                                       __mem40 void *pkt_mem,
                                        uint32_t mem_len);
 
 /**
@@ -289,9 +289,9 @@ __intrinsic uint16_t net_csum_ipv4_tcp(void *ip, void *tcp,
  * was called for checksum calculation (rather than just verification).
  */
 __intrinsic uint16_t net_csum_ipv6_udp(void *ip, void *udp,
-                                       __addr40 void *pkt_ctm,
+                                       __mem40 void *pkt_ctm,
                                        uint32_t ctm_len,
-                                       __addr40 void *pkt_mem,
+                                       __mem40 void *pkt_mem,
                                        uint32_t mem_len);
 
 /**
@@ -324,9 +324,9 @@ __intrinsic uint16_t net_csum_ipv6_udp(void *ip, void *udp,
  * fields.
  */
 __intrinsic uint16_t net_csum_ipv6_tcp(void *ip, void *tcp,
-                                       __addr40 void *pkt_ctm,
+                                       __mem40 void *pkt_ctm,
                                        uint32_t ctm_len,
-                                       __addr40 void *pkt_mem,
+                                       __mem40 void *pkt_mem,
                                        uint32_t mem_len);
 
 #endif /* _PKT_CSUM_H_ */

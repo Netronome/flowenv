@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2015-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ mac_stats_add(__gpr unsigned int src_hi, __gpr unsigned int src_lo,
 
 int
 macstats_port_read(unsigned int mac, unsigned int port,
-                   __mem struct macstats_port *port_stats)
+                   __mem40 struct macstats_port *port_stats)
 {
     unsigned char core;
     unsigned char seg;
@@ -149,7 +149,7 @@ macstats_port_read(unsigned int mac, unsigned int port,
 
 int
 macstats_port_accum(unsigned int mac, unsigned int port,
-                    __mem struct macstats_port_accum *port_stats)
+                    __mem40 struct macstats_port_accum *port_stats)
 {
     unsigned char core;
     unsigned char seg;
@@ -191,7 +191,7 @@ macstats_port_accum(unsigned int mac, unsigned int port,
 
 int
 macstats_channel_read(unsigned int mac, unsigned int channel,
-                      __mem struct macstats_channel *channel_stats)
+                      __mem40 struct macstats_channel *channel_stats)
 {
     __gpr unsigned int src_hi;
     __gpr unsigned int src_lo;
@@ -220,7 +220,7 @@ macstats_channel_read(unsigned int mac, unsigned int channel,
 
 int
 macstats_channel_accum(unsigned int mac, unsigned int channel,
-                       __mem struct macstats_channel_accum *channel_stats)
+                       __mem40 struct macstats_channel_accum *channel_stats)
 {
     __gpr unsigned int src_hi;
     __gpr unsigned int src_lo;
@@ -260,7 +260,7 @@ macstats_channel_accum(unsigned int mac, unsigned int channel,
 __intrinsic int
 __macstats_head_drop_accum(unsigned int nbi, unsigned int core,
                            unsigned short ports_mask,
-                           __mem struct macstats_head_drop_accum *port_stats,
+                           __mem40 struct macstats_head_drop_accum *port_stats,
                            unsigned int break_cpp_burst)
 {
     __gpr uint32_t addr;
@@ -317,7 +317,7 @@ out:
 __intrinsic int
 macstats_head_drop_accum(unsigned int nbi, unsigned int core,
                          unsigned short ports_mask,
-                         __mem struct macstats_head_drop_accum *port_stats)
+                         __mem40 struct macstats_head_drop_accum *port_stats)
 {
     return __macstats_head_drop_accum(nbi, core, ports_mask, port_stats, 0);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2012-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,19 +43,19 @@
  * signal while waiting for the operation to complete.
  */
 
-__intrinsic void __mem_read_atomic(__xread void *data, __mem void *addr,
+__intrinsic void __mem_read_atomic(__xread void *data,__mem40 void *addr,
                                    size_t size, const size_t max_size,
                                    sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_read_atomic(__xread void *data,
-                                 __mem void *addr, size_t size);
+__intrinsic void mem_read_atomic(__xread void *data, __mem40 void *addr,
+                                 size_t size);
 
-__intrinsic void __mem_write_atomic(__xwrite void *data, __mem void *addr,
+__intrinsic void __mem_write_atomic(__xwrite void *data, __mem40 void *addr,
                                     size_t size, const size_t max_size,
                                     sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_write_atomic(__xwrite void *data,
-                                  __mem void *addr, size_t size);
+__intrinsic void mem_write_atomic(__xwrite void *data, __mem40 void *addr,
+                                  size_t size);
 
 /**
  * Atomic increment/decrement of a value in memory (EMEM, IMEM, or CTM).
@@ -64,13 +64,13 @@ __intrinsic void mem_write_atomic(__xwrite void *data,
  * These functions increment or decrement a single 32 bit or 64 bit
  * word in NFP memory.
  */
-__intrinsic void mem_incr32(__mem void *addr);
+__intrinsic void mem_incr32(__mem40 void *addr);
 
-__intrinsic void mem_decr32(__mem void *addr);
+__intrinsic void mem_decr32(__mem40 void *addr);
 
-__intrinsic void mem_incr64(__mem void *addr);
+__intrinsic void mem_incr64(__mem40 void *addr);
 
-__intrinsic void mem_decr64(__mem void *addr);
+__intrinsic void mem_decr64(__mem40 void *addr);
 
 /**
  * Atomic add immediate to a value in memory (EMEM, IMEM, or CTM).
@@ -80,9 +80,9 @@ __intrinsic void mem_decr64(__mem void *addr);
  * These functions provide the ability to increment a single 32 bit or 64 bit
  * word in memory by a 16 bit number without the need for transfer registers.
  */
-__intrinsic void mem_add32_imm(unsigned int val, __mem void *addr);
+__intrinsic void mem_add32_imm(unsigned int val, __mem40 void *addr);
 
-__intrinsic void mem_add64_imm(unsigned int val, __mem void *addr);
+__intrinsic void mem_add64_imm(unsigned int val, __mem40 void *addr);
 
 /**
  * Atomic bit set/clr immediate (EMEM, IMEM, or CTM).
@@ -92,9 +92,9 @@ __intrinsic void mem_add64_imm(unsigned int val, __mem void *addr);
  * These functions provide the ability to bit set/clr a value in memory
  * without the need for transfer registers.
  */
-__intrinsic void mem_bitset_imm(unsigned int val, __mem void *addr);
+__intrinsic void mem_bitset_imm(unsigned int val, __mem40 void *addr);
 
-__intrinsic void mem_bitclr_imm(unsigned int val, __mem void *addr);
+__intrinsic void mem_bitclr_imm(unsigned int val, __mem40 void *addr);
 
 /**
  * Atomic add/sub to/from multiple 4B or 8B values (EMEM, IMEM, or CTM).
@@ -115,32 +115,32 @@ __intrinsic void mem_bitclr_imm(unsigned int val, __mem void *addr);
  * assumed to be compile time constant, and the context swaps on an internal
  * signal while waiting for the operation to complete.
  */
-__intrinsic void __mem_add32(__xwrite void *data, __mem void *addr,
+__intrinsic void __mem_add32(__xwrite void *data, __mem40 void *addr,
                              size_t size, const size_t max_size,
                              sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_add32(__xwrite void *data, __mem void *addr,
+__intrinsic void mem_add32(__xwrite void *data, __mem40 void *addr,
                            size_t size);
 
-__intrinsic void __mem_add64(__xwrite void *data, __mem void *addr,
+__intrinsic void __mem_add64(__xwrite void *data, __mem40 void *addr,
                              size_t size, const size_t max_size,
                              sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_add64(__xwrite void *data, __mem void *addr,
+__intrinsic void mem_add64(__xwrite void *data, __mem40 void *addr,
                            size_t size);
 
-__intrinsic void __mem_sub32(__xwrite void *data, __mem void *addr,
+__intrinsic void __mem_sub32(__xwrite void *data, __mem40 void *addr,
                              size_t size, const size_t max_size,
                              sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_sub32(__xwrite void *data, __mem void *addr,
+__intrinsic void mem_sub32(__xwrite void *data, __mem40 void *addr,
                            size_t size);
 
-__intrinsic void __mem_sub64(__xwrite void *data, __mem void *addr,
+__intrinsic void __mem_sub64(__xwrite void *data, __mem40 void *addr,
                              size_t size, const size_t max_size,
                              sync_t sync, SIGNAL *sig);
 
-__intrinsic void mem_sub64(__xwrite void *data, __mem void *addr,
+__intrinsic void mem_sub64(__xwrite void *data, __mem40 void *addr,
                            size_t size);
 
 /**
@@ -161,19 +161,19 @@ __intrinsic void mem_sub64(__xwrite void *data, __mem void *addr,
  * assumed to be compile time constant, and the context swaps on an internal
  * signal while waiting for the operation to complete.
  */
-__intrinsic void __mem_bitset(__xwrite void *data, __mem void *addr,
+__intrinsic void __mem_bitset(__xwrite void *data, __mem40 void *addr,
                               size_t size, const size_t max_size,
                               sync_t sync, SIGNAL *sig);
 
 __intrinsic void mem_bitset(__xwrite void *data,
-                            __mem void *addr, size_t size);
+                            __mem40 void *addr, size_t size);
 
-__intrinsic void __mem_bitclr(__xwrite void *data, __mem void *addr,
+__intrinsic void __mem_bitclr(__xwrite void *data, __mem40 void *addr,
                               size_t size, const size_t max_size,
                               sync_t sync, SIGNAL *sig);
 
 __intrinsic void mem_bitclr(__xwrite void *data,
-                            __mem void *addr, size_t size);
+                            __mem40 void *addr, size_t size);
 
 /**
  * Atomic compare and conditional write of one or more 32-bit values.
@@ -201,12 +201,12 @@ __intrinsic void mem_bitclr(__xwrite void *data,
  *         if ((memory[addr + n] & mask) == (data[n] & mask))
  *             memory[addr + n] = data[n];
  */
-__intrinsic void __mem_cmp_write(__xwrite void *data, __mem void *addr,
+__intrinsic void __mem_cmp_write(__xwrite void *data, __mem40 void *addr,
                                  unsigned int byte_mask, size_t size,
                                  const size_t max_size, sync_t sync,
                                  SIGNAL *sig);
 
-__intrinsic void mem_cmp_write(__xwrite void *data, __mem void *addr,
+__intrinsic void mem_cmp_write(__xwrite void *data, __mem40 void *addr,
                                unsigned int byte_mask, size_t size);
 
 /**
@@ -223,18 +223,18 @@ __intrinsic void mem_cmp_write(__xwrite void *data, __mem void *addr,
  * These functions provide basic atomic bit test and set/clr in NFP EMEM,
  * IMEM or CTM memory types.
  */
-__intrinsic void __mem_test_set(__xrw void *data, __mem void *addr,
+__intrinsic void __mem_test_set(__xrw void *data, __mem40 void *addr,
                                 size_t size, const size_t max_size,
                                 sync_t sync, SIGNAL_PAIR *sig_pair);
 
-__intrinsic void mem_test_set(__xrw void *data, __mem void *addr,
+__intrinsic void mem_test_set(__xrw void *data, __mem40 void *addr,
                               size_t size);
 
-__intrinsic void __mem_test_clr(__xrw void *data, __mem void *addr,
+__intrinsic void __mem_test_clr(__xrw void *data, __mem40 void *addr,
                                 size_t size, const size_t max_size,
                                 sync_t sync, SIGNAL_PAIR *sig);
 
-__intrinsic void mem_test_clr(__xrw void *data, __mem void *addr,
+__intrinsic void mem_test_clr(__xrw void *data, __mem40 void *addr,
                               size_t size);
 
 /**
@@ -251,18 +251,18 @@ __intrinsic void mem_test_clr(__xrw void *data, __mem void *addr,
  * These functions will add or subtract data in NFP EMEM, IMEM or CTM memory
  * types, and return the contents of memory before the operation.
  */
-__intrinsic void __mem_test_add(__xrw void *data, __mem void *addr,
+__intrinsic void __mem_test_add(__xrw void *data, __mem40 void *addr,
                                 size_t size, const size_t max_size,
                                 sync_t sync, SIGNAL_PAIR *sig);
 
-__intrinsic void mem_test_add(__xrw void *data, __mem void *addr,
+__intrinsic void mem_test_add(__xrw void *data, __mem40 void *addr,
                               size_t size);
 
-__intrinsic void __mem_test_sub(__xrw void *data, __mem void *addr,
+__intrinsic void __mem_test_sub(__xrw void *data, __mem40 void *addr,
                                 size_t size, const size_t max_size,
                                 sync_t sync, SIGNAL_PAIR *sig);
 
-__intrinsic void mem_test_sub(__xrw void *data, __mem void *addr,
+__intrinsic void mem_test_sub(__xrw void *data, __mem40 void *addr,
                               size_t size);
 
 /**
@@ -294,12 +294,12 @@ __intrinsic void mem_test_sub(__xrw void *data, __mem void *addr,
  *             memory[addr + n] = data.write[n];
  *     }
  */
-__intrinsic void __mem_test_cmp_write(__xrw void *data, __mem void *addr,
+__intrinsic void __mem_test_cmp_write(__xrw void *data, __mem40 void *addr,
                                       unsigned int byte_mask, size_t size,
                                       const size_t max_size, sync_t sync,
                                       SIGNAL_PAIR *sig_pair);
 
-__intrinsic void mem_test_cmp_write(__xrw void *data, __mem void *addr,
+__intrinsic void mem_test_cmp_write(__xrw void *data, __mem40 void *addr,
                                     unsigned int byte_mask, size_t size);
 
 /*
@@ -464,7 +464,7 @@ enum meter_color {
  * @note meter_data is used to pass in the packet size or packet count.
  * @note meter_data will be set to the packet color by the metering operation.
  */
-__intrinsic void __mem_meter(__xrw uint32_t *meter_data, __mem void *addr,
+__intrinsic void __mem_meter(__xrw uint32_t *meter_data, __mem40 void *addr,
                              enum meter_mode mode, enum meter_color color,
                              SIGNAL_PAIR *sig_pair);
 
@@ -479,7 +479,7 @@ __intrinsic void __mem_meter(__xrw uint32_t *meter_data, __mem void *addr,
  * @note Set meter_amt to the packet size for byte-per-second metering.
  * @note Set meter_amt to the packet count for packet-per-second metering.
  */
-__intrinsic enum meter_color mem_meter(uint32_t meter_amt, __mem void *addr,
+__intrinsic enum meter_color mem_meter(uint32_t meter_amt, __mem40 void *addr,
                                        enum meter_mode mode,
                                        enum meter_color color);
 

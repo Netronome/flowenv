@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2017-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ struct hash_lkup_addr {
 
 /** Helper method to encode the address for the hash lookup operation. */
 static __intrinsic void
-hash_init_lkup_addr(__gpr struct hash_lkup_addr *lkup_addr, __mem void *addr,
+hash_init_lkup_addr(__gpr struct hash_lkup_addr *lkup_addr, __mem40 void *addr,
                     enum hash_lkup_opcode opcode, unsigned int data_offset,
                     size_t table_size)
 {
@@ -145,7 +145,7 @@ hash_init_lkup_addr(__gpr struct hash_lkup_addr *lkup_addr, __mem void *addr,
 
 /** Generic helper method to issue a hash lookup operation. */
 static __intrinsic void
-hash_generic_lkup(__xrw void *data, __mem void *addr,
+hash_generic_lkup(__xrw void *data, __mem40 void *addr,
                   enum hash_lkup_opcode opcode, unsigned int data_offset,
                   size_t data_size, size_t table_size, sync_t sync,
                   SIGNAL_PAIR *sig_pair)
@@ -168,7 +168,7 @@ hash_generic_lkup(__xrw void *data, __mem void *addr,
 /* *** Lookup Engine Hash Lookup API Methods. *** */
 
 __intrinsic void
-__mem_lkup_cam32_16B(__xrw void *data, __mem void *addr,
+__mem_lkup_cam32_16B(__xrw void *data, __mem40 void *addr,
                      unsigned int data_offset, size_t data_size,
                      size_t table_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
@@ -177,7 +177,7 @@ __mem_lkup_cam32_16B(__xrw void *data, __mem void *addr,
 }
 
 __intrinsic void
-mem_lkup_cam32_16B(__xrw void *data, __mem void *addr,
+mem_lkup_cam32_16B(__xrw void *data, __mem40 void *addr,
                    unsigned int data_offset, size_t data_size,
                    size_t table_size)
 {
@@ -189,7 +189,7 @@ mem_lkup_cam32_16B(__xrw void *data, __mem void *addr,
 }
 
 __intrinsic void
-__mem_lkup_cam128_64B(__xrw void *data, __mem void *addr,
+__mem_lkup_cam128_64B(__xrw void *data, __mem40 void *addr,
                       unsigned int data_offset, size_t data_size,
                       size_t table_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
@@ -198,7 +198,7 @@ __mem_lkup_cam128_64B(__xrw void *data, __mem void *addr,
 }
 
 __intrinsic void
-mem_lkup_cam128_64B(__xrw void *data, __mem void *addr,
+mem_lkup_cam128_64B(__xrw void *data, __mem40 void *addr,
                     unsigned int data_offset, size_t data_size,
                     size_t table_size)
 {

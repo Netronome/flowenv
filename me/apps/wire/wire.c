@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ __shared int nsent = 0;
 void main(void)
 {
     __gpr struct pkt_ms_info msi;
-    __addr40 char *pbuf;
+    __mem40 char *pbuf;
     __xread struct nbi_meta_null nbi_meta;
     __xread struct nbi_meta_pkt_info *pi = &nbi_meta.pkt_info;
 

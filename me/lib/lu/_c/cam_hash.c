@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2015 Netronome, Inc.
+ * Copyright 2012-2018 Netronome, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,13 @@
 #include <lu/cam_hash.h>
 
 __intrinsic int32_t
-camht_lookup(__mem void *hash_tbl, __mem void *key_tbl,
+camht_lookup(__mem40 void *hash_tbl,__mem40 void *key_tbl,
              int32_t entries, size_t entry_sz,
              void *key, size_t key_sz)
 {
     __xread uint32_t ht_key[CAMHT_MAX_KEY_SZ32];
     __gpr int32_t idx;
-    __mem char* kt;
+    __mem40 char* kt;
     int32_t ret;
 
     /* Make sure the parameters are as we expect */
@@ -88,7 +88,7 @@ out:
 
 
 __intrinsic int32_t
-camht_lookup_idx(__mem void *hash_tbl, int32_t entries,
+camht_lookup_idx(__mem40 void *hash_tbl, int32_t entries,
                  void *key, size_t key_sz)
 {
     __xrw struct mem_cam_24bit cam;
@@ -96,7 +96,7 @@ camht_lookup_idx(__mem void *hash_tbl, int32_t entries,
     __gpr uint32_t crc32c;
     __gpr uint32_t b_idx;
     __gpr uint32_t b_entry;
-    __mem uint32_t *ht;
+    __mem40 uint32_t *ht;
     int32_t ret;
 
     /* Make sure the parameters are as we expect */
@@ -131,7 +131,7 @@ out:
 }
 
 __intrinsic int32_t
-camht_lookup_idx_add(__mem void *hash_tbl, int32_t entries,
+camht_lookup_idx_add(__mem40 void *hash_tbl, int32_t entries,
                      void *key, size_t key_sz, int32_t* added)
 {
     __gpr uint32_t crc32;
@@ -139,7 +139,7 @@ camht_lookup_idx_add(__mem void *hash_tbl, int32_t entries,
     __gpr uint32_t b_idx;
     __gpr uint32_t b_entry;
     __xrw struct mem_cam_24bit cam;
-    __mem uint32_t *ht;
+    __mem40 uint32_t *ht;
     int32_t ret;
 
     /* Make sure the parameters are as we expect */

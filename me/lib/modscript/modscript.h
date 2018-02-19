@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Netronome Systems, Inc. All rights reserved.
+ * Copyright 2017-2018 Netronome Systems, Inc. All rights reserved.
  *
  * @file          lib/modscript/modscript.h
  * @brief         Header of the packet modifier script interface
@@ -75,7 +75,7 @@ typedef union modscript_struct_t {
 * @param off    Start of data in pbuf (used to calculate modifier script)
 * @return       Returns pkt_msi_info
 */
-__intrinsic struct pkt_ms_info modscript_write(__addr40 void *pbuf,
+__intrinsic struct pkt_ms_info modscript_write(__mem40 void *pbuf,
                     unsigned char off);
 
 
@@ -92,7 +92,7 @@ __intrinsic struct pkt_ms_info modscript_write(__addr40 void *pbuf,
 * @param sig2   The read back signal to use
 * @return       Returns pkt_msi_info
 */
-__intrinsic struct pkt_ms_info __modscript_write(__addr40 void *pbuf,
+__intrinsic struct pkt_ms_info __modscript_write(__mem40 void *pbuf,
                     unsigned char off, __xwrite modscript_struct_t *pwrite,
                     __xread unsigned int *rdback, SIGNAL *sig1,
                     SIGNAL *sig2);

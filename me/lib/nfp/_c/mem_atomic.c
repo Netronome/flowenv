@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2012-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,7 +227,7 @@ do {                                                                           \
 } while (0)
 
 __intrinsic void
-__mem_read_atomic(__xread void *data, __mem void *addr,
+__mem_read_atomic(__xread void *data, __mem40 void *addr,
                   size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_read_reg(data));
@@ -239,7 +239,7 @@ __mem_read_atomic(__xread void *data, __mem void *addr,
 }
 
 __intrinsic void
-mem_read_atomic(__xread void *data, __mem void *addr, size_t size)
+mem_read_atomic(__xread void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL sig;
 
@@ -247,7 +247,7 @@ mem_read_atomic(__xread void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-__mem_write_atomic(__xwrite void *data, __mem void *addr,
+__mem_write_atomic(__xwrite void *data, __mem40 void *addr,
                    size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
@@ -259,7 +259,7 @@ __mem_write_atomic(__xwrite void *data, __mem void *addr,
 }
 
 __intrinsic void
-mem_write_atomic(__xwrite void *data, __mem void *addr, size_t size)
+mem_write_atomic(__xwrite void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL sig;
 
@@ -267,31 +267,31 @@ mem_write_atomic(__xwrite void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-mem_incr32(__mem void *addr)
+mem_incr32(__mem40 void *addr)
 {
     _MEM_ATOMIC_CMD_NO_DATA(incr, addr);
 }
 
 __intrinsic void
-mem_decr32(__mem void *addr)
+mem_decr32(__mem40 void *addr)
 {
     _MEM_ATOMIC_CMD_NO_DATA(decr, addr);
 }
 
 __intrinsic void
-mem_incr64(__mem void *addr)
+mem_incr64(__mem40 void *addr)
 {
     _MEM_ATOMIC_CMD_NO_DATA(incr64, addr);
 }
 
 __intrinsic void
-mem_decr64(__mem void *addr)
+mem_decr64(__mem40 void *addr)
 {
     _MEM_ATOMIC_CMD_NO_DATA(decr64, addr);
 }
 
 __intrinsic void
-mem_add32_imm(unsigned int val, __mem void *addr)
+mem_add32_imm(unsigned int val, __mem40 void *addr)
 {
     try_ctassert(val <= SZ_64K);
 
@@ -299,7 +299,7 @@ mem_add32_imm(unsigned int val, __mem void *addr)
 }
 
 __intrinsic void
-mem_add64_imm(unsigned int val, __mem void *addr)
+mem_add64_imm(unsigned int val, __mem40 void *addr)
 {
     try_ctassert(val <= SZ_64K);
 
@@ -307,7 +307,7 @@ mem_add64_imm(unsigned int val, __mem void *addr)
 }
 
 __intrinsic void
-mem_bitset_imm(unsigned int val, __mem void *addr)
+mem_bitset_imm(unsigned int val, __mem40 void *addr)
 {
     try_ctassert(val < SZ_64K);
 
@@ -315,7 +315,7 @@ mem_bitset_imm(unsigned int val, __mem void *addr)
 }
 
 __intrinsic void
-mem_bitclr_imm(unsigned int val, __mem void *addr)
+mem_bitclr_imm(unsigned int val, __mem40 void *addr)
 {
     try_ctassert(val < SZ_64K);
 
@@ -323,7 +323,7 @@ mem_bitclr_imm(unsigned int val, __mem void *addr)
 }
 
 __intrinsic void
-__mem_add32(__xwrite void *data, __mem void *addr,
+__mem_add32(__xwrite void *data, __mem40 void *addr,
             size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
@@ -334,7 +334,7 @@ __mem_add32(__xwrite void *data, __mem void *addr,
 }
 
 __intrinsic void
-mem_add32(__xwrite void *data, __mem void *addr, size_t size)
+mem_add32(__xwrite void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL sig;
 
@@ -342,7 +342,7 @@ mem_add32(__xwrite void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-__mem_add64(__xwrite void *data, __mem void *addr,
+__mem_add64(__xwrite void *data, __mem40 void *addr,
             size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
@@ -353,7 +353,7 @@ __mem_add64(__xwrite void *data, __mem void *addr,
 }
 
 __intrinsic void
-mem_add64(__xwrite void *data, __mem void *addr, size_t size)
+mem_add64(__xwrite void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL sig;
 
@@ -361,7 +361,7 @@ mem_add64(__xwrite void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-__mem_sub32(__xwrite void *data, __mem void *addr,
+__mem_sub32(__xwrite void *data, __mem40 void *addr,
             size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
@@ -372,7 +372,7 @@ __mem_sub32(__xwrite void *data, __mem void *addr,
 }
 
 __intrinsic void
-mem_sub32(__xwrite void *data, __mem void *addr, size_t size)
+mem_sub32(__xwrite void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL sig;
 
@@ -380,7 +380,7 @@ mem_sub32(__xwrite void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-__mem_sub64(__xwrite void *data, __mem void *addr,
+__mem_sub64(__xwrite void *data, __mem40 void *addr,
             size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
@@ -391,7 +391,7 @@ __mem_sub64(__xwrite void *data, __mem void *addr,
 }
 
 __intrinsic void
-mem_sub64(__xwrite void *data, __mem void *addr, size_t size)
+mem_sub64(__xwrite void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL sig;
 
@@ -399,7 +399,7 @@ mem_sub64(__xwrite void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-__mem_bitset(__xwrite void *data, __mem void *addr,
+__mem_bitset(__xwrite void *data, __mem40 void *addr,
              size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
@@ -415,7 +415,7 @@ __mem_bitset(__xwrite void *data, __mem void *addr,
 }
 
 __intrinsic void
-mem_bitset(__xwrite void *data, __mem void *addr, size_t size)
+mem_bitset(__xwrite void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL sig;
 
@@ -423,7 +423,7 @@ mem_bitset(__xwrite void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-__mem_bitclr(__xwrite void *data, __mem void *addr,
+__mem_bitclr(__xwrite void *data, __mem40 void *addr,
              size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
@@ -439,7 +439,7 @@ __mem_bitclr(__xwrite void *data, __mem void *addr,
 }
 
 __intrinsic void
-mem_bitclr(__xwrite void *data, __mem void *addr, size_t size)
+mem_bitclr(__xwrite void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL sig;
 
@@ -447,8 +447,9 @@ mem_bitclr(__xwrite void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-__mem_cmp_write(__xwrite void *data, __mem void *addr, unsigned int byte_mask,
-                size_t size, const size_t max_size, sync_t sync, SIGNAL *sig)
+__mem_cmp_write(__xwrite void *data, __mem40 void *addr,
+                unsigned int byte_mask, size_t size, const size_t max_size,
+                sync_t sync, SIGNAL *sig)
 {
     ctassert(__is_write_reg(data));
     try_ctassert(size <= 32);
@@ -458,7 +459,7 @@ __mem_cmp_write(__xwrite void *data, __mem void *addr, unsigned int byte_mask,
 }
 
 __intrinsic void
-mem_cmp_write(__xwrite void *data, __mem void *addr, unsigned int byte_mask,
+mem_cmp_write(__xwrite void *data, __mem40 void *addr, unsigned int byte_mask,
               size_t size)
 {
     SIGNAL sig;
@@ -467,7 +468,7 @@ mem_cmp_write(__xwrite void *data, __mem void *addr, unsigned int byte_mask,
 }
 
 __intrinsic void
-__mem_test_set(__xrw void *data, __mem void *addr, size_t size,
+__mem_test_set(__xrw void *data, __mem40 void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
     try_ctassert(size <= 32);
@@ -477,7 +478,7 @@ __mem_test_set(__xrw void *data, __mem void *addr, size_t size,
 }
 
 __intrinsic void
-mem_test_set(__xrw void *data, __mem void *addr, size_t size)
+mem_test_set(__xrw void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL_PAIR sig_pair;
 
@@ -486,7 +487,7 @@ mem_test_set(__xrw void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-__mem_test_clr(__xrw void *data, __mem void *addr, size_t size,
+__mem_test_clr(__xrw void *data, __mem40 void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
     try_ctassert(size <= 32);
@@ -496,7 +497,7 @@ __mem_test_clr(__xrw void *data, __mem void *addr, size_t size,
 }
 
 __intrinsic void
-mem_test_clr(__xrw void *data, __mem void *addr, size_t size)
+mem_test_clr(__xrw void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL_PAIR sig_pair;
 
@@ -505,7 +506,7 @@ mem_test_clr(__xrw void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-__mem_test_add(__xrw void *data, __mem void *addr, size_t size,
+__mem_test_add(__xrw void *data, __mem40 void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
     try_ctassert(size <= 16);
@@ -515,7 +516,7 @@ __mem_test_add(__xrw void *data, __mem void *addr, size_t size,
 }
 
 __intrinsic void
-mem_test_add(__xrw void *data, __mem void *addr, size_t size)
+mem_test_add(__xrw void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL_PAIR sig_pair;
 
@@ -524,7 +525,7 @@ mem_test_add(__xrw void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-__mem_test_sub(__xrw void *data, __mem void *addr, size_t size,
+__mem_test_sub(__xrw void *data, __mem40 void *addr, size_t size,
                const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
     try_ctassert(size <= 16);
@@ -534,7 +535,7 @@ __mem_test_sub(__xrw void *data, __mem void *addr, size_t size,
 }
 
 __intrinsic void
-mem_test_sub(__xrw void *data, __mem void *addr, size_t size)
+mem_test_sub(__xrw void *data, __mem40 void *addr, size_t size)
 {
     SIGNAL_PAIR sig_pair;
 
@@ -543,7 +544,7 @@ mem_test_sub(__xrw void *data, __mem void *addr, size_t size)
 }
 
 __intrinsic void
-__mem_test_cmp_write(__xrw void *data, __mem void *addr,
+__mem_test_cmp_write(__xrw void *data, __mem40 void *addr,
                      unsigned int byte_mask, size_t size,
                      const size_t max_size, sync_t sync, SIGNAL_PAIR *sig_pair)
 {
@@ -554,8 +555,8 @@ __mem_test_cmp_write(__xrw void *data, __mem void *addr,
 }
 
 __intrinsic void
-mem_test_cmp_write(__xrw void *data, __mem void *addr, unsigned int byte_mask,
-                   size_t size)
+mem_test_cmp_write(__xrw void *data, __mem40 void *addr,
+                   unsigned int byte_mask, size_t size)
 {
     SIGNAL_PAIR sig_pair;
 
@@ -565,8 +566,9 @@ mem_test_cmp_write(__xrw void *data, __mem void *addr, unsigned int byte_mask,
 }
 
 __intrinsic void
-__mem_meter(__xrw uint32_t *meter_data, __mem void *addr, enum meter_mode mode,
-            enum meter_color color, SIGNAL_PAIR *sig_pair)
+__mem_meter(__xrw uint32_t *meter_data, __mem40 void *addr,
+            enum meter_mode mode, enum meter_color color,
+            SIGNAL_PAIR *sig_pair)
 {
     uint32_t addr_hi;
     uint32_t addr_lo;
@@ -583,7 +585,7 @@ __mem_meter(__xrw uint32_t *meter_data, __mem void *addr, enum meter_mode mode,
 }
 
 __intrinsic enum meter_color
-mem_meter(uint32_t meter_amt, __mem void *addr, enum meter_mode mode,
+mem_meter(uint32_t meter_amt, __mem40 void *addr, enum meter_mode mode,
           enum meter_color color)
 {
     SIGNAL_PAIR sig_pair;
