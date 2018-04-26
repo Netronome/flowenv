@@ -238,6 +238,27 @@ __intrinsic void mem_test_clr(__xrw void *data, __mem40 void *addr,
                               size_t size);
 
 /**
+ * Atomic swap in multiple of 4B values (EMEM, IMEM, or CTM).
+ * @param data      Pointer to sufficient RW transfer registers for the op
+ * @param addr      40-bit pointer to the first value in memory
+ * @param size      Size of the op, must be a multiple of 4
+ * @param max_size  Used to determine largest op, if size is not a constant
+ * @param sync      Type of synchronization (must be sig_done)
+ * @param sig_pair  Signal pair to use
+ *
+ * Note: Maximum for @max_size is 32.
+ *
+ * These functions provide atomic swap in NFP EMEM, IMEM or CTM
+ * memory types.
+ */
+__intrinsic void __mem_swap(__xrw void *data, __mem40 void *addr,
+                                size_t size, const size_t max_size,
+                                sync_t sync, SIGNAL_PAIR *sig);
+
+__intrinsic void mem_swap(__xrw void *data, __mem40 void *addr,
+                              size_t size);
+
+/**
  * Atomic test and add/sub in multiple of 4B values (EMEM, IMEM, or CTM).
  * @param data      Pointer to sufficient RW transfer registers for the op
  * @param addr      40-bit pointer to the first value in memory
