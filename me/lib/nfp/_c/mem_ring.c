@@ -428,7 +428,7 @@ mem_ring_current_size(unsigned int rnum, mem_ring_addr_t raddr)
     __xread struct nfp_memring_t2 desc;
     SIGNAL sig;
 
-    ctassert(rnum < 1024);
+    try_ctassert(rnum < 1024);
 
     __asm mem[push_qdesc, desc, raddr, <<8, rnum], ctx_swap[sig];
 
