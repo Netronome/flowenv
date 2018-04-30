@@ -598,7 +598,7 @@ __mem_meter(__xrw uint32_t *meter_data, __mem40 void *addr,
 
     addr_hi  = ((uint64_t)addr >> 8) & 0xFF000000;
     addr_lo  =  (uint64_t)addr       & 0xFFFFFFF8;
-    addr_lo |= ((color & 0x3) << 2) | (mode & 0x1);
+    addr_lo |= ((color & 0x3) << 1) | (mode & 0x1);
 
     __asm mem[meter, *meter_data, addr_hi, <<8, addr_lo], sig_done[*sig_pair];
 }
