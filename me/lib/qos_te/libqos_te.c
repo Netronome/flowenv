@@ -23,6 +23,7 @@
  * include files in <qos_te/*.h>.  They are not protected by header guards and
  * should not be included elsewhere.
  */
+#include "_c/fast_meter.c"
 #include "_c/red.c"
 #include "_c/wred.c"
 #include "_c/geared.c"
