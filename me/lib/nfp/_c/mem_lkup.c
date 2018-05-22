@@ -24,6 +24,13 @@
  *   1. Direct Table lookups ("mem_lkup_direct_")
  *   2. Algorithmic lookups  ("mem_lkup_algo_")
  *   3. Hash lookups         ("mem_lkup_hash_")
+ *
+ * DISCLAIMER: This library uses the top locality bit to select whether to use
+ * the internal or external lookup engine. Each MU has both engines but with
+ * IMEM only the internal engine is accessible from the ME's.
+ * This code was tested with high locality and direct access pointers only.
+ * It should not be used with low locality or discard after read (DAR) without
+ * further testing.
  */
 
 #include <assert.h>
@@ -83,16 +90,17 @@ enum hash_lkup_opcode {
 struct hash_lkup_addr {
     union {
         struct {
-            unsigned int access_mode   : 2;  /**< Direct access field. */
-            unsigned int __rsvd        : 30; /**< Reserved. */
-            unsigned int __unused0     : 1;  /**< Unused: Don't care. */
-            unsigned int direct_lkup   : 1;  /**< Direct lookup (set to 0). */
-            unsigned int hash_lkup     : 1;  /**< Hash lookup (set to 1). */
-            unsigned int base_addr     : 17; /**< Table base address. */
-            unsigned int __unused1     : 1;  /**< Unused: Don't care. */
-            unsigned int table_size    : 3;  /**< Table size. */
-            unsigned int hash_opcode   : 6;  /**< Hash command opcode. */
-            unsigned int start_pos     : 2;  /**< Starting bit position. */
+            unsigned int access_mode     : 2;  /**< Direct access field. */
+            unsigned int __rsvd          : 30; /**< Reserved. */
+            /**< 1 = Int LU Engine, 0 = Ext LU Engine*/
+            unsigned int use_internal_le : 1;
+            unsigned int direct_lkup     : 1;  /**< Direct lookup (set to 0). */
+            unsigned int hash_lkup       : 1;  /**< Hash lookup (set to 1). */
+            unsigned int base_addr       : 17; /**< Table base address. */
+            unsigned int __unused1       : 1;  /**< Unused: Don't care. */
+            unsigned int table_size      : 3;  /**< Table size. */
+            unsigned int hash_opcode     : 6;  /**< Hash command opcode. */
+            unsigned int start_pos       : 2;  /**< Starting bit position. */
         };
         struct {
             uint32_t addr_hi; /**< Upper 8 bits of the input CPP address. */
@@ -132,15 +140,18 @@ hash_init_lkup_addr(__gpr struct hash_lkup_addr *lkup_addr, __mem40 void *addr,
                     (HASH_IS_64B_TABLE(opcode) ? 16 : 14)) & 0x7;
 
     /* Encode the CPP address for the Lookup Engine operation. */
-    lkup_addr->addr_hi     = ((uint64_t)addr >> 8) & 0xff000000;
-    lkup_addr->addr_lo     = 0;
-    lkup_addr->base_addr   = (((uint64_t)addr >> 16) &
+    lkup_addr->addr_hi          = ((uint64_t)addr >> 8) & 0xff000000;
+    lkup_addr->addr_lo          = 0;
+    lkup_addr->base_addr        = (((uint64_t)addr >> 16) &
                               HASH_BASE_ADDR_FIELD_MASK);
-    lkup_addr->direct_lkup = 0;
-    lkup_addr->hash_lkup   = 1;
-    lkup_addr->hash_opcode = opcode;
-    lkup_addr->start_pos   = start_pos;
-    lkup_addr->table_size  = table_sz_enc;
+    /* Select internal lookup engine for imem and emem_cache_upper. Based on top
+    * locality bit*/
+    lkup_addr->use_internal_le  = ((uint64_t)addr >> 39) & 0x1;
+    lkup_addr->direct_lkup      = 0;
+    lkup_addr->hash_lkup        = 1;
+    lkup_addr->hash_opcode      = opcode;
+    lkup_addr->start_pos        = start_pos;
+    lkup_addr->table_size       = table_sz_enc;
 }
 
 /** Generic helper method to issue a hash lookup operation. */
