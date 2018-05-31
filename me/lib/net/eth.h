@@ -22,7 +22,6 @@
 #ifndef _NET_ETH_H_
 #define _NET_ETH_H_
 
-#include <assert.h>
 
 /**
  * Header length definitions
@@ -82,6 +81,7 @@
 
 #include <nfp.h>
 #include <stdint.h>
+#include <assert.h>
 
 /**
  * Ethernet header structure
