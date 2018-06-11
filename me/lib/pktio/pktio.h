@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2017-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -475,7 +475,7 @@ struct pktio_nbi_meta {
  * NBI metadata struct comprised of 24 bytes of catamaran metadata with no
  * MAC prepended data.
  */
-struct pkt_nbi_meta {
+struct pktio_nbi_meta {
     union {
         struct {
             struct nbi_meta_catamaran   nbi;
