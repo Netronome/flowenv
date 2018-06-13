@@ -22,13 +22,18 @@
 
 #include <nfp.h>
 
+/* Guard against unsupported chip types. */
+#if !defined(__NFP_IS_6XXX) && !defined(__NFP_IS_38XX)
+    #error "Unsupported chip type"
+#endif
+
 /**
  * This API provides an optimized way to handle 64bits and "packets and bytes"
  * counters in the NFP.
  * The API supports 64bit CTM/IMEM/EMEM counters and 64bit CLS counters using
  * the atomic operations of the respective memory type.
  * For the "packets and bytes" counters the API uses the STATS engine available
- * only in the IMEM.
+ * only in the IMEM for NFP6000, and only in the EMEM for NFP3800.
  * The API optimization is achieved by eliminating the 40 bits address split
  * to high and low parts at every counter access. The user must allocate the
  * memory for the counters at a 256Byte aligned address, and use the "get_addr"
@@ -66,6 +71,7 @@
  *  //add 128 to counter at index 5, use base 0, don't swap out
  *  pkt_cntr_add(pkts_cntr_base, 5, 0, 128, sig_done, &sig);
  *
+ *  Note: For NFP3800, "my_pkt_counters" should be located in "__emem".
  *
  * Users that are not interested in the optimized coutners API should simply
  * use the mem_atomic API.
@@ -90,15 +96,16 @@
  * Declare the data structure for the packets and bytes counters.
  * @param _name         Name of the counters array
  * @param _entries      Number of counters
- * @param _imem_loc     imem memory the packets counters shuold be
+ * @param _mem_loc      Memory the packets counters should be
  *                      allocated in.
- *                      __imem, __imem_n(#)
+ *                      For NFP6000, __imem, __imem_n(#).
+ *                      For NFP3800, __emem, __emem_n(0).
  *
  * Using this macro ensures that the counters memory is allocated at the
  * needed alignment.
  */
-#define PKTS_CNTRS_DECLARE(_name, _entries, _imem_loc) \
-    __export __shared _imem_loc __addr40 __align256 unsigned long long int _name[_entries]
+#define PKTS_CNTRS_DECLARE(_name, _entries, _mem_loc) \
+    __export __shared _mem_loc __addr40 __align256 unsigned long long int _name[_entries]
 
 /**
  * Packets and bytes counter address.
@@ -240,10 +247,13 @@ __intrinsic void cntr64_cls_add(unsigned int base, unsigned int offset,
 
 /*
  * Packets and bytes counters APIs.
- * Handled using the Stats engine in the MU (IMEM only).
+ * Handled using the Stats engine in the MU.
  * Each counter is 64 bits wide where the packets count uses 29/28 bits
  * and the bytes count uses 35/34 bits depending on the
  * wrap/saturate configuration.
+ *
+ * Note: For NFP6000, only the IMEM supports the Stats engine.
+ * Note: For NFP3800, only the EMEM supports the Stats engine.
  */
 
 /**
@@ -258,7 +268,11 @@ __intrinsic void cntr64_cls_add(unsigned int base, unsigned int offset,
  * holds the lower part of the address after transform to an 8 bytes address.
  * This is done to avoid additional computations in the packets and bytes APIs.
  */
+#if defined(__NFP_IS_6XXX)
 __intrinsic struct pkt_cntr_addr pkt_cntr_get_addr(__imem __addr40 void *base);
+#elif defined(__NFP_IS_38XX)
+__intrinsic struct pkt_cntr_addr pkt_cntr_get_addr(__emem __addr40 void *base);
+#endif
 
 /**
  * Clears a packets and bytes counter.
