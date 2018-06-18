@@ -57,8 +57,13 @@
 #include <pktio/pktio.h>
 #include <modscript/modscript.h>
 
-#if (__REVISION_MAX < __REVISION_B0)
-#error "Unsupported chip type"
+#if defined(__NFP_IS_38XX)
+/* TODO: verify if this library works with NFP38XX */
+    #error "Unsupported chip type"
+#elif defined(__NFP_IS_6XXX)
+    #if (__REVISION_MAX < __REVISION_B0)
+        #error "Unsupported chip type"
+    #endif
 #endif
 
 struct pktio_handle {
