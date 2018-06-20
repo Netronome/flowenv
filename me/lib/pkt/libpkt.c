@@ -35,11 +35,19 @@
 #define MAC_EGR_CMD_L4_CSUM_EN_shf 30
 #define MAC_EGR_CMD_L4_CSUM_EN     (1 << MAC_EGR_CMD_L4_CSUM_EN_shf)
 
-/* B0 and later allow the modification script at an offset up to 128B */
-#if (__REVISION_MIN < __REVISION_B0)
-#define MS_MAX_OFF  64
+/* NFP6XXX B0 and later allow the modification script at an offset up to 128B */
+#if defined(__NFP_IS_6XXX)
+    #if (__REVISION_MIN < __REVISION_B0)
+        #define MS_MAX_OFF  64
+    #elif (__REVISION_MIN >= __REVISION_B0)
+        #define MS_MAX_OFF  128
+    #endif
+#elif defined( __NFP_IS_38XX)
+    #if (__REVISION_MIN == __REVISION_A0)
+        #define MS_MAX_OFF  224
+    #endif
 #else
-#define MS_MAX_OFF  128
+    #error "Unsupported chip type"
 #endif
 
 /*
