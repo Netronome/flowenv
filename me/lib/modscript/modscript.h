@@ -15,14 +15,15 @@
 #include <nfp.h>
 #include <modscript/modscript.h>
 
-
-/* Only supported in B0 */
-#if (__REVISION_MIN >= __REVISION_C0)
-    #error "Unsupported chip revision"
-#elif (__REVISION_MAX < __REVISION_B0)
-    #error "Unsupported chip revision"
+/* Only supported in NFP6XXX B0 */
+#if defined(__NFP_IS_6XXX)
+    #if (__REVISION_MIN >= __REVISION_C0)
+        #error "Unsupported chip revision"
+    #elif(__REVISION_MAX < __REVISION_B0)
+        #error "Unsupported chip revision"
+    #endif
 #else
-    /* supported */
+    #error "Unsupported chip type"
 #endif
 
 /* This is the min allowable offset for packet to start. */
