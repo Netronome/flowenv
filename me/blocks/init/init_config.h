@@ -57,24 +57,45 @@
     #define PKT_NBI_OFFSET 64
 #endif
 
-#if (__REVISION_MIN == __REVISION_A0)
-    #if (PKT_NBI_OFFSET == 32)
-        #define CTM_OFFSET 0
-    #elif (PKT_NBI_OFFSET == 64)
-        #define CTM_OFFSET 1
+/* Family and revision specific configurations */
+#if IS_NFPTYPE(__NFP6000)
+    #if (__REVISION_MIN == __REVISION_A0)
+        #if (PKT_NBI_OFFSET == 32)
+            #define CTM_OFFSET 0
+        #elif (PKT_NBI_OFFSET == 64)
+            #define CTM_OFFSET 1
+        #else
+            #error "Invalid PKT_NBI_OFFSET must be 32 or 64"
+        #endif
+    #elif (__REVISION_MIN == __REVISION_B0)
+        #if (PKT_NBI_OFFSET == 64)
+            #define CTM_OFFSET 1
+        #elif (PKT_NBI_OFFSET == 128)
+            #define CTM_OFFSET 0
+        #else
+            #error "Invalid PKT_NBI_OFFSET must be 64 or 128"
+        #endif
     #else
-        #error "Invalid PKT_NBI_OFFSET must be 32 or 64"
+        #error "Invalid chip revision selected for NFP6XXX target"
     #endif
-#elif (__REVISION_MIN == __REVISION_B0)
-    #if (PKT_NBI_OFFSET == 64)
-        #define CTM_OFFSET 1
-    #elif (PKT_NBI_OFFSET == 128)
-        #define CTM_OFFSET 0
+#elif IS_NFPTYPE(__NFP3800)
+    #if (__REVISION_MIN == __REVISION_A0)
+	/*
+	TODO: add support for 32B-512B CTM_OFFSET.
+	Currently CtmOffsetCompatabilityMode is used.
+	*/
+        #if (PKT_NBI_OFFSET == 64)
+            #define CTM_OFFSET 1
+        #elif (PKT_NBI_OFFSET == 128)
+            #define CTM_OFFSET 0
+        #else
+            #error "Invalid PKT_NBI_OFFSET must be 64 or 128"
+        #endif
     #else
-        #error "Invalid PKT_NBI_OFFSET must be 64 or 128"
+        #error "Invalid chip revision selected for NFP38XX target"
     #endif
 #else
-    #error "Invalid CHIP REVISION"
+    #error "Unsupported chip type selected."
 #endif
 
 /* Maxmimum split length boundary between a packets CTM buffer and it's backing
@@ -85,6 +106,7 @@
  * 3 - Split at 2048B boundary
  */
 #ifndef SPLIT_LENGTH
+	/* TODO: Add support for 4K-16K Split length in NFP3800 */
     #define SPLIT_LENGTH 3
 #endif
 

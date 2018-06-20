@@ -67,79 +67,108 @@
     #error "SPLIT_LENGTH is not defined"
 #endif
 
-/* NBI DMA settings for C0 */
-#if (__REVISION_MIN >= __REVISION_C0)
+/* Family and revision specific configurations */
+#if IS_NFPTYPE(__NFP6000)
 
-/* FIXME: C0 */
-#error "C0 not implemented by NBI DMA init."
+    /* NBI DMA settings for A0-B0 in NFP6000 */
+    #if (__REVISION_MAX <= __REVISION_B0)
+        #if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND0) + \
+            PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0)) > 256)
+            #error \
+            "ME Island0's CTM Packet credits are not allocated appropriately"
+        #endif
+        #if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND0) + \
+            BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0)) > 128)
+            #error \
+            "ME Island0's CTM Buffer credits are not allocated appropriately"
+        #endif
+        #if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND1) + \
+            PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND1)) > 256)
+            #error \
+            "ME Island1's CTM Packet credits are not allocated appropriately"
+        #endif
+        #if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND1) + \
+            BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND1)) > 128)
+            #error \
+            "ME Island1's CTM Buffer credits are not allocated appropriately"
+        #endif
+        #if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND2) + \
+            PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND2)) > 256)
+            #error \
+            "ME Island2's CTM Packet credits are not allocated appropriately"
+        #endif
+        #if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND2) + \
+            BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND2)) > 128)
+            #error \
+            "ME Island2's CTM Buffer credits are not allocated appropriately"
+        #endif
+        #if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND3) + \
+            PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND3)) > 256)
+            #error \
+            "ME Island3's CTM Packet credits are not allocated appropriately"
+        #endif
+        #if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND3) + \
+            BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND3)) > 128)
+            #error \
+            "ME Island3's CTM Buffer credits are not allocated appropriately"
+        #endif
+        #if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND4) + \
+            PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND4)) > 256)
+            #error \
+            "ME Island4's CTM Packet credits are not allocated appropriately"
+        #endif
+        #if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND4) + \
+            BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND4)) > 128)
+            #error \
+            "ME Island4's CTM Buffer credits are not allocated appropriately"
+        #endif
+        #if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND5) + \
+            PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND5)) > 256)
+            #error \
+            "ME Island5's CTM Packet credits are not allocated appropriately"
+        #endif
+        #if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND5) + \
+            BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND5)) > 128)
+            #error \
+            "ME Island5's CTM Buffer credits are not allocated appropriately"
+        #endif
+        #if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND6) + \
+            PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND6)) > 256)
+            #error \
+            "ME Island6's CTM Packet credits are not allocated appropriately"
+        #endif
+        #if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND6) + \
+            BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND6)) > 128)
+            #error \
+            "ME Island6's CTM Buffer credits are not allocated appropriately"
+        #endif
 
-/* NBI DMA settings for A0-B0 */
-#elif (__REVISION_MAX <= __REVISION_B0)
+    /* NBI DMA settings for C0 in NFP6000 */
+    #elif (__REVISION_MIN >= __REVISION_C0)
 
-#if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND0) + \
-      PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0)) > 256)
-    #error "ME Island0's CTM Packet credits are not allocated appropriately"
-#endif
-#if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND0) + \
-      BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0)) > 128)
-    #error "ME Island0's CTM Buffer credits are not allocated appropriately"
-#endif
-#if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND1) + \
-      PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND1)) > 256)
-    #error "ME Island1's CTM Packet credits are not allocated appropriately"
-#endif
-#if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND1) + \
-      BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND1)) > 128)
-    #error "ME Island1's CTM Buffer credits are not allocated appropriately"
-#endif
-#if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND2) + \
-      PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND2)) > 256)
-    #error "ME Island2's CTM Packet credits are not allocated appropriately"
-#endif
-#if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND2) + \
-      BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND2)) > 128)
-    #error "ME Island2's CTM Buffer credits are not allocated appropriately"
-#endif
-#if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND3) + \
-      PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND3)) > 256)
-    #error "ME Island3's CTM Packet credits are not allocated appropriately"
-#endif
-#if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND3) + \
-      BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND3)) > 128)
-    #error "ME Island3's CTM Buffer credits are not allocated appropriately"
-#endif
-#if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND4) + \
-      PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND4)) > 256)
-    #error "ME Island4's CTM Packet credits are not allocated appropriately"
-#endif
-#if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND4) + \
-      BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND4)) > 128)
-    #error "ME Island4's CTM Buffer credits are not allocated appropriately"
-#endif
-#if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND5) + \
-      PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND5)) > 256)
-    #error "ME Island5's CTM Packet credits are not allocated appropriately"
-#endif
-#if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND5) + \
-      BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND5)) > 128)
-    #error "ME Island5's CTM Buffer credits are not allocated appropriately"
-#endif
-#if ( (PKT_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND6) + \
-      PKT_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND6)) > 256)
-    #error "ME Island6's CTM Packet credits are not allocated appropriately"
-#endif
-#if ( (BUF_CREDIT_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND6) + \
-      BUF_CREDIT_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND6)) > 128)
-    #error "ME Island6's CTM Buffer credits are not allocated appropriately"
-#endif
+        /* FIXME: C0 */
+        #error "NFP6000 C0 not implemented by NBI DMA init."
 
-/* NBI DMA settings for mixed A0-B0 and C0 */
+    /* NBI DMA settings for mixed A0-B0 and C0 for NFP6XXX*/
+    #else
+
+        /* NBI DMA settings for mixed NFP6XXX versions are not implimented */
+        #error "Mixed NFP6XXX version are not implemented by NBI DMA init."
+
+    #endif
+
+/* NBI DMA settings for A0 in NFP3800 */
+#elif IS_NFPTYPE(__NFP3800)
+
+    /* FIXME: 3800 */
+    #error "NFP3800 not implemented by NBI DMA init."
+
 #else
 
-/* FIXME: C0 */
-#error "Mixed A0-B0 and C0 not implemented by NBI DMA init."
+    #error "Unsupported chip type selected."
 
 #endif
+
 
 /* A helper macro to populate the NBI DMA BPE credit symbol */
 #macro Nbi_Dma_Bpe_Credits_Populate(NBI_ID, BPE, CTM, PKT_CREDIT, BUF_CREDIT)
