@@ -291,7 +291,7 @@
  * Macro to pull buffers from Egress(TM) side to EMU ring
  */
 #macro blm_egress_pull_buffers_to_emu_ring(NbiNum, blq, addr, ringid)
-    #if (__REVISION_MIN < __REVISION_B0)
+    #if ((__REVISION_MIN < __REVISION_B0) && (IS_NFPTYPE(__NFP6000)))
         #ifndef TH_12713
             #define TH_12713    NBI_READ
         #endif
@@ -377,7 +377,7 @@
     .xfer_order $dummy
     blm_cache_acquire_lock()
     move(_addr, (__ADDR_I0_CTM >>8) & 0xFF000000)
-    #if (__REVISION_MIN < __REVISION_B0)
+    #if ((__REVISION_MIN < __REVISION_B0) && (IS_NFPTYPE(__NFP6000)))
         #ifndef TH_12713
             #define TH_12713    NBI_READ
         #endif
@@ -486,7 +486,7 @@
     .reg _offset
     move(_addr, ((BLM_EGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID >>8) & 0xFF000000))
     move(_offset, ((BLM_EGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID) & 0xFFFFFFFF))
-    #if (__REVISION_MIN < __REVISION_B0)
+    #if ((__REVISION_MIN < __REVISION_B0) && (IS_NFPTYPE(__NFP6000)))
         #define_eval _MAX_PULL_DATA_LEN     2
     #else
         #define_eval _MAX_PULL_DATA_LEN     n
