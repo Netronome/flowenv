@@ -43,7 +43,8 @@
           NFPBSP-1179
     */
     #if ((__REVISION_MIN == __REVISION_A0) || \
-         (__REVISION_MIN == __REVISION_A1))
+         (__REVISION_MIN == __REVISION_A1) && \
+         (IS_NFPTYPE(__NFP6000)))
         Nbi_PktPreclassifier_NFPBSP_1179(NBI_ID)
     #endif
 
