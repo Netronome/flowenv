@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,8 +107,8 @@
         #error 4 "BLM requires NFAS version 5.2.0.0 or later."
     #endif
 
-    #if (!IS_NFPTYPE(__NFP6000))
-        #error 4 "BLM is compatible only with NFP6000 chip family:" __IXPTYPE
+    #if (!IS_NFPTYPE(__NFP6000) && !IS_NFPTYPE(__NFP3800))
+        #error 4 "BLM is compatible only with NFP6000 and NFP3800 chip families:" __IXPTYPE
     #endif
 
     #ifndef __NFP_INDIRECT_REF_FORMAT_NFP6000

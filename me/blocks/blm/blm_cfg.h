@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,25 @@
  */
 #define BLM_MEM_TYPE_EMEM               0
 #define BLM_MEM_TYPE_EMEM_CACHE_UPPER   1
+
+/* Determine the chip type in order to select appropriate default settings. */
+#if defined(__NFP_LANG_ASM)
+    #if (IS_NFPTYPE(__NFP6000))
+        #define BLM_USE_NFP6XXX_DEFAULTS
+    #elif (IS_NFPTYPE(__NFP3800))
+        #define BLM_USE_NFP38XX_DEFAULTS
+    #else
+        #error "Unsupported chip type"
+    #endif
+#else
+    #if defined(__NFP_IS_6XXX)
+        #define BLM_USE_NFP6XXX_DEFAULTS
+    #elif defined(__NFP_IS_38XX)
+        #define BLM_USE_NFP38XX_DEFAULTS
+    #else
+        #error "Unsupported chip type"
+    #endif
+#endif
 
 
 #ifdef BLM_CUSTOM_CONFIG
@@ -246,10 +265,18 @@
 #endif
 /* The number of buffers from IMEM0 for BLQ ring 0 */
 #ifndef BLM_NBI8_BLQ0_BDSRAM_IMEM0_NUM_BUFS
-    #define BLM_NBI8_BLQ0_BDSRAM_IMEM0_NUM_BUFS 512
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI8_BLQ0_BDSRAM_IMEM0_NUM_BUFS 0
+    #else
+        #define BLM_NBI8_BLQ0_BDSRAM_IMEM0_NUM_BUFS 512
+    #endif
 #endif
 #ifndef BLM_NBI8_BLQ0_EMU_IMEM0_DENSITY
-    #define BLM_NBI8_BLQ0_EMU_IMEM0_DENSITY     1
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI8_BLQ0_EMU_IMEM0_DENSITY     0
+    #else
+        #define BLM_NBI8_BLQ0_EMU_IMEM0_DENSITY     1
+    #endif
 #endif
 
 #ifndef BLM_NBI8_BLQ0_EMU_IMEM1_NUM_BUFS
@@ -598,13 +625,25 @@
 #endif
 
 #ifndef BLM_NBI8_BLQ1_EMU_EMEM1_NUM_BUFS
-    #define BLM_NBI8_BLQ1_EMU_EMEM1_NUM_BUFS    768
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI8_BLQ1_EMU_EMEM1_NUM_BUFS    0
+    #else
+        #define BLM_NBI8_BLQ1_EMU_EMEM1_NUM_BUFS    768
+    #endif
 #endif
 #ifndef BLM_NBI8_BLQ1_BDSRAM_EMEM1_NUM_BUFS
-    #define BLM_NBI8_BLQ1_BDSRAM_EMEM1_NUM_BUFS 256
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI8_BLQ1_BDSRAM_EMEM1_NUM_BUFS 0
+    #else
+        #define BLM_NBI8_BLQ1_BDSRAM_EMEM1_NUM_BUFS 256
+    #endif
 #endif
 #ifndef BLM_NBI8_BLQ1_EMU_EMEM1_DENSITY
-    #define BLM_NBI8_BLQ1_EMU_EMEM1_DENSITY     1
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI8_BLQ1_EMU_EMEM1_DENSITY     0
+    #else
+        #define BLM_NBI8_BLQ1_EMU_EMEM1_DENSITY     1
+    #endif
 #endif
 
 #ifndef BLM_NBI8_BLQ1_EMU_EMEM2_NUM_BUFS
@@ -838,13 +877,25 @@
 #endif
 
 #ifndef BLM_NBI9_BLQ1_EMU_EMEM1_NUM_BUFS
-    #define BLM_NBI9_BLQ1_EMU_EMEM1_NUM_BUFS    768
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ1_EMU_EMEM1_NUM_BUFS    0
+    #else
+        #define BLM_NBI9_BLQ1_EMU_EMEM1_NUM_BUFS    768
+    #endif
 #endif
 #ifndef BLM_NBI9_BLQ1_BDSRAM_EMEM1_NUM_BUFS
-    #define BLM_NBI9_BLQ1_BDSRAM_EMEM1_NUM_BUFS 256
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ1_BDSRAM_EMEM1_NUM_BUFS 0
+    #else
+        #define BLM_NBI9_BLQ1_BDSRAM_EMEM1_NUM_BUFS 256
+    #endif
 #endif
 #ifndef BLM_NBI9_BLQ1_EMU_EMEM1_DENSITY
-    #define BLM_NBI9_BLQ1_EMU_EMEM1_DENSITY     1
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ1_EMU_EMEM1_DENSITY     0
+    #else
+        #define BLM_NBI9_BLQ1_EMU_EMEM1_DENSITY     1
+    #endif
 #endif
 
 #ifndef BLM_NBI9_BLQ1_EMU_EMEM2_NUM_BUFS
