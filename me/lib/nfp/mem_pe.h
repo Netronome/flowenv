@@ -22,6 +22,12 @@
 #include <nfp.h>
 #include <types.h>
 
+#ifdef __NFP_PE_DMA_DUAL_SIGNAL
+    /* TODO: Add support for PE DMA POLL mode. */
+    /* Note that PE DMA POLL mode is only supported in NFP38XX. */
+    #error "PE DMA Poll mode is not yet supported."
+#endif
+
 /**
  * DMA from MU to CTM.
  * @param ctm_addr  32-bit pointer to the CTM start address (destination)
@@ -30,8 +36,12 @@
  * @param sync      Type of synchronisation (sig_done or ctx_swap)
  * @param sig       Signal to use
  *
- * @note You *must not* have more than 16 outstanding DMA commands per
- *       CTM. It is the caller's responsibility to enforce
+ * @note If you are using NFP6000. You *must not* have more than 16 outstanding
+ *       DMA commands per CTM. It is the caller's responsibility to enforce
+ *       this. libpktdma provides safe functions which enforce this
+ *       constraint.
+ * @note If you are using NFP3800. You *must not* have more than 32 outstanding
+ *       DMA commands per CTM. It is the caller's responsibility to enforce
  *       this. libpktdma provides safe functions which enforce this
  *       constraint.
  * @note @ctm_addr must be a real address not a packet mode address.
