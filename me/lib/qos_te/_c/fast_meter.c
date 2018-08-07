@@ -257,7 +257,7 @@ fast_meter_lock(__mem40 struct fast_meter *meter, unsigned int max_retries)
             break;
         }
 
-        /* Update retry count only if a limit has been specified set. */
+        /* Update retry count only if a limit has been specified. */
         if (max_retries) {
             ++retry_cnt;
         }
@@ -270,23 +270,31 @@ fast_meter_lock(__mem40 struct fast_meter *meter, unsigned int max_retries)
         ctrl.__raw     = 0;
         ctrl.ts_update = 1;
 
-        while (ctrl_xrw & ctrl.__raw) {
-            mem_read_atomic(&ctrl_xr, &(meter->ctrl), sizeof(ctrl_xr));
-
-            /* Update retry count only if a limit has been specified set. */
-            if (max_retries) {
-                ++retry_cnt;
-            }
-        }
-
-        /* Clear the lock if the timestamp update is still locked. */
         if (ctrl_xrw & ctrl.__raw) {
-            ctrl.__raw = 0;
-            ctrl.lock  = 1;
+            do {
+                mem_read_atomic(&ctrl_xr, &(meter->ctrl), sizeof(ctrl_xr));
 
-            mem_bitclr_imm(ctrl.__raw, &(meter->ctrl));
+                if (!(ctrl_xr & ctrl.__raw)) { /* Timestamp update unlocked. */
+                    break;
+                }
 
-            lock_failed = -1;
+                /* Update retry count only if a limit has been specified. */
+                if (max_retries) {
+                    ++retry_cnt;
+                }
+
+                sleep(FM_LOCK__SLEEP_TIME);
+            } while (retry_cnt <= retry_limit);
+
+            /* Clear the lock if the timestamp update is still locked. */
+            if (ctrl_xr & ctrl.__raw) {
+                ctrl.__raw = 0;
+                ctrl.lock  = 1;
+
+                mem_bitclr_imm(ctrl.__raw, &(meter->ctrl));
+
+                lock_failed = -1;
+            }
         }
     }
 
@@ -335,7 +343,7 @@ fast_meter_packet(uint32_t meter_amt, __mem40 struct fast_meter *meter,
             out_pkt_color = mem_meter(meter_amt << ctrl_ts_xrw.ctrl.rdx_pt_shf,
                                       &(meter->bucket),
                                       ctrl_ts_xrw.ctrl.rfc_mode,
-                                      out_pkt_color);
+                                      in_pkt_color);
         } else {
             out_pkt_color = in_pkt_color;
         }
