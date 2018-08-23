@@ -69,7 +69,7 @@
  */
 #define MEM_RING_INIT_MUCURN(_name, _size, _mu, _rloc) \
     _NFP_CHIPRES_ASM(.alloc_resource _name##_rnum _mu##_queues+_rloc global 1)\
-    _NFP_CHIPRES_ASM(.alloc_mem _name _mu##_caceh_upper global _size _size ) \
+    _NFP_CHIPRES_ASM(.alloc_mem _name _mu##_cache_upper global _size _size ) \
     _NFP_CHIPRES_ASM(.init_mu_ring _name##_rnum _name)
 
 /* 
