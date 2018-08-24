@@ -367,7 +367,14 @@
 
 #ifdef PKTIO_NFD_ENABLED
 #include <shared/nfd_common.h>
-#endif
+
+#ifndef NFD_IN_WQ_SHARED
+#if (defined(NFD_PCIE1_EMEM) || defined(NFD_PCIE2_EMEM) || \
+     defined(NFD_PCIE3_EMEM))
+#error "libpktio requires NFD_IN_WQ_SHARED if PCIe 1..3 are used"
+#endif /* NFD_PCIEX_EMEM */
+#endif /* NFD_IN_WQ_SHARED */
+#endif /* PKTIO_NFD_ENABLED */
 
 #ifndef PKTIO_MAX_TM_QUEUES
 #define PKTIO_MAX_TM_QUEUES 256
