@@ -25,8 +25,8 @@
 
 #if defined (__NFP_LANG_MICROC)
 
-/* 
- * Declare+initialize a ring in a specific MU 
+/*
+ * Declare+initialize a ring in a specific MU
  * @param _name         Name of the ring memory
  * @param _size         Size of the ring (must be a power of 2)
  * @param _mu           Name of MU to put the ring in (e.g. emem0)
@@ -36,7 +36,7 @@
     _NFP_CHIPRES_ASM(.alloc_mem _name _mu global _size _size ) \
     _NFP_CHIPRES_ASM(.init_mu_ring _name##_rnum _name)
 
-/* 
+/*
  * Declare+initialize a ring in a specific MU with a specific ring number
  * @param _name         Name of the ring memory
  * @param _size         Size of the ring (must be a power of 2)
@@ -48,7 +48,7 @@
     _NFP_CHIPRES_ASM(.alloc_mem _name _mu global _size _size ) \
     _NFP_CHIPRES_ASM(.init_mu_ring _name##_rnum _name)
 
-/* 
+/*
  * Declare+initialize a ring in a specific MU in cache_upper
  * @param _name         Name of the ring memory
  * @param _size         Size of the ring (must be a power of 2)
@@ -59,7 +59,7 @@
     _NFP_CHIPRES_ASM(.alloc_mem _name _mu##_cache_upper global _size _size ) \
     _NFP_CHIPRES_ASM(.init_mu_ring _name##_rnum _name)
 
-/* 
+/*
  * Declare+initialize a ring in a specific MU in cache_upper with a
  * specific ring number.
  * @param _name         Name of the ring memory
@@ -69,10 +69,10 @@
  */
 #define MEM_RING_INIT_MUCURN(_name, _size, _mu, _rloc) \
     _NFP_CHIPRES_ASM(.alloc_resource _name##_rnum _mu##_queues+_rloc global 1)\
-    _NFP_CHIPRES_ASM(.alloc_mem _name _mu##_caceh_upper global _size _size ) \
+    _NFP_CHIPRES_ASM(.alloc_mem _name _mu##_cache_upper global _size _size ) \
     _NFP_CHIPRES_ASM(.init_mu_ring _name##_rnum _name)
 
-/* 
+/*
  * Declare+initialize a ring in emem0
  * @param _name         Name of the ring memory
  * @param _size         Size of the ring (must be a power of 2)
@@ -80,7 +80,7 @@
 #define MEM_RING_INIT(_name, _size) \
     MEM_RING_INIT_MU(_name, _size, emem0)
 
-/* 
+/*
  * Declare+initialize a ring in emem0 with a specific ring number
  * @param _name         Name of the ring memory
  * @param _size         Size of the ring (must be a power of 2)
@@ -89,7 +89,7 @@
 #define MEM_RING_INIT_RN(_name, _size, _rnum) \
     MEM_RING_INIT_MURN(_name, _size, emem0, _rnum)
 
-/* 
+/*
  * Declare+initialize a ring in emem0 cache_upper
  * @param _name         Name of the ring memory
  * @param _size         Size of the ring (must be a power of 2)
@@ -97,7 +97,7 @@
 #define MEM_RING_INIT_CU(_name, _size) \
     MEM_RING_INIT_MUCU(_name, _size, emem0)
 
-/* 
+/*
  * Declare+initialize a ring in emem0 cache_upper with a specific ring number
  * @param _name         Name of the ring memory
  * @param _size         Size of the ring (must be a power of 2)
