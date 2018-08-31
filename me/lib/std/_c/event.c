@@ -126,19 +126,20 @@ event_cls_autopush_signal_setup(unsigned int apnum, unsigned int master,
 
 __intrinsic void
 __event_cls_autopush_filter_reset(unsigned int fnum, unsigned int type,
-                                  unsigned int autopush, sync_t sync,
+                                  unsigned int autopush,
+                                  __xwrite unsigned int *apfwr, sync_t sync,
                                   SIGNAL *sig)
 {
     __cls void *apfaddr = (__cls void *)NFP_CLS_AUTOPUSH_STATUS(fnum);
-    __xwrite unsigned int apfval;
 
     ctassert(__is_ct_const(sync));
     ctassert(sync == sig_done || sync == ctx_swap);
 
-    apfval = (NFP_CLS_AUTOPUSH_STATUS_MONITOR(type) |
+    *apfwr = (NFP_CLS_AUTOPUSH_STATUS_MONITOR(type) |
               NFP_CLS_AUTOPUSH_STATUS_AUTOPUSH(autopush));
 
-    __cls_write(&apfval, apfaddr, sizeof(apfval), sizeof(apfval), sync, sig);
+    __cls_write(apfwr, apfaddr, sizeof(unsigned int), sizeof(unsigned int),
+                sync, sig);
 }
 
 __intrinsic void
@@ -146,8 +147,10 @@ event_cls_autopush_filter_reset(unsigned int fnum, unsigned int type,
                                 unsigned int autopush)
 {
     SIGNAL sig;
+    __xwrite unsigned int apfwr;
 
-    __event_cls_autopush_filter_reset(fnum, type, autopush, ctx_swap, &sig);
+    __event_cls_autopush_filter_reset(fnum, type, autopush, &apfwr, ctx_swap,
+                                      &sig);
 }
 
 __intrinsic void

@@ -99,12 +99,14 @@ __intrinsic void event_cls_autopush_signal_setup(unsigned int apnum,
  * @param fnum          Autopush filter number
  * @param type          Autopush filter type
  * @param autopush      Autopush signal to invoke
+ * @param apfwr         Write transfer register for the reset
  * @param sync          Type of synchronization (sig_done or ctx_swap)
  * @param sig           Signal to use
  */
 __intrinsic void __event_cls_autopush_filter_reset(unsigned int fnum,
                                                    unsigned int type,
                                                    unsigned int autopush,
+                                                   __xwrite unsigned int *apfwr,
                                                    sync_t sync,
                                                    SIGNAL *sig);
 
