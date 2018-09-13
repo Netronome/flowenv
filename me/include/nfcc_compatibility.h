@@ -31,11 +31,11 @@
 #endif
 
 #ifndef __cls32
-#define __cls32         __declspec(add32 cls)
+#define __cls32         __declspec(addr32 cls)
 #endif
 
 #ifndef __cls40
-#define __cls40         __declspec(add40 cls)
+#define __cls40         __declspec(addr40 cls)
 #endif
 
 #ifndef __ctm32
