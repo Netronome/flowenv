@@ -42,7 +42,33 @@
  */
  blm_compatability_check()
 
-.alloc_mem CTM_RESERVED                   ctm+0             island  0x20000     reserved
+#ifndef BLM_RESERVE_NUM_CTM_PARTITIONS
+/**
+ * Macro to reserve N/8ths of CTM for data buffers.
+ * @note Set to 0 if another entity is reserving CTM memory for data buffers.
+ * @note For NFP-6xxx/4xxxx, setting this macro to non-zero automatically
+ *       reserves half of CTM (128 kB out of 256 kB).
+ */
+#define BLM_RESERVE_NUM_CTM_PARTITIONS 4
+#endif
+
+#if IS_NFPTYPE(__NFP6000)
+    #if BLM_RESERVE_NUM_CTM_PARTITIONS > 0
+        /* Note: Reserve half of CTM. */
+        #define CTM_RESERVED_SIZE 0x20000
+        .alloc_mem CTM_RESERVED                   ctm+0             island  CTM_RESERVED_SIZE     reserved
+    #else
+        #define CTM_RESERVED_SIZE 0x0
+    #endif
+#else
+    #if BLM_RESERVE_NUM_CTM_PARTITIONS > 0
+        #define CTM_RESERVED_SIZE                             \
+            ((0x20000 * BLM_RESERVE_NUM_CTM_PARTITIONS) >> 3)
+        .alloc_mem CTM_RESERVED                   ctm+0             island  CTM_RESERVED_SIZE     reserved
+    #else
+        #define CTM_RESERVED_SIZE 0x0
+    #endif
+#endif
 
 /* Mem Reserved for BLM use */
 .alloc_mem BLM_INFO_SECTION_BASE        i0.ctm                 island   64 8
