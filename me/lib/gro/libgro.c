@@ -278,30 +278,60 @@ gro_cli_build_mem_ring_meta3(__xwrite struct gro_meta_memq *meta,
 }
 
 
-
 __intrinsic void
+#if defined(__NFP_IS_6XXX)
 gro_cli_build_nbi_meta(__xwrite struct gro_meta_nbi *meta, unsigned int pkt_isl,
                        unsigned int pkt_num, unsigned int ctm_sz,
                        unsigned int ms_off, unsigned int eoff, unsigned int nbi,
                        unsigned int txq)
+#else
+gro_cli_build_nbi_meta_no_pm(__xwrite struct gro_meta_nbi *meta,
+                             unsigned int pkt_isl, unsigned int pkt_num,
+                             unsigned int ctm_sz, unsigned int offset,
+                             unsigned int eoff, unsigned int nbi,
+                             unsigned int txq)
+#endif
 {
     unsigned int dm;
+#if !defined(__NFP_IS_6XXX)
+    unsigned int adj_offset;
+#endif
 
     try_ctassert(pkt_isl < 64);
     try_ctassert(pkt_num < 512);
+#if defined(__NFP_IS_6XXX)
     try_ctassert(((ms_off % 8) == 0) && (ms_off <= 56));
+#else
+    /* TODO: Add NFP-3800 support for offsets from 137 to 519. */
+    try_ctassert((offset >= 8) && (offset < 136));
+#endif
     try_ctassert(nbi < 2);
     try_ctassert(txq < 1024);
 
     /*
-     * See the NFP 6xxx Databook section 9.2.2.7.9 for the format of the
-     * various packet processing complete fields.
+     * See the NFP 6xxx Databook section 9.2.2.7.9, or NFP-38xx Databook
+     * sections 7.2.5.9 and 8.2.2.6.8, for the format of the various packet
+     * ready fields.
      */
+#if defined(__NFP_IS_6XXX)
     meta->__raw[0] = (GRO_DTYPE_IFACE << GRO_META_TYPE_shf) |
                      ((GRO_DEST_IFACE_BASE + nbi) << GRO_META_DEST_shf);
+#else
+    adj_offset = offset - 8;
+    meta->__raw[0] =
+        ((adj_offset &
+          (GRO_META_NBI_OFFSET_msk << GRO_META_NBI_OFFSET_rshf)) <<
+         (GRO_META_NBI_OFFSET_shf - GRO_META_NBI_OFFSET_rshf)) |
+        (GRO_DTYPE_IFACE << GRO_META_TYPE_shf) |
+        ((GRO_DEST_IFACE_BASE + nbi) << GRO_META_DEST_shf);
+#endif
     dm = (__ME() & 1) + 2;
     meta->addr_hi = (nbi << 30) | (pkt_isl << 24) | (dm << 20);
+#if defined(__NFP_IS_6XXX)
     meta->addr_lo = eoff | (pkt_num << 16);
+#else
+    meta->addr_lo = (pkt_num << 16) | ((adj_offset & 0x3) << 14) | eoff;
+#endif
 
     /*
      * Word 3: (previous ALU instruction value)
@@ -322,13 +352,21 @@ gro_cli_build_nbi_meta(__xwrite struct gro_meta_nbi *meta, unsigned int pkt_isl,
      *
      *  * TXQ goes in data_ref[10;0] which is in [10;16] of the previous ALU.
      *
-     *  * The CTM size goes in data_ref[2;12] which is at [2;28] of the
-     *    previous ALU.
+     *  * For NFP-6xxx, the CTM size goes in data_ref[2;12] which is at [2;28]
+     *    of the previous ALU.
+     *
+     *  * For NFP-38xx, the CTM size goes in data_ref[4;10] which is at [4;26]
+     *    of the previous ALU.
      */
 #define __NBI_IREF_LO8 ((1 << 0) | (1 << 1) | (1 << 3) | (1 << 6) | (1 << 7))
 
+#if defined(__NFP_IS_6XXX)
     meta->prev_alu = __NBI_IREF_LO8 | (((ms_off / 8) - 1) << 8) | (txq << 16) |
                      (ctm_sz << 28);
+#else
+    meta->prev_alu = __NBI_IREF_LO8 | ((adj_offset & 0x7c) << 6) |
+                     (txq << 16) | (ctm_sz << 26);
+#endif
 
 #undef __NBI_IREF_LO8
 }

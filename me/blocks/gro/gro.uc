@@ -174,12 +174,6 @@
 
 #define GRO_CLP2(x)     (1 << log2(x, 1))
 
-#if (__NFPTYPE != __NFP6000)
-
-    #error "This version of gro.uc is only for NFP6xxx processors"
-
-#endif
-
 
 #ifndef GRO_NUM_BLOCKS
 #error "GRO_NUM_BLOCKS must be #defined"
@@ -1326,12 +1320,14 @@ done#:
  * @param out_xmeta     The location to put the output metadata
  * @param in_isl        The island containing the CTM buffer of the packet.
  * @param in_pktn       The packet number of the CTM buffer.
- * @param in_ctm_sz     The size of the CTM buffer (2 bits.  size = 2^(8+sz))
+ * @param in_ctm_sz     The size of the CTM buffer
  * @param in_off        The starting offset of the packet modifier script.
  * @param in_len        The length of the packet starting from the BEGINNING
  *                      of the CTM buffer.
  * @param in_nbi        The NBI to send the packet out.
  * @param in_txq        The TXQ in the NBI to send the packet onto.
+ * @note For NFP-6xxx, 'in_ctm_sz' is 2 bits.  (size = 2^(8+sz))
+ * @note For NFP-38xx, 'in_ctm_sz' is 4 bits.
  */
 #macro gro_cli_build_nbi_meta(out_xmeta, in_isl, in_pktn, in_ctm_sz, in_off, in_len, in_nbi, in_txq)
 .begin
@@ -1340,8 +1336,9 @@ done#:
     .reg dm
 
     /*
-     * See the NFP 6xxx Databook section 9.2.2.7.9 for the format of the various packet
-     * processing complete fields.  This version sends directly to NBI.
+     * See the NFP 6xxx Databook section 9.2.2.7.9, or NFP 38xx Databook
+     * sections 7.2.5.9 and 8.2.2.6.8, for the format of the various packet
+     * ready fields.  This version sends directly to NBI.
      */
 
     /* Word 0 */
@@ -1349,7 +1346,7 @@ done#:
     alu[tmp, tmp, +, in_nbi]
     alu[out_xmeta[GRO_META_TYPE_wrd], GRO_DTYPE_IFACE, OR, tmp, <<GRO_META_DEST_shf]
 
-    /* Word 1 == addr_hi of the packet_complete_unicast */
+    /* Word 1 == addr_hi of the packet_ready_unicast */
     local_csr_rd[ACTIVE_CTX_STS]        // addr[31:28] = CTM Data master
     immed[tmp, 0]                       // Load balance these so odd and even
     alu[tmp, 1, AND, tmp, >>3]          // MEs use different ports.
@@ -1358,13 +1355,13 @@ done#:
     alu[tmp, tmp, OR, in_nbi, <<30]     // addr[39:38] == NBI number
     alu[out_xmeta[GRO_META_NBI_ADDRHI_wrd], tmp, OR, in_isl, <<24] // addr[32:37] == CTM island
 
-    /* Word 2 == addr_lo of the packet_complete_unicast */
+    /* Word 2 == addr_lo of the packet_ready_unicast */
     alu[out_xmeta[GRO_META_NBI_ADDRLO_wrd], in_len, OR, in_pktn, <<16]
 
     /*
      * Word 3:
      *
-     * previous ALU for PPC must override:
+     * previous ALU for packet ready must override:
      *  * Signal master from CSR0 (seq number)  (1 << 0)
      *
      *  * Data master from CSR0 (seq number)    (1 << 1)
@@ -1386,10 +1383,13 @@ done#:
 
     /*
      * The TXQ goes in data_ref[10;0] which is in [10;16] of the previous ALU.
-     * The CTM size goes in data_ref[2;12] which is at [2;28] of the prev ALU.
+     * For NFP-6xxx, the CTM size goes in data_ref[2;12] which is at [2;28] of
+     * the prev ALU.
+     * For NFP-38xx, the CTM size goes in data_ref[4;10] which is at [4;26] of
+     * the prev ALU.
      */
     alu[tmp, tmp, OR, in_txq, <<16]
-    alu[out_xmeta[GRO_META_NBI_PALU_wrd], tmp, OR, in_ctm_sz, <<28]
+    alu[out_xmeta[GRO_META_NBI_PALU_wrd], tmp, OR, in_ctm_sz, <<GRO_PKT_RDY_CTM_SZ_shf]
 
     #undef __NBI_IREF_LO8
 

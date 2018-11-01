@@ -20,7 +20,31 @@
 #define __GRO_H
 
 #ifndef __NFP_LANG_ASM
+
 #include <stdint.h>
+
+#if defined(__NFP_IS_6XXX)
+    #define GRO_DEFAULT_MEM        imem
+    /** Shift amount for CTM size field for the packet ready previous ALU. */
+    #define GRO_PKT_RDY_CTM_SZ_shf 28
+#elif defined(__NFP_IS_38XX)
+    #define GRO_DEFAULT_MEM        emem
+    /** Shift amount for CTM size field for the packet ready previous ALU. */
+    #define GRO_PKT_RDY_CTM_SZ_shf 26
+#else
+    #error "GRO cannot support unknown chip type!"
+#endif
+
+#else
+
+#if (__NFPTYPE == __NFP6000)
+    #define GRO_DEFAULT_MEM imem
+#elif (__NFPTYPE == __NFP3800)
+    #define GRO_DEFAULT_MEM emem
+#else
+    #error "GRO cannot support unknown chip type!"
+#endif
+
 #endif /* __NFP_LANG_ASM */
 
 
@@ -74,7 +98,13 @@ struct gro_meta_drop {
 struct gro_meta_nbi {
     union {
         struct {
+#if defined(__NFP_IS_6XXX)
             unsigned int unused:25;
+#else
+            unsigned int unused0:2;
+            unsigned int offset_hi:2;
+            unsigned int unused1:21;
+#endif
             unsigned int dest:4;
             unsigned int type:3;
             uint32_t addr_hi;
@@ -195,6 +225,10 @@ union gro_meta {
 #define GRO_META_DROP_BUFH_shf          0
 #define GRO_META_DROP_BUFH_msk          0xFFFFFFFFFF
 
+#define GRO_META_NBI_OFFSET_wrd         0
+#define GRO_META_NBI_OFFSET_msk         0x3
+#define GRO_META_NBI_OFFSET_rshf        7
+#define GRO_META_NBI_OFFSET_shf         28
 #define GRO_META_NBI_ADDRHI_wrd         1
 #define GRO_META_NBI_ADDRLO_wrd         2
 #define GRO_META_NBI_PALU_wrd           3
@@ -382,11 +416,11 @@ struct gro_client_ctx {
 
 
 #ifndef GRO_CNTR_MEM_UC
-#define GRO_CNTR_MEM_UC imem
-#endif /* GRO_CNTR_MEM_MICROC */
+#define GRO_CNTR_MEM_UC GRO_DEFAULT_MEM
+#endif /* GRO_CNTR_MEM_UC */
 
 #ifndef GRO_CNTR_MEM_MICROC
-#define GRO_CNTR_MEM_MICROC __declspec(imem)
+#define GRO_CNTR_MEM_MICROC __declspec(GRO_DEFAULT_MEM)
 #endif /* GRO_CNTR_MEM_MICROC */
 
 

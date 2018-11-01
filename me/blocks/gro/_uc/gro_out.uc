@@ -28,6 +28,20 @@
 #include <journal.uc>
 #endif
 
+#if IS_NFPTYPE(__NFP6000)
+    #define NBI_SEQ_MASK     0x3fffffff
+    #define PKT_RDY_TOK      $
+    #define XMIT_NINST_LONG  12
+    #define XMIT_NINST_SHORT 10
+#elif IS_NFPTYPE(__NFP3800)
+    #define NBI_SEQ_MASK     0x0fffffff
+    #define PKT_RDY_TOK      --
+    #define XMIT_NINST_LONG  14
+    #define XMIT_NINST_SHORT 12
+#else
+    #error "GRO cannot support unknown chip type!"
+#endif
+
 #ifndef GRO_RELEASE_RING_TYPE
 #define GRO_RELEASE_RING_TYPE MEMRING
 #endif
@@ -149,8 +163,10 @@
 #endif
 
 #ifdef NO_DDR_1
-    #define emem1_cache_upper emem1
-    .init_csr xpbm:ExtMu1IsldXpbmMap.Island.ExtMuXpbMap.MuConfigReg.ConfigCPP.DirAccWays 0xff required
+    #if (__nfp_has_island(25))
+        #define emem1_cache_upper emem1
+        .init_csr xpbm:ExtMu1IsldXpbmMap.Island.ExtMuXpbMap.MuConfigReg.ConfigCPP.DirAccWays 0xff required
+    #endif
 #endif
 
 #ifdef NO_DDR_2
@@ -841,22 +857,31 @@ wait_mem_ring1_input#:
 #macro gro_iface_xmit(in_meta, out_xfer, OUTSIG, CUR_BUF, ONE_REQ_LABEL, TWO_REQ_LABEL)
 .begin
     .reg addr_hi
+#if !IS_NFPTYPE(__NFP6000)
+    .reg ind_ref_val
+#endif
 
     #if (!streq('TWO_REQ_LABEL', '--'))
-        #define_eval _GRO_H_NINST 12
+        #define_eval _GRO_H_NINST XMIT_NINST_LONG
         alu[g_sigmask, --, B, CUR_BUF[LM_XBUF_SIGMASK_wrd]]
     #else
-        #define_eval _GRO_H_NINST 10
+        #define_eval _GRO_H_NINST XMIT_NINST_SHORT
         local_csr_wr[SAME_ME_SIGNAL, g_sig_next_worker]
     #endif
 
     /* XXX XXX XXX  Assumes one cycle lost unrecoverably due to jump[] */
 
     alu[addr_hi, --, B, in_meta[GRO_META_NBI_ADDRHI_wrd]]
+#if IS_NFPTYPE(__NFP6000)
     local_csr_wr[CMD_INDIRECT_REF_0, LM_DEST_NBI_CSR0]
+#else
+    alu[ind_ref_val, in_meta[GRO_META_NBI_OFFSET_wrd], AND, GRO_META_NBI_OFFSET_msk, <<GRO_META_NBI_OFFSET_shf]
+    alu[ind_ref_val, ind_ref_val, OR, LM_DEST_NBI_CSR0]
+    local_csr_wr[CMD_INDIRECT_REF_0, ind_ref_val]
+#endif
     alu[--, --, B, in_meta[GRO_META_NBI_PALU_wrd]]
 
-    nbi[packet_ready_unicast, $, addr_hi, <<8, in_meta[GRO_META_NBI_ADDRLO_wrd]], indirect_ref
+    nbi[packet_ready_unicast, PKT_RDY_TOK, addr_hi, <<8, in_meta[GRO_META_NBI_ADDRLO_wrd]], indirect_ref
 
     #if (!streq('TWO_REQ_LABEL', '--'))
         br_bset[CUR_BUF[LM_XBUF_FLAGS_wrd], XBUF_FLAG_TWOPKTS_bit, TWO_REQ_LABEL], defer[2]
@@ -1282,7 +1307,7 @@ xmit_drop_mu_buf#:
      * See NFP-6xxx PRm 4.2.1.1.55.
      */
     move(g_nbi_seq_incr, 0x00010000)
-    move(g_nbi_seq_mask, 0x3fffffff)
+    move(g_nbi_seq_mask, NBI_SEQ_MASK)
 
     _gro_out_worker_init_xbufs(ctx, next_ctx, ORDERSIG, $meta_, insig_)
 

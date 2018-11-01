@@ -225,6 +225,8 @@ __intrinsic void gro_cli_build_memq_meta(__xwrite struct gro_meta_memq *meta,
                                          int w0, int w1, int w2);
 
 
+#if defined(__NFP_IS_6XXX)
+
 /**
  * gro_cli_build_nbi_meta()
  *
@@ -251,6 +253,29 @@ __intrinsic void gro_cli_build_nbi_meta(__xwrite struct gro_meta_nbi *meta,
                                         unsigned int eoff,
                                         unsigned int nbi,
                                         unsigned int txq);
+
+#else
+
+/**
+ * gro_cli_build_nbi_meta_no_pm()
+ *
+ * Generate GRO metadata for sending a packet to a TX queue on an NBI.
+ *
+ * @param meta          The location to store the GRO metadata
+ * @param pkt_isl       The island of the CTM buffer holding the packet
+ * @param ctm_sz        The encoding for the CTM buffer size
+ * @param offset        The starting offset of the packet (8 to 135)
+ * @param eoff          The ending offset of the packet
+ * @param nbi           The NBI to send the packet queue
+ * @param txq           The transmit queue in the NBi to send the packet out
+ */
+__intrinsic void gro_cli_build_nbi_meta_no_pm(
+                     __xwrite struct gro_meta_nbi *meta, unsigned int pkt_isl,
+                     unsigned int pkt_num, unsigned int ctm_sz,
+                     unsigned int offset, unsigned int eoff, unsigned int nbi,
+                     unsigned int txq);
+
+#endif
 
 
 /**

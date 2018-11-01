@@ -320,11 +320,17 @@ struct nbi_meta_catamaran {
  * build the command.  It also requires building the address of the
  * packet in an unusual way.
  *
- * References:
- *  - NFP 6xxx PRM Section 2.1.6.4.6 "NFP-6xxx (Normal) Indirect
- *    Reference Formats"
+ * NFP 6xxx References:
+ *  - NFP 6xxx PRM Section 2.1.6.4.6 "NFP-6xxx (Normal) Indirect Reference
+ *    Formats"
  *  - NFP 6xxx DB Section 9.2.2.7.9 "Packet Processing Complete Target
  *    Command and Packet Ready Master Command"
+ *
+ * NFP 3800 References:
+ *  - NFP 3800 PRM Section 2.1.6.4.6 "NFP-6xxx (Normal) Indirect Reference
+ *    Formats"
+ *  - NFP 3800 DB Section 7.2.5.9 "Target Commands", and Section 8.2.2.6.8
+ *    "Processing and Transmitting the Packets".
  *
  * Users of this API need not worry about these details.  The functions
  * provided handle all of these steps.  The pkt_iref_* functions and
@@ -332,6 +338,7 @@ struct nbi_meta_catamaran {
  * user who wants to write their own packet transmit operations.
  */
 
+#if defined(__NFP_IS_6XXX)
 
 /**
  * The bitfields for the CmdIndirectRef0 CSR when sending/freeing CTM
@@ -354,36 +361,6 @@ struct pkt_iref_csr0 {
     };
 };
 
-
-/**
- * Packet Ready address fields for directly sending the Packet Ready to the NBI
- *  must overide:
- *  - Total length                              (len)
- *  - Packet number                             (pnum << 16)
- *  - Data master (based on ME ID)              ((meid & 0x1 | 0x2) << 28)
- *  - Data master island (island ID)            (iid << 32)
- *  - NBI ID                                    (nbi << 38)
- *
- * Packet Ready address upper fields for directly sending the Packet Ready to
- * the NBI is shifted before being sent:
- * - Packet Ready address left shift amount    8
- */
-#define PKT_READY_ADDR_LO_PNUM_shf        16
-
-#define PKT_READY_ADDR_HI_LSHIFT          8
-#define PKT_READY_ADDR_HI_DMASTER_shf     (28 - PKT_READY_ADDR_HI_LSHIFT)
-#define PKT_READY_ADDR_HI_DMASTER_ISL_shf (32 - PKT_READY_ADDR_HI_LSHIFT)
-#define PKT_READY_ADDR_HI_NBI_shf         (38 - PKT_READY_ADDR_HI_LSHIFT)
-
-#define PKT_READY_ADDR_LO_FIELDS(_pnum, _len)      \
-    ((_pnum << PKT_READY_ADDR_LO_PNUM_shf) | (_len))
-
-#define PKT_READY_ADDR_HI_DMASTER(_meid)  ((_meid & 0x1) | 0x2)
-#define PKT_READY_ADDR_HI_FIELDS(_nbi, _iid, _meid)                         \
-    ((_nbi << PKT_READY_ADDR_HI_NBI_shf)                                    \
-     | (_iid << PKT_READY_ADDR_HI_DMASTER_ISL_shf)                          \
-     | (PKT_READY_ADDR_HI_DMASTER(_meid) << PKT_READY_ADDR_HI_DMASTER_shf))
-
 /**
  * Bitfield format of the previous ALU instruction result for the
  * indirect reference required to send or drop a CTM packet.  This
@@ -405,7 +382,6 @@ struct pkt_iref_palu {
     };
 };
 
-
 /**
  * Previous ALU for Packet Processing Complete must override:
  * - Signal master from CSR0 (seq number)  (1 << 0)
@@ -417,6 +393,134 @@ struct pkt_iref_palu {
  */
 #define PKT_IREF_PALU_MAGIC     0xcb
 
+/**
+ * Packet Ready address fields for directly sending the Packet Ready to the NBI
+ *  must overide:
+ *  - Total length                              (len)
+ *  - Packet number                             (pnum << 16)
+ *  - Data master (based on ME ID)              ((meid & 0x1 | 0x2) << 28)
+ *  - Data master island (island ID)            (iid << 32)
+ *  - NBI ID                                    (nbi << 38)
+ *
+ * Packet Ready address upper fields for directly sending the Packet Ready to
+ * the NBI is shifted before being sent:
+ * - Packet Ready address left shift amount    8
+ */
+#define PKT_READY_ADDR_LO_PNUM_shf        16
+
+#define PKT_READY_ADDR_LO_FIELDS(_pnum, _len)      \
+    ((_pnum << PKT_READY_ADDR_LO_PNUM_shf) | (_len))
+
+#else /* !defined(__NFP_IS_6XXX) */
+
+/**
+ * The bitfields for the CmdIndirectRef0 CSR when sending/freeing CTM packets.
+ * This structure defines the fields as the CTM packet engine sees them instead
+ * of how the ME and the DSF CPP bus sees the fields.  For example, the
+ * sequencer number field goes in the CPP bytemask field.  The sequence number
+ * overlaps the signal master, data master and data master island fields.
+ * The reserved fields should be left as zero.
+ */
+struct pkt_iref_csr0 {
+    union {
+        struct {
+            unsigned int resv0:2;       /**< Reserved, set to 0 */
+            unsigned int offset_hi:2;   /**< Starting offset, bits [7:6] */
+            unsigned int seq:12;        /**< NBI TM sequence number */
+            unsigned int resv1:8;       /**< Reserved, set to 0 */
+            unsigned int drop_prec:3;   /**< Drop precedence. */
+            unsigned int seqr:5;        /**< NBI TM sequencer number */
+        };
+        uint32_t __raw;
+    };
+};
+
+#define PKT_IREF_CSR0_OFFSET_HI_msk  0x3
+#define PKT_IREF_CSR0_OFFSET_HI_shf  7
+/** Macro for setting the starting offset field in Indirect CSR0. */
+#define PKT_IREF_CSR0_OFFSET_HI(_offset)          \
+    (((_offset) >> PKT_IREF_CSR0_OFFSET_HI_shf) & \
+     PKT_IREF_CSR0_OFFSET_HI_msk)
+
+/**
+ * Bitfield format of the previous ALU instruction result for the
+ * indirect reference required to send or drop a CTM packet.  This
+ * structure defines the fields as the CTM packet engine or NBI TM
+ * understands them rather than how the ME and DSF CPP bus sees them.
+ */
+struct pkt_iref_palu {
+    union {
+        struct {
+            unsigned int resv0:2;        /**< Reserved: set to 0 */
+            unsigned int ctm_pkt_size:4; /**< CTM packet buffer size */
+            unsigned int txq:10;         /**< TX queue to send the packet to */
+            unsigned int resv2:3;        /**< No override sig num or sig ctx */
+            unsigned int offset_mid:5;   /**< Starting offset, bits [6:2] */
+            unsigned int magic:8;        /**< PKT_IREF_PALU_MAGIC: see below */
+        };
+        uint32_t __raw;
+    };
+};
+
+/**
+ * Previous ALU for Packet Ready must override:
+ * - Signal master from CSR0 (seq number)                             (1 << 0)
+ * - Data master from CSR0 (seq number)                               (1 << 1)
+ *   Data master island from CSR0 (seq number, starting offset [8:7])
+ * - Data reference (from prev alu DATA16, for TXQ and CTM pkt len)   (1 << 3)
+ * - Bytemask from CSR0 (TM sequencer, drop precedence)               (1 << 6)
+ * - Length (from prev ALU length, for starting offset [6:2])         (1 << 7)
+ */
+#define PKT_IREF_PALU_MAGIC     0xcb
+
+#define PKT_IREF_PALU_OFFSET_MID_msk 0x1f
+#define PKT_IREF_PALU_OFFSET_MID_shf 2
+/** Macro for setting the starting offset field in the previous ALU value. */
+#define PKT_IREF_PALU_OFFSET_MID(_offset)          \
+    (((_offset) >> PKT_IREF_PALU_OFFSET_MID_shf) & \
+     PKT_IREF_PALU_OFFSET_MID_msk)
+
+/**
+ * Packet Ready address fields for directly sending the Packet Ready to the NBI
+ *  must overide:
+ *  - Total length                              (len)
+ *  - Starting offset                           ((offset & 0x3) << 14)
+ *  - Packet number                             (pnum << 16)
+ *  - Data master (based on ME ID)              ((meid & 0x1 | 0x2) << 28)
+ *  - Data master island (island ID)            (iid << 32)
+ *  - NBI ID                                    (nbi << 38)
+ *
+ * Packet Ready address upper fields for directly sending the Packet Ready to
+ * the NBI is shifted before being sent:
+ * - Packet Ready address left shift amount    8
+ */
+#define PKT_READY_ADDR_LO_OFFSET_msk      0x3
+#define PKT_READY_ADDR_LO_OFFSET_shf      14
+#define PKT_READY_ADDR_LO_PNUM_shf        16
+
+#define PKT_READY_ADDR_LO_FIELDS(_pnum, _offset, _len) \
+    (((_pnum) << PKT_READY_ADDR_LO_PNUM_shf) |         \
+     (((_offset) & PKT_READY_ADDR_LO_OFFSET_msk) <<    \
+      PKT_READY_ADDR_LO_OFFSET_shf) | (_len))
+
+#endif /* !defined(__NFP_IS_6XXX) */
+
+#define PKT_READY_ADDR_HI_LSHIFT          8
+#define PKT_READY_ADDR_HI_DMASTER_shf     (28 - PKT_READY_ADDR_HI_LSHIFT)
+#define PKT_READY_ADDR_HI_DMASTER_ISL_shf (32 - PKT_READY_ADDR_HI_LSHIFT)
+#define PKT_READY_ADDR_HI_NBI_shf         (38 - PKT_READY_ADDR_HI_LSHIFT)
+
+#define PKT_READY_ADDR_HI_DMASTER(_meid)  ((_meid & 0x1) | 0x2)
+#define PKT_READY_ADDR_HI_FIELDS(_nbi, _iid, _meid)                         \
+    ((_nbi << PKT_READY_ADDR_HI_NBI_shf)                                    \
+     | (_iid << PKT_READY_ADDR_HI_DMASTER_ISL_shf)                          \
+     | (PKT_READY_ADDR_HI_DMASTER(_meid) << PKT_READY_ADDR_HI_DMASTER_shf))
+
+
+/*
+ * Note: The NBI Packet Modifier is supported on the NFP 6xxx family of chips.
+ */
+#if defined(__NFP_IS_6XXX)
 
 /**
  * Holds information pertaining to the addition of a modification script to
@@ -529,6 +633,35 @@ struct ctm_pkt_credits {
 #ifndef PKT_CTM_CRED_ALLOC_FAIL_SLEEP
 #define PKT_CTM_CRED_ALLOC_FAIL_SLEEP 1000
 #endif
+
+#else /* defined(__NFP_IS_6XXX) */
+
+/* 2-bit encoded various CTM buffer sizes */
+enum PKT_CTM_SIZE {
+    PKT_CTM_SIZE_256   = 0,
+    PKT_CTM_SIZE_512   = 1,
+    PKT_CTM_SIZE_1024  = 2,
+    PKT_CTM_SIZE_2048  = 3,
+    PKT_CTM_SIZE_4096  = 4,
+    PKT_CTM_SIZE_8192  = 5,
+    PKT_CTM_SIZE_16384 = 6,
+    PKT_CTM_SIZE_6144  = 8,
+    PKT_CTM_SIZE_10240 = 9,
+    PKT_CTM_SIZE_12288 = 10,
+    PKT_CTM_SIZE_14336 = 11,
+    PKT_CTM_SIZE_1K    = 2,
+    PKT_CTM_SIZE_2K    = 3,
+    PKT_CTM_SIZE_4K    = 4,
+    PKT_CTM_SIZE_8K    = 5,
+    PKT_CTM_SIZE_16K   = 6,
+    PKT_CTM_SIZE_6K    = 8,
+    PKT_CTM_SIZE_10K   = 9,
+    PKT_CTM_SIZE_12K   = 10,
+    PKT_CTM_SIZE_14K   = 11,
+};
+
+#endif /* !defined(__NFP_IS_6XXX) */
+
 
 /**
  * Packet Engine response for packet_alloc commands.
@@ -757,6 +890,11 @@ __intrinsic void pkt_mac_egress_cmd_write(__mem40 void *pbuf,
                                           int l4_csum_ins);
 
 
+/*
+ * Note: The NBI Packet Modifier is supported on the NFP 6xxx family of chips.
+ */
+#if defined(__NFP_IS_6XXX)
+
 /**
  * Write a direct packet modifier modification script to the beginning of a
  * packet and return the metadata required to send the packet.
@@ -845,10 +983,9 @@ __intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
                                   unsigned int seq,
                                   enum PKT_CTM_SIZE ctm_buf_size);
 
-
 /*
- *  The following sequence of actions is expected to properly allocate and
- *  free CTM packets:
+ *  For NFP 6000, the following sequence of actions is expected to properly
+ *  allocate and free CTM packets:
  *
  *  1. Allocate a credits management structure in CLS memory.
  *      __export __shared __cls struct ctm_pkt_credits my_credits;
@@ -878,13 +1015,6 @@ __intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
  *  6. Free CTM packets (using pkt_num from stage 4).
  *      pkt_ctm_free(isl_num, pkt_num);
  */
-
-/**
- * Free a packet from CTM. Does not notify sequencer.
- * @param isl   Island of the CTM packet
- * @param pnum  Packet number of the CTM packet
- */
-__intrinsic void pkt_ctm_free(unsigned int isl, unsigned int pnum);
 
 /**
  * Allocate a CTM packet buffer.
@@ -960,6 +1090,108 @@ __intrinsic void pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
                                      unsigned int pkt_credits,
                                      unsigned int buf_credits,
                                      int replenish_credits);
+
+#else /* !defined(__NFP_IS_6XXX) */
+
+/**
+ * Send a packet to an NBI port. Notifies sequencer and frees the packet.
+ * @param isl           Island of the CTM packet
+ * @param pnum          Packet number of the CTM packet
+ * @param len           Length of the packet from the start of the packet data
+ *                      (including any prepended command words or tags)
+ * @param offset        Number of bytes between the start of the CTM buffer to
+ *                      the start of the packet data (including any prepended
+ *                      command words or tags) (range is from 8 to 511 bytes)
+ * @param nbi           NBI TM to send the packet to
+ * @param txq           NBI TM TX queue to send the packet to
+ * @param seqr          NBI TM sequencer to send the packet to
+ * @param seq           NBI TM sequence number of the packet
+ * @param drop_prec     Drop precedence profile(0 to 7)
+ * @param ctm_buf_size  Encoded CTM buffer size
+ */
+__intrinsic void pkt_nbi_send(unsigned char isl, unsigned int pnum,
+                              unsigned int len, unsigned int offset,
+                              unsigned int nbi, unsigned int txq,
+                              unsigned int seqr, unsigned int seq,
+                              unsigned int drop_prec,
+                              enum PKT_CTM_SIZE ctm_buf_size);
+
+/**
+ * Send a packet to an NBI port without freeing it. Does not notify sequencer.
+ * @param isl           Island of the CTM packet
+ * @param pnum          Packet number of the CTM packet
+ * @param len           Length of the packet from the start of the packet data
+ *                      (including any prepended command words or tags)
+ * @param offset        Number of bytes between the start of the CTM buffer to
+ *                      the start of the packet data (including any prepended
+ *                      command words or tags) (range is from 8 to 511 bytes)
+ * @param nbi           NBI TM to send the packet to
+ * @param txq           NBI TM TX queue to send the packet to
+ * @param seqr          NBI TM sequencer to send the packet to
+ * @param seq           NBI TM sequence number of the packet
+ * @param drop_prec     Drop precedence profile(0 to 7)
+ * @param ctm_buf_size  Encoded CTM buffer size
+ */
+__intrinsic void pkt_nbi_send_dont_free(unsigned char isl, unsigned int pnum,
+                                        unsigned int len, unsigned int offset,
+                                        unsigned int nbi, unsigned int txq,
+                                        unsigned int seqr, unsigned int seq,
+                                        unsigned int drop_prec,
+                                        enum PKT_CTM_SIZE ctm_buf_size);
+
+/**
+ * Drop a packet sequence from an NBI port. Needed to keep sequencer happy.
+ * @param isl           Island of the CTM packet
+ * @param pnum          Packet number of the CTM packet
+ * @param len           Length of the packet from the start of the packet data
+ *                      (including any prepended command words or tags)
+ * @param offset        Number of bytes between the start of the CTM buffer to
+ *                      the start of the packet data (including any prepended
+ *                      command words or tags) (range is from 8 to 511 bytes)
+ * @param nbi           NBI TM to send the packet to
+ * @param txq           NBI TM TX queue to send the packet to
+ * @param seqr          NBI TM sequencer to send the packet to
+ * @param seq           NBI TM sequence number of the packet
+ * @param ctm_buf_size  Encoded CTM buffer size
+ */
+__intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
+                                  unsigned int len, unsigned int offset,
+                                  unsigned int nbi, unsigned int txq,
+                                  unsigned int seqr, unsigned int seq,
+                                  enum PKT_CTM_SIZE ctm_buf_size);
+
+/*
+ *  For NFP 3800, the following sequence of actions is expected to properly
+ *  allocate and free CTM packets:
+ *
+ *  1. Allocate packets (one at a time, in this example 256 bytes):
+ *      pkt_num = pkt_ctm_alloc(isl_num, PKT_CTM_SIZE_256);
+ *
+ *  2. Free CTM packets (using pkt_num from stage 2).
+ *      pkt_ctm_free(isl_num, pkt_num);
+ */
+
+/**
+ * Allocate a CTM packet buffer.
+ * @param isl               Island of the CTM packet
+ * @param size              CTM buffer size (PKT_CTM_SIZE_*)
+ * @return the allocated packet number on success, 0xffffffff on failure
+ */
+__intrinsic unsigned int pkt_ctm_alloc(unsigned char isl,
+                                       enum PKT_CTM_SIZE size);
+
+#endif /* !defined(__NFP_IS_6XXX) */
+
+
+/** Value for a failed packet allocation. */
+#define PKT_ALLOC_FAIL  0xffffffff
+
+/**
+ * Free a packet from CTM. Does not notify sequencer.
+ * @param isl   Island of the CTM packet
+ * @param pnum  Packet number of the CTM packet
+ */
+__intrinsic void pkt_ctm_free(unsigned int isl, unsigned int pnum);
 
 #endif /* __NFP_LANG_MICROC */
 

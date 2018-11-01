@@ -248,6 +248,8 @@ pkt_mac_egress_cmd_write(__mem40 void *pbuf, unsigned char off,
     return;
 }
 
+#if defined(__NFP_IS_6XXX)
+
 __intrinsic struct pkt_ms_info
 __pkt_msd_write(__mem40 void *pbuf, unsigned char off,
                 __xwrite uint32_t xms[2], size_t size, sync_t sync,
@@ -306,6 +308,8 @@ pkt_msd_write(__mem40 void *pbuf, unsigned char off)
     return __pkt_msd_write(pbuf, off, ms, sizeof(ms), ctx_swap, &sig);
 }
 
+#endif /* defined(__NFP_IS_6XXX) */
+
 
 __intrinsic void
 __pkt_nbi_recv_with_hdrs(__xread void *meta, size_t msize, uint32_t off,
@@ -351,6 +355,8 @@ pkt_nbi_recv(__xread void *meta, size_t msize)
     pkt_nbi_recv_with_hdrs(meta, msize, 0);
 }
 
+
+#if defined(__NFP_IS_6XXX)
 
 __intrinsic void
 pkt_nbi_send(unsigned char isl, unsigned int pnum,
@@ -491,6 +497,173 @@ pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
     }
 }
 
+#else /* !defined(__NFP_IS_6XXX) */
+
+__intrinsic void
+pkt_nbi_send(unsigned char isl, unsigned int pnum, unsigned int len,
+             unsigned int offset, unsigned int nbi, unsigned int txq,
+             unsigned int seqr, unsigned int seq, unsigned int drop_prec,
+             enum PKT_CTM_SIZE ctm_buf_size)
+{
+    __gpr unsigned int adj_offset;
+    __gpr unsigned int addr_hi;
+    __gpr unsigned int addr_lo;
+    __gpr struct pkt_iref_csr0 csr0;
+    __gpr struct pkt_iref_palu palu;
+
+    try_ctassert(adj_offset >= 8);
+
+    /*
+     * The "packet ready" commands require a special encoding in the address
+     * field, which include the length, or _ending_offset_, of the packet.
+     * To get the ending offset, we add the packet length to the starting
+     * offset of the packet, including any MAC egress command word.
+     *
+     * Note: These packet offsets are relative to start of the CTM buffer + 8
+     *       bytes; the first 8 bytes of the CTM buffer are reserved and cannot
+     *       contain any packet data.
+     *
+     * See NFP 3800 Databook Section 7.2.5.9 "Target Commands", and Section
+     * 8.2.2.6.8 "Processing and Transmitting the Packets".
+     */
+    adj_offset = offset - 8;
+    addr_hi = PKT_READY_ADDR_HI_FIELDS(nbi, isl, __ME());
+    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, adj_offset, len + offset);
+
+    csr0.__raw = 0;
+    csr0.drop_prec = drop_prec;
+    csr0.offset_hi = PKT_IREF_CSR0_OFFSET_HI(adj_offset);
+    csr0.seqr = seqr;
+    csr0.seq = seq;
+
+    local_csr_write(local_csr_cmd_indirect_ref_0, csr0.__raw);
+
+    /*
+     * XXX We clear the reserved bits of the previous ALU instruction
+     * structure by assigning the whole 32-bit value the MAGIC constant.
+     * This constant starts at bit 0 of the structure anyways.
+     */
+    palu.__raw = PKT_IREF_PALU_MAGIC;
+    palu.ctm_pkt_size = (unsigned int)ctm_buf_size;
+    palu.txq = txq;
+    palu.offset_mid = PKT_IREF_PALU_OFFSET_MID(adj_offset);
+
+    __asm {
+        alu[--, --, B, palu.__raw];
+        nbi[packet_ready_unicast, --, addr_hi, <<8, addr_lo], indirect_ref;
+    }
+}
+
+
+__intrinsic void
+pkt_nbi_send_dont_free(unsigned char isl, unsigned int pnum, unsigned int len,
+                       unsigned int offset, unsigned int nbi, unsigned int txq,
+                       unsigned int seqr, unsigned int seq,
+                       unsigned int drop_prec, enum PKT_CTM_SIZE ctm_buf_size)
+{
+    __gpr unsigned int adj_offset;
+    __gpr unsigned int addr_hi;
+    __gpr unsigned int addr_lo;
+    __gpr struct pkt_iref_csr0 csr0;
+    __gpr struct pkt_iref_palu palu;
+
+    try_ctassert(adj_offset >= 8);
+
+    /*
+     * The "packet ready" commands require a special encoding in the address
+     * field, which include the length, or _ending_offset_, of the packet.
+     * To get the ending offset, we add the packet length to the starting
+     * offset of the packet, including any MAC egress command word.
+     *
+     * Note: These packet offsets are relative to start of the CTM buffer + 8
+     *       bytes; the first 8 bytes of the CTM buffer are reserved and cannot
+     *       contain any packet data.
+     *
+     * See NFP 3800 Databook Section 7.2.5.9 "Target Commands", and Section
+     * 8.2.2.6.8 "Processing and Transmitting the Packets".
+     */
+    adj_offset = offset - 8;
+    addr_hi = PKT_READY_ADDR_HI_FIELDS(nbi, isl, __ME());
+    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, adj_offset, len + offset);
+
+    csr0.__raw = 0;
+    csr0.drop_prec = drop_prec;
+    csr0.offset_hi = PKT_IREF_CSR0_OFFSET_HI(adj_offset);
+    csr0.seqr = seqr;
+    csr0.seq = seq;
+    local_csr_write(local_csr_cmd_indirect_ref_0, csr0.__raw);
+
+    /*
+     * XXX We clear the reserved bits of the previous ALU instruction
+     * structure by assigning the whole 32-bit value the MAGIC constant.
+     * This constant starts at bit 0 of the structure anyways.
+     */
+    palu.__raw = PKT_IREF_PALU_MAGIC;
+    palu.ctm_pkt_size = (unsigned int)ctm_buf_size;
+    palu.txq = txq;
+    palu.offset_mid = PKT_IREF_PALU_OFFSET_MID(adj_offset);
+
+    __asm {
+        alu[--, --, B, palu.__raw];
+        nbi[packet_ready_multicast_dont_free, --, addr_hi, <<8, addr_lo], \
+            indirect_ref;
+    }
+}
+
+
+__intrinsic void
+pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum, unsigned int len,
+                 unsigned int offset, unsigned int nbi, unsigned int txq,
+                 unsigned int seqr, unsigned int seq,
+                 enum PKT_CTM_SIZE ctm_buf_size)
+{
+    __gpr unsigned int adj_offset;
+    __gpr unsigned int addr_hi;
+    __gpr unsigned int addr_lo;
+    __gpr struct pkt_iref_csr0 csr0;
+    __gpr struct pkt_iref_palu palu;
+
+    try_ctassert(adj_offset >= 8);
+
+    /*
+     * The "packet ready" commands require a special encoding in the address
+     * field, which include the length, or _ending_offset_, of the packet.
+     * To get the ending offset, we add the packet length to the starting
+     * offset of the packet, including any MAC egress command word.
+     *
+     * Note: These packet offsets are relative to start of the CTM buffer + 8
+     *       bytes; the first 8 bytes of the CTM buffer are reserved and cannot
+     *       contain any packet data.
+     *
+     * See NFP 3800 Databook Section 7.2.5.9 "Target Commands", and Section
+     * 8.2.2.6.8 "Processing and Transmitting the Packets".
+     */
+    adj_offset = offset - 8;
+    addr_hi = PKT_READY_ADDR_HI_FIELDS(nbi, isl, __ME());
+    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, adj_offset, len + offset);
+
+    /* XXX cheat and initialize the structure to 0 by assigning the
+     * sequencer to the whole value. */
+    csr0.__raw = seqr;
+    csr0.seq = seq;
+    local_csr_write(local_csr_cmd_indirect_ref_0, csr0.__raw);
+
+    /* XXX cheat by knowing that the least significant byte is the 'magic' */
+    /* byte saves an extra initialization step. */
+    palu.__raw = PKT_IREF_PALU_MAGIC;
+    palu.ctm_pkt_size = (unsigned int)ctm_buf_size;
+    palu.txq = txq;
+    palu.offset_mid = PKT_IREF_PALU_OFFSET_MID(adj_offset);
+
+    __asm {
+        alu[--, --, B, palu.__raw];
+        nbi[packet_ready_drop, --, addr_hi, <<8, addr_lo], indirect_ref;
+    }
+}
+
+#endif /* !defined(__NFP_IS_6XXX) */
+
+
 __intrinsic void
 pkt_ctm_free(unsigned int isl, unsigned int pnum)
 {
@@ -501,6 +674,8 @@ pkt_ctm_free(unsigned int isl, unsigned int pnum)
 
     __asm mem[packet_free, --, addr_hi, <<8, pnum];
 }
+
+#if defined(__NFP_IS_6XXX)
 
 __intrinsic unsigned int
 pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
@@ -624,3 +799,32 @@ pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
             ctx_swap[sig_cls];
     }
 }
+
+#else /* !defined(__NFP_IS_6XXX) */
+
+__intrinsic unsigned int
+pkt_ctm_alloc(unsigned char isl, enum PKT_CTM_SIZE size)
+{
+    __gpr unsigned int pnum;
+    __xread struct pe_pkt_alloc_res pe_res;
+    SIGNAL sig_alloc;
+    __gpr unsigned int addr_hi = (isl != 0) ? (0x80 | isl) << 24 : 0;
+    __gpr unsigned int addr_lo = 0;
+    __gpr unsigned int ind = size << NFP_MECSR_PREV_ALU_LENGTH_shift;
+
+    __asm {
+        alu[ind, ind, OR, 1, <<NFP_MECSR_PREV_ALU_OV_LEN_bit];
+        mem[packet_alloc_poll, pe_res, addr_hi, <<8, addr_lo, 1],\
+            indirect_ref, ctx_swap[sig_alloc];
+    }
+
+    /* An all 1s response indicates failure to allocate */
+    if (pe_res.__raw == 0xffffffff)
+        pnum = 0xffffffff;
+    else
+        pnum = pe_res.pnum;
+
+    return pnum;
+}
+
+#endif

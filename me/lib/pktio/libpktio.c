@@ -45,6 +45,10 @@
     #include <nfp3800/nfp_me.h>
     #include <nfp3800/nfp_mac.h>
 #elif defined(__NFP_IS_6XXX)
+    #if (__REVISION_MAX < __REVISION_B0)
+        #error "Unsupported chip revision"
+    #endif
+    #include <modscript/modscript.h>
     #include <nfp6000/nfp_me.h>
     #include <nfp6000/nfp_mac.h>
 #endif
@@ -62,16 +66,6 @@
 
 #include <blm/blm.h>
 #include <pktio/pktio.h>
-#include <modscript/modscript.h>
-
-#if defined(__NFP_IS_38XX)
-/* TODO: verify if this library works with NFP38XX */
-    #error "Unsupported chip type"
-#elif defined(__NFP_IS_6XXX)
-    #if (__REVISION_MAX < __REVISION_B0)
-        #error "Unsupported chip type"
-    #endif
-#endif
 
 struct pktio_handle {
     union {
@@ -137,6 +131,8 @@ struct pktio_handle {
 #endif /* NFD TX VLAN offload configured */
 
 
+#if defined(__NFP_IS_6XXX)
+
 /*
  * Half of the packet and buffer credits allocated to the ME
  */
@@ -147,6 +143,9 @@ struct pktio_handle {
 #ifndef ME_CTM_ALLOC_MAX_BUF_CREDITS
 #define ME_CTM_ALLOC_MAX_BUF_CREDITS 64
 #endif
+
+#endif
+
 
 /*
  * Can get per packet using pkt_status_read or from DMA engine,
@@ -233,11 +232,16 @@ __shared __gpr uint32_t pktio_cntrs_base;
 #define NFD_CTM_SIZE (256 << NFD_CTM_TYPE)
 
 
+#if defined(__NFP_IS_6XXX)
+
 /* CTM credit management, required for RX from host. Use all of CTM RX */
 #define CTM_ALLOC_ERR                   0xffffffff
 
 __export __shared __cls struct ctm_pkt_credits ctm_credits =
     {ME_CTM_ALLOC_MAX_PKT_CREDITS, ME_CTM_ALLOC_MAX_BUF_CREDITS};
+
+#endif
+
 
 /* Declaration of pkt */
 PKTIO_META_TYPE struct pktio_meta pkt;
@@ -324,8 +328,9 @@ drop_packet(__xwrite struct gro_meta_drop *gmeta)
     } else
 #ifdef PKTIO_NBI_SEQR_ENABLED
     if (pkt.p_ro_ctx) {
-        __gpr struct pkt_ms_info msi = {0,0}; /* dummy msi */
         /* Notify the NBI to ignore this packet's sequence number */
+#if defined(__NFP_IS_6XXX)
+        __gpr struct pkt_ms_info msi = {0,0}; /* dummy msi */
         pkt_nbi_drop_seq(pkt.p_isl,
                          pkt.p_pnum,
                          &msi,
@@ -335,6 +340,10 @@ drop_packet(__xwrite struct gro_meta_drop *gmeta)
                          pkt.p_ro_ctx,
                          pkt.p_seq,
                          pkt.p_ctm_size);
+#else
+        pkt_nbi_drop_seq(pkt.p_isl, pkt.p_pnum, pkt.p_len, pkt.p_offset, 0, 0,
+                         pkt.p_ro_ctx, pkt.p_seq, pkt.p_ctm_size);
+#endif
     } else
 #endif
     ;
@@ -351,8 +360,9 @@ drop_packet()
     /* If ordered packet, drop with seq number in NBI. */
 #ifdef PKTIO_NBI_SEQR_ENABLED
     if (pkt.p_ro_ctx) {
-        __gpr struct pkt_ms_info msi = {0,0}; /* dummy msi */
         /* Notify the NBI to ignore this packet's sequence number */
+#if defined(__NFP_IS_6XXX)
+        __gpr struct pkt_ms_info msi = {0,0}; /* dummy msi */
         pkt_nbi_drop_seq(pkt.p_isl,
                          pkt.p_pnum,
                          &msi,
@@ -362,6 +372,10 @@ drop_packet()
                          pkt.p_ro_ctx,
                          pkt.p_seq,
                          pkt.p_ctm_size);
+#else
+        pkt_nbi_drop_seq(pkt.p_isl, pkt.p_pnum, pkt.p_len, pkt.p_offset, 0, 0,
+                         pkt.p_ro_ctx, pkt.p_seq, pkt.p_ctm_size);
+#endif
     }
 #endif
 }
@@ -495,9 +509,15 @@ pktio_rx_host_issue(__xread struct nfd_in_pkt_desc *nfd_rxd, sync_t sync,
     /* Poll for a CTM packet until one is returned.  Note, if we never
      * get one the thread hangs but nothing is in-process yet anyway,
      * which is why we do this before actually receiving the packet. */
+#if defined(__NFP_IS_6XXX)
     for (ctm_pnum = CTM_ALLOC_ERR; ctm_pnum == CTM_ALLOC_ERR;) {
         ctm_pnum = pkt_ctm_alloc(&ctm_credits, __ISLAND, NFD_CTM_TYPE, 1, 1);
     }
+#else
+    for (ctm_pnum = PKT_ALLOC_FAIL; ctm_pnum == PKT_ALLOC_FAIL;) {
+        ctm_pnum = pkt_ctm_alloc(__ISLAND, NFD_CTM_TYPE);
+    }
+#endif
 
     /* now receive the next packet from host */
     __nfd_in_recv(0, NFD_IN_WQ, nfd_rxd, sync, sig);
@@ -662,11 +682,16 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
     __mem40 void *ctm_ptr;
     SIGNAL info_sig;
     SIGNAL mac_write_sig;
+#if defined(__NFP_IS_6XXX)
     SIGNAL pms_sig1;
     SIGNAL pms_sig2;
     __xwrite modscript_struct_t pms_write;
     __xread uint32_t pms_readback;
     __gpr struct pkt_ms_info msi;
+#endif
+#ifdef PKTIO_GRO_ENABLED
+    __xwrite union gro_meta gmeta;
+#endif
     uint16_t flags;
     uint32_t offset;
     uint32_t len;
@@ -674,8 +699,9 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
     uint64_t port_bit;
     int dst_subsys = PKT_PORT_SUBSYS_of(pkt.p_dst);
     int dst_q = PKT_PORT_QUEUE_of(pkt.p_dst);
-#ifdef PKTIO_GRO_ENABLED
-    __xwrite union gro_meta gmeta;
+#if !defined(__NFP_IS_6XXX)
+    /* TODO : Add drop precedence support. */
+    const unsigned int drop_prec = 0; /* Note: Hard-code for now. */
 #endif
 
     /*
@@ -729,6 +755,7 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
             }
 #endif
 
+#if defined(__NFP_IS_6XXX)
             /* Fire off write of modification script */
             msi = __modscript_write(ctm_ptr, offset, &pms_write, &pms_readback,
                                     &pms_sig1, &pms_sig2);
@@ -744,12 +771,17 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                 ret = -2;
                 goto drop;
             }
+#elif defined(MAC_EGRESS_PREPEND_ENABLE)
+            /* Wait for MAC egress write I/O operation to complete. */
+            wait_for_all(&mac_write_sig);
+#endif
             __critical_path();
             dst_q = CHANNEL_TO_TMQ(dst_q);
 
 #ifdef PKTIO_GRO_ENABLED
             if (pkt.p_is_gro_seq) {
                 __critical_path();
+#if defined(__NFP_IS_6XXX)
                 gro_cli_build_nbi_meta(&gmeta.nbi,
                                        pkt.p_isl,
                                        pkt.p_pnum,
@@ -758,9 +790,15 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                                        len + offset,
                                        dst_subsys,
                                        dst_q);
+#else
+                gro_cli_build_nbi_meta_no_pm(&gmeta.nbi, pkt.p_isl, pkt.p_pnum,
+                                             pkt.p_ctm_size, offset,
+                                             len + offset, dst_subsys, dst_q);
+#endif
             } else
 #endif
             {
+#if defined(__NFP_IS_6XXX)
                 pkt_nbi_send(pkt.p_isl,
                              pkt.p_pnum,
                              &msi,
@@ -770,6 +808,11 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                              pkt.p_ro_ctx,
                              pkt.p_seq,
                              pkt.p_ctm_size);
+#else
+                pkt_nbi_send(pkt.p_isl, pkt.p_pnum, len, offset, dst_subsys,
+                             dst_q, pkt.p_ro_ctx, pkt.p_seq, drop_prec,
+                             pkt.p_ctm_size);
+#endif
             }
             PKTIO_CNTR_INC(PKTIO_CNTR_TX_TO_WIRE);
         } break;
