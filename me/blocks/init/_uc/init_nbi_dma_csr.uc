@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,11 @@
  *
  */
 #macro NbiDmaXpb_NbiDmaCsr_NbiDmaCfg(NBI_ID,CTM_POLL_SEARCH_ENA,RATE_LIMIT_ENABLE,CTM_POLL_INTVL,CTM_POLL_ENA)
+#if IS_NFPTYPE(__NFP6000)
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.NbiDmaXpb.NbiDmaCsr.NbiDmaCfg.CtmPollSearchEna               CTM_POLL_SEARCH_ENA const
+#else
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.NbiDmaXpb.NbiDmaCsr.NbiDmaCfg.PollSearchEna                  CTM_POLL_SEARCH_ENA const
+#endif
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.NbiDmaXpb.NbiDmaCsr.NbiDmaCfg.RateLimitEnable                RATE_LIMIT_ENABLE   const
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.NbiDmaXpb.NbiDmaCsr.NbiDmaCfg.CtmPollIntvl                   CTM_POLL_INTVL      const
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.NbiDmaXpb.NbiDmaCsr.NbiDmaCfg.CtmPollEna                     CTM_POLL_ENA        const
