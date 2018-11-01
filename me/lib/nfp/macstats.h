@@ -32,28 +32,43 @@
     #error "Please select valid chip target."
 #endif
 
-/* TODO: Update comments to include nfp38XX documentation*/
-
 /**
  * This file contains the API for reading and accumulating MAC statistics.
+ *
+ * NFP-6xxx MAC Information:
+ *
  * For a detailed description of the MAC please see NFP-6xxx Databook section
  * 10 (Networking).
- * Each MAC supports up to 24 eth ports (12 SerDes lanes per core) and up
- * to 128 NBI channels (64 per core). The used port and channel numbers
- * depends on the core configuration (which is capable of being configured to
- * 100GE/3x40GE/12x10GE/12x1GE) and the per-port channel assignment (see
- * MacPortChanAssign CSR for details). Each of the ports can be assigned with
- * a starting channel number and up to 8 channels from the start.
+ *
+ * Each MAC supports up to 24 eth ports (12 SerDes lanes per core). The used
+ * port numbers depends on the core configuration (which is capable of being
+ * configured to 100GE/3x40GE/12x10GE/12x1GE).
+ *
+ * NFP-38xx MAC Information:
+ *
+ * For a detailed description of the MAC please see NFP-38xx Databook section
+ * 9 (Networking).
+ *
+ * Common NFP MAC Information:
+ *
+ * Each MAC supports up to 128 MAC/NBI channels (64 per core). The used channel
+ * numbers depends on the per-port channel assignment (see MacPortChanAssign
+ * CSR for details). Each of the ports can be assigned with a starting channel
+ * number and up to 8 channels from the start.
+ *
  * Each port and each channel has a total of 256 bytes address space of
  * statistics.
+ *
  * Those MAC statistics are cleared on read and should be read/accumulated
  * periodically to prevent overflow. Each of the statistics is a 32/40 bits
  * counter, while the accumulating structure reserves 64 bits per counter.
  */
 
 /* Per port statistics
- * See NFP-6xxx Databook Section 10.3.3.1.1 EthPortStatsSeg for details.
- * Each segment (12 per MAC core) has 256 bytes of stats counters.
+ * See NFP-6xxx Databook Section 10.3.3.1.1 EthPortStatsSeg, or NFP-38xx
+ * Databook Section 9.3.3.1.1 EthPortStatsSeg, for details.
+ * Each segment (12 per NFP-6xxx MAC core, or 10 per NFP-38xx MAC core) has 256
+ * bytes of stats counters.
  * This structure is used to read the current port stats.
  */
 struct macstats_port {
@@ -194,7 +209,8 @@ struct macstats_port_accum {
 };
 
 /* Per channel statistics
- * See NFP-6xxx Databook Section 10.3.3.2 ChannelStatsSeg for details.
+ * See NFP-6xxx Databook Section 10.3.3.2 ChannelStatsSeg, or NFP-38xx
+ * Databook Section 9.3.3.2 EthPortStatsSeg, for details.
  * Each channel (total of 128 channels) has 128 bytes of stats counters.
  * This structure is used to read the current channel stats.
  */
@@ -274,24 +290,49 @@ struct macstats_channel_accum {
 
 /* Per port mac head drop counters accumulation */
 struct macstats_head_drop_accum {
-    /* We have 12 ports */
+    /*
+     * For NFP-6xxx, there are 12 ports per MAC core.
+     * For NFP-38xx, there are 10 ports per MAC core.
+     */
     uint64_t ports_drop[NFP_MAX_ETH_PORTS_PER_MAC_CORE];
 };
 
 /**
  * Accumulates the per port mac head drop counters.
- * @param nbi               The nbi to read from (0/1)
- * @param core              The MAC core to read from (0/1)
+ * @param nbi               The MAC/NBI island to read from
+ * @param core              The MAC core to read from
  * @param ports_mask        A 16 bits ports mask configuration used, each bit
- *                          indicates if a port is in use. Only bits 0-11 are
- *                          used.
- * @param port_stats        A pointer to the accumulate stats struct to update,
- *                          must be in ctm/imem/emem only
+ *                          indicates if a port is in use.
+ * @param port_stats        A pointer to the accumulate stats struct to update
  * @param break_cpp_burst   A flag indicating if this function should sleep
  *                          between loops to avoid a burst of CPP commands.
  *                          This should only be used if the current ctx is not
  *                          already waiting for an alarm to fire.
  *                          (using the CTX_FUTURE_COUNT mechanism).
+ *
+ * @note For NFP-6xxx, valid range for 'nbi' is from 0 to 1, inclusive
+ * @note For NFP-6xxx, valid range for 'core' is from 0 to 1, inclusive
+ * @note For NFP-6xxx, only bits 0-11 are used in the 'ports_mask'
+ * @note For NFP-6xxx, 'port_stats' must be in CTM/IMEM/EMEM only
+ * @note For NFP-6xxx, to prevent the MAC head drop counter(s) from saturating,
+ *       this function should be called approximately once per 440 microseconds
+ *       for a 100 GE interface
+ *
+ * @note For NFP-4xxx, 'nbi' must be set to 0
+ * @note For NFP-4xxx, 'core' must be set to 0
+ * @note For NFP-4xxx, only bits 0-9 are used in the 'ports_mask'
+ * @note For NFP-4xxx, 'port_stats' must be in CTM/IMEM/EMEM only
+ * @note For NFP-4xxx, to prevent the MAC head drop counter(s) from saturating,
+ *       this function should be called approximately once per 440 microseconds
+ *       for a 100 GE interface
+ *
+ * @note For NFP-38xx, 'nbi' must be 0
+ * @note For NFP-38xx, valid range for 'core' is from 0 to 1, inclusive
+ * @note For NFP-38xx, only bits 0-9 are used in the 'ports_mask'
+ * @note For NFP-38xx, 'port_stats' must be in CTM/EMEM only
+ * @note For NFP-38xx, to prevent the MAC head drop counter(s) from saturating,
+ *       this function should be called approximately once per 72 seconds for a
+ *       40 GE interface
  *
  * @return 0 on success, -1 on error
  */
@@ -302,16 +343,38 @@ int __macstats_head_drop_accum(unsigned int nbi, unsigned int core,
 
 /**
  * Accumulates the per port mac head drop counters.
- * @param nbi               The nbi to read from (0/1)
+ * @param nbi               The nbi to read from
  * @param core              The MAC core to read from (0/1)
  * @param ports_mask        A 16 bits ports mask configuration used, each bit
- *                          indicates if a port is in use. Only bits 0-11 are
- *                          used.
- * @param port_stats        A pointer to the accumulate stats struct to update,
- *                          must be in ctm/imem/emem only
+ *                          indicates if a port is in use
+ * @param port_stats        A pointer to the accumulate stats struct to update
  *
- * This API simply calls the __macstats_head_drop_accum with the
- * break_cpp_burst set to 0.
+ * @note This API simply calls the __macstats_head_drop_accum with the
+ *       break_cpp_burst set to 0.
+ *
+ * @note For NFP-6xxx, valid range for 'nbi' is from 0 to 1, inclusive
+ * @note For NFP-6xxx, valid range for 'core' is from 0 to 1, inclusive
+ * @note For NFP-6xxx, only bits 0-11 are used in the 'ports_mask'
+ * @note For NFP-6xxx, 'port_stats' must be in CTM/IMEM/EMEM only
+ * @note For NFP-6xxx, to prevent the MAC head drop counter(s) from saturating,
+ *       this function should be called approximately once per 440 microseconds
+ *       for a 100 GE interface
+ *
+ * @note For NFP-4xxx, 'nbi' must be set to 0
+ * @note For NFP-4xxx, 'core' must be set to 0
+ * @note For NFP-4xxx, only bits 0-9 are used in the 'ports_mask'
+ * @note For NFP-4xxx, 'port_stats' must be in CTM/IMEM/EMEM only
+ * @note For NFP-4xxx, to prevent the MAC head drop counter(s) from saturating,
+ *       this function should be called approximately once per 440 microseconds
+ *       for a 100 GE interface
+ *
+ * @note For NFP-38xx, 'nbi' must be 0
+ * @note For NFP-38xx, valid range for 'core' is from 0 to 1, inclusive
+ * @note For NFP-38xx, only bits 0-9 are used in the 'ports_mask'
+ * @note For NFP-38xx, 'port_stats' must be in CTM/EMEM only
+ * @note For NFP-38xx, to prevent the MAC head drop counter(s) from saturating,
+ *       this function should be called approximately once per 72 seconds for a
+ *       40 GE interface
  *
  * @return 0 on success, -1 on error
  */
@@ -321,10 +384,23 @@ int macstats_head_drop_accum(unsigned int nbi, unsigned int core,
 
 /**
  * Reads and clears MAC stats for a given port.
- * @param mac         The mac to read from (0/1)
- * @param port        The port number (0-23)
+ * @param mac         The mac to read from
+ * @param port        The port number
  * @param port_stats  A pointer to the stats struct to fill,
  *                    must be in ctm/imem/emem only
+ *
+ * @note For NFP-6xxx, valid range for 'mac' is from 0 to 1, inclusive
+ * @note For NFP-6xxx, valid range for 'port' is from 0 to 23, inclusive
+ * @note For NFP-6xxx, 'port_stats' must be in CTM/IMEM/EMEM only
+ *
+ * @note For NFP-4xxx, 'mac' must be set to 0
+ * @note For NFP-4xxx, valid range for 'port' is from 0 to 9, inclusive
+ * @note For NFP-4xxx, 'port_stats' must be in CTM/IMEM/EMEM only
+ *
+ * @note For NFP-38xx, 'mac' must be 0
+ * @note For NFP-38xx, valid range for 'port' is from 0 to 19, inclusive
+ * @note For NFP-38xx, 'port_stats' must be in CTM/EMEM only
+ *
  * @return 0 on success, -1 on error
  */
 int macstats_port_read(unsigned int mac, unsigned int port,
@@ -332,10 +408,23 @@ int macstats_port_read(unsigned int mac, unsigned int port,
 
 /**
  * Accumulate MAC stats for a given port.
- * @param mac         The mac to read from (0/1)
- * @param port        The port number (0-23)
+ * @param mac         The mac to read from
+ * @param port        The port number
  * @param port_stats  A pointer to the accumulate stats struct to
  *                    update, must be in ctm/imem/emem only
+ *
+ * @note For NFP-6xxx, valid range for 'mac' is from 0 to 1, inclusive
+ * @note For NFP-6xxx, valid range for 'port' is from 0 to 23, inclusive
+ * @note For NFP-6xxx, 'port_stats' must be in CTM/IMEM/EMEM only
+ *
+ * @note For NFP-4xxx, 'mac' must be set to 0
+ * @note For NFP-4xxx, valid range for 'port' is from 0 to 9, inclusive
+ * @note For NFP-4xxx, 'port_stats' must be in CTM/IMEM/EMEM only
+ *
+ * @note For NFP-38xx, 'mac' must be 0
+ * @note For NFP-38xx, valid range for 'port' is from 0 to 19, inclusive
+ * @note For NFP-38xx, 'port_stats' must be in CTM/EMEM only
+ *
  * @return 0 on success, -1 on error
  */
 int macstats_port_accum(unsigned int mac, unsigned int port,
@@ -344,10 +433,20 @@ int macstats_port_accum(unsigned int mac, unsigned int port,
 
 /**
  * Reads and clears MAC stats for a given channel.
- * @param mac            The mac to read from (0/1)
+ * @param mac            The mac to read from
  * @param channel        The channel number (0-127)
  * @param channel_stats  A pointer to the stats struct to fill,
  *                       must be in ctm/imem/emem only
+ *
+ * @note For NFP-6xxx, valid range for 'mac' is from 0 to 1, inclusive
+ * @note For NFP-6xxx, 'channel_stats' must be in CTM/IMEM/EMEM only
+ *
+ * @note For NFP-4xxx, 'mac' must be set to 0
+ * @note For NFP-4xxx, 'channel_stats' must be in CTM/IMEM/EMEM only
+ *
+ * @note For NFP-38xx, 'mac' must be 0
+ * @note For NFP-38xx, 'channel_stats' must be in CTM/EMEM only
+ *
  * @return 0 on success, -1 on error
  */
 int macstats_channel_read(unsigned int mac, unsigned int channel,
@@ -355,10 +454,20 @@ int macstats_channel_read(unsigned int mac, unsigned int channel,
 
 /**
  * Accumulate MAC stats for a given channel.
- * @param mac            The mac to read from (0/1)
+ * @param mac            The mac to read from
  * @param channel        The channel number (0-127)
  * @param channel_stats  A pointer to the accumulate stats struct to
  *                       update, must be in ctm/imem/emem only
+ *
+ * @note For NFP-6xxx, valid range for 'mac' is from 0 to 1, inclusive
+ * @note For NFP-6xxx, 'channel_stats' must be in CTM/IMEM/EMEM only
+ *
+ * @note For NFP-4xxx, 'mac' must be set to 0
+ * @note For NFP-4xxx, 'channel_stats' must be in CTM/IMEM/EMEM only
+ *
+ * @note For NFP-38xx, 'mac' must be 0
+ * @note For NFP-38xx, 'channel_stats' must be in CTM/EMEM only
+ *
  * @return 0 on success, -1 on error
  */
 int macstats_channel_accum(unsigned int mac, unsigned int channel,
