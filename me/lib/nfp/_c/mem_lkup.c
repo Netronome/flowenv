@@ -219,3 +219,46 @@ mem_lkup_cam128_64B(__xrw void *data, __mem40 void *addr,
                           sig_done, &sig_pair);
     __wait_for_all(&sig_pair);
 }
+
+__intrinsic void
+__mem_lkup_cam48_64B(__xrw void *data, __mem40 void *addr,
+                      unsigned int data_offset, size_t data_size,
+                      size_t table_size, sync_t sync, SIGNAL_PAIR *sig_pair)
+{
+    hash_generic_lkup(data, addr, HASH_OP_CAM48_64B, data_offset, data_size,
+                      table_size, sync, sig_pair);
+}
+
+__intrinsic void
+mem_lkup_cam48_64B(__xrw void *data, __mem40 void *addr,
+                    unsigned int data_offset, size_t data_size,
+                    size_t table_size)
+{
+    SIGNAL_PAIR sig_pair;
+
+    __mem_lkup_cam48_64B(data, addr, data_offset, data_size, table_size,
+                          sig_done, &sig_pair);
+    __wait_for_all(&sig_pair);
+}
+
+__intrinsic void
+__mem_lkup_cam_r_48_64B(__xrw void *data, __mem40 void *addr,
+                      unsigned int data_offset, size_t data_size,
+                      size_t table_size, sync_t sync, SIGNAL_PAIR *sig_pair)
+{
+    hash_generic_lkup(data, addr, HASH_OP_CAMR48_64B, data_offset, data_size,
+                      table_size, sync, sig_pair);
+}
+
+__intrinsic void
+mem_lkup_cam_r_48_64B(__xrw void *data, __mem40 void *addr,
+                    unsigned int data_offset, size_t data_size,
+                    size_t table_size)
+{
+    SIGNAL_PAIR sig_pair;
+
+    __mem_lkup_cam_r_48_64B(data, addr, data_offset, data_size, table_size,
+                          sig_done, &sig_pair);
+    __wait_for_all(&sig_pair);
+}
+
