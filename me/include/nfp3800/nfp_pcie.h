@@ -142,6 +142,7 @@
  * <base>.DMAController.DmaCmdInsertHiToPCIodd0
  * <base>.DMAController.DmaCmdInsertMedToPCIeven0
  * <base>.DMAController.DmaCmdInsertMedToPCIodd0
+ * <base>.DMAController.DmaCmdInsertLoToPCIeven0
  * <base>.DMAController.DmaCmdInsertLoToPCIodd0
  * <base>.DMAController.DmaCmdInsertHiFrmPCIeven0
  * <base>.DMAController.DmaCmdInsertHiFrmPCIodd0
@@ -154,7 +155,8 @@
 #define NFP_PCIE_DMA_TOPCI_HI_ODD0                         0x800010
 #define NFP_PCIE_DMA_TOPCI_MED_EVEN0                       0x800020
 #define NFP_PCIE_DMA_TOPCI_MED_ODD0                        0x800030
-#define NFP_PCIE_DMA_TOPCI_LO_ODD0                         0x800040
+#define NFP_PCIE_DMA_TOPCI_LO_EVEN0                        0x800040
+#define NFP_PCIE_DMA_TOPCI_LO_ODD0                         0x800050
 #define NFP_PCIE_DMA_FROMPCI_HI_EVEN0                      0x800060
 #define NFP_PCIE_DMA_FROMPCI_HI_ODD0                       0x800070
 #define NFP_PCIE_DMA_FROMPCI_MED_EVEN0                     0x800080
@@ -181,6 +183,7 @@
  * <base>.DMAController.DmaCmdInsertHiToPCIodd1
  * <base>.DMAController.DmaCmdInsertMedToPCIeven1
  * <base>.DMAController.DmaCmdInsertMedToPCIodd1
+ * <base>.DMAController.DmaCmdInsertLoToPCIeven1
  * <base>.DMAController.DmaCmdInsertLoToPCIodd1
  * <base>.DMAController.DmaCmdInsertHiFrmPCIeven1
  * <base>.DMAController.DmaCmdInsertHiFrmPCIodd1
@@ -193,7 +196,8 @@
 #define NFP_PCIE_DMA_TOPCI_HI_ODD1                         0x800014
 #define NFP_PCIE_DMA_TOPCI_MED_EVEN1                       0x800024
 #define NFP_PCIE_DMA_TOPCI_MED_ODD1                        0x800034
-#define NFP_PCIE_DMA_TOPCI_LO_ODD1                         0x800044
+#define NFP_PCIE_DMA_TOPCI_LO_EVEN1                        0x800044
+#define NFP_PCIE_DMA_TOPCI_LO_ODD1                         0x800054
 #define NFP_PCIE_DMA_FROMPCI_HI_EVEN1                      0x800064
 #define NFP_PCIE_DMA_FROMPCI_HI_ODD1                       0x800074
 #define NFP_PCIE_DMA_FROMPCI_MED_EVEN1                     0x800084
@@ -244,6 +248,7 @@
  * <base>.DMAController.DmaCmdInsertHiToPCIodd2
  * <base>.DMAController.DmaCmdInsertMedToPCIeven2
  * <base>.DMAController.DmaCmdInsertMedToPCIodd2
+ * <base>.DMAController.DmaCmdInsertLoToPCIeven2
  * <base>.DMAController.DmaCmdInsertLoToPCIodd2
  * <base>.DMAController.DmaCmdInsertHiFrmPCIeven2
  * <base>.DMAController.DmaCmdInsertHiFrmPCIodd2
@@ -256,7 +261,8 @@
 #define NFP_PCIE_DMA_TOPCI_HI_ODD2                         0x800018
 #define NFP_PCIE_DMA_TOPCI_MED_EVEN2                       0x800028
 #define NFP_PCIE_DMA_TOPCI_MED_ODD2                        0x800038
-#define NFP_PCIE_DMA_TOPCI_LO_ODD2                         0x800048
+#define NFP_PCIE_DMA_TOPCI_LO_EVEN2                        0x800048
+#define NFP_PCIE_DMA_TOPCI_LO_ODD2                         0x800058
 #define NFP_PCIE_DMA_FROMPCI_HI_EVEN2                      0x800068
 #define NFP_PCIE_DMA_FROMPCI_HI_ODD2                       0x800078
 #define NFP_PCIE_DMA_FROMPCI_MED_EVEN2                     0x800088
@@ -283,6 +289,7 @@
  * <base>.DMAController.DmaCmdInsertHiToPCIodd3
  * <base>.DMAController.DmaCmdInsertMedToPCIeven3
  * <base>.DMAController.DmaCmdInsertMedToPCIodd3
+ * <base>.DMAController.DmaCmdInsertLoToPCIeven3
  * <base>.DMAController.DmaCmdInsertLoToPCIodd3
  * <base>.DMAController.DmaCmdInsertHiFrmPCIeven3
  * <base>.DMAController.DmaCmdInsertHiFrmPCIodd3
@@ -295,7 +302,8 @@
 #define NFP_PCIE_DMA_TOPCI_HI_ODD3                         0x80001c
 #define NFP_PCIE_DMA_TOPCI_MED_EVEN3                       0x80002c
 #define NFP_PCIE_DMA_TOPCI_MED_ODD3                        0x80003c
-#define NFP_PCIE_DMA_TOPCI_LO_ODD3                         0x80004c
+#define NFP_PCIE_DMA_TOPCI_LO_EVEN3                        0x80004c
+#define NFP_PCIE_DMA_TOPCI_LO_ODD3                         0x80005c
 #define NFP_PCIE_DMA_FROMPCI_HI_EVEN3                      0x80006c
 #define NFP_PCIE_DMA_FROMPCI_HI_ODD3                       0x80007c
 #define NFP_PCIE_DMA_FROMPCI_MED_EVEN3                     0x80008c
@@ -1799,6 +1807,12 @@
 /*
  * NFP 6XXX backward-compatible PCIe CSRs
  */
+#define NFP_PCIE_DMA_TOPCI_HI                              NFP_PCIE_DMA_TOPCI_HI_EVEN0
+#define NFP_PCIE_DMA_TOPCI_MED                             NFP_PCIE_DMA_TOPCI_MED_EVEN0
+#define NFP_PCIE_DMA_TOPCI_LO                              NFP_PCIE_DMA_TOPCI_LO_EVEN0
+#define NFP_PCIE_DMA_FROMPCI_HI                            NFP_PCIE_DMA_FROMPCI_HI_EVEN0
+#define NFP_PCIE_DMA_FROMPCI_MED                           NFP_PCIE_DMA_FROMPCI_MED_EVEN0
+#define NFP_PCIE_DMA_FROMPCI_LO                            NFP_PCIE_DMA_FROMPCI_LO_EVEN0
 #define   NFP_PCIE_DMA_CMD_LW3                               (3)
 #define   NFP_PCIE_DMA_CMD_LENGTH(x)                         (((x) & 0xfff) << 20)
 #define   NFP_PCIE_DMA_CMD_LENGTH_of(x)                      (((x) >> 20) & 0xfff)
