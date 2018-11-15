@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Netronome, Inc.
+ * Copyright 2017-2018 Netronome, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,17 @@
 
 #include <nfp.h>
 #include <nfp/cls.h>
-#include <nfp6000/nfp_mac_csr_synch.h>
 #include <nfp/mac_csr_synch.h>
+
+#if defined(__NFP_IS_38XX)
+    /* TODO: create nfp3800/nfp_mac_csr_synch.h */
+    #error "<nfp3800/nfp_mac_csr_synch.h> has not yet been added to flowenv"
+#elif defined(__NFP_IS_6XXX)
+    #include <nfp6000/nfp_mac_csr_synch.h>
+#else
+    #error "Please select valid chip target."
+#endif
+
 
 /* Do not force recache */
 #ifndef MAC_FORCE_RECACHE
