@@ -154,11 +154,7 @@ cntr64_cls_add(unsigned int base, unsigned int offset, unsigned int count)
 
 
 __intrinsic struct pkt_cntr_addr
-#if defined(__NFP_IS_6XXX)
-pkt_cntr_get_addr(__imem __addr40 void *base)
-#elif defined(__NFP_IS_38XX)
-pkt_cntr_get_addr(__emem __addr40 void *base)
-#endif
+pkt_cntr_get_addr(__mem __addr40 void *base)
 {
     struct pkt_cntr_addr cntr_addr;
 

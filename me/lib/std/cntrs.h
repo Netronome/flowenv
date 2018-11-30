@@ -60,16 +60,16 @@
  *  Packets and bytes counters
  *
  *  //struct to hold the packet and bytes counters base address
- *  __gpr pkt_cntr_addr pkts_cntr_base;
+ *  __gpr pkt_cntr_addr pkt_cntr_base;
  *  SIGNAL sig;
  *  //Declare an array of 16 apckets and bytes counters
- *  PKTS_CNTRS_DECLARE(my_pkt_counters, 16, __imem);
+ *  PKT_CNTR_ALLOC_SYM(my_pkt_counters, 16, PKT_CNTR_LOC_DEFAULT);
  *  //get the base address
- *  pkts_cntr_base = pkt_cntr_get_addr(my_pkt_counters);
+ *  pkt_cntr_base = PKT_CNTR_GET_ADDR_SYM(my_pkt_counters);
  *  //clear counter at index 0, use base 0, swap out
- *  pkt_cntr_clr(pkts_cntr_base, 0, 0, ctx_swap, &sig);
+ *  pkt_cntr_clr(pkt_cntr_base, 0, 0, ctx_swap, &sig);
  *  //add 128 to counter at index 5, use base 0, don't swap out
- *  pkt_cntr_add(pkts_cntr_base, 5, 0, 128, sig_done, &sig);
+ *  pkt_cntr_add(pkt_cntr_base, 5, 0, 128, sig_done, &sig);
  *
  *  Note: For NFP3800, "my_pkt_counters" should be located in "__emem".
  *
@@ -104,8 +104,61 @@
  * Using this macro ensures that the counters memory is allocated at the
  * needed alignment.
  */
-#define PKTS_CNTRS_DECLARE(_name, _entries, _mem_loc) \
-    __export __shared _mem_loc __addr40 __align256 unsigned long long int _name[_entries]
+#if defined(__NFP_IS_6XXX)
+    #define PKTS_CNTRS_DECLARE(_name, _entries, _mem_loc)                   \
+        __export __shared _mem_loc __addr40 __align256                      \
+        unsigned long long int _name[_entries]
+#elif defined(__NFP_IS_38XX)
+    /* XXX these "C" memory declarations are older style microC and do not
+     * support all memory types.  Please use the PKT_CNTR_ALLOC_SYM() API
+     * instead. */
+#else
+    #error "Unsupported chip type"
+#endif
+
+
+/**
+ * Allocate the data structure for the packets and bytes counters.
+ * @param _name         Name of the counters array
+ * @param _entries      Number of counters
+ * @param _mem_loc      Memory the packets counters should be
+ *                      allocated in.
+ *                      For NFP6000, imem, imemN.
+ *                      For NFP3800, emem0.emem_cache_upper.
+ *
+ * Using this macro ensures that the counters memory is allocated at the
+ * needed alignment.  Using the PKT_CNTR_LOC() or PKT_CNTR_LOC_DEFAULT
+ * macro for the _mem_loc parameter is recommended for portability between
+ * NFP variants.  PKT_CNTR_GET_ADDR_SYM() should be used to get the symbol
+ * address in struct pkt_cntr_addr format.
+ */
+#define PKT_CNTR_ALLOC_SYM(_name, _entries, _mem_loc)                   \
+    __asm { .alloc_mem _name _mem_loc global ((_entries) * 8) 256 }
+
+/* Packet and byte counter location helper macros */
+#if defined(__NFP_IS_6XXX)
+    #define PKT_CNTR_LOC_IND(_n)    imem##_n
+    #define PKT_CNTR_LOC(_n)        PKT_CNTR_LOC_IND(_n)
+
+    #define PKT_CNTR_LOC_DEFAULT    imem0
+#else
+    #define PKT_CNTR_LOC_IND(_n)    emem0.emem_cache_upper
+    #define PKT_CNTR_LOC(_n)        PKT_CNTR_LOC_IND(_n)
+
+    #define PKT_CNTR_LOC_DEFAULT    emem0.emem_cache_upper
+#endif
+
+
+/**
+ * Get the Packets and bytes counters base address from a symbol name.
+ * @param base    40 bits address of the counters memory
+ *                (must be 256 bytes aligned)
+ * @return Base address as expected for the counters APIs
+ */
+#define PKT_CNTR_GET_ADDR_SYM(_name) \
+    pkt_cntr_get_addr((__mem __addr40 void *) __link_sym(#_name))
+
+
 
 /**
  * Packets and bytes counter address.
@@ -268,11 +321,8 @@ __intrinsic void cntr64_cls_add(unsigned int base, unsigned int offset,
  * holds the lower part of the address after transform to an 8 bytes address.
  * This is done to avoid additional computations in the packets and bytes APIs.
  */
-#if defined(__NFP_IS_6XXX)
-__intrinsic struct pkt_cntr_addr pkt_cntr_get_addr(__imem __addr40 void *base);
-#elif defined(__NFP_IS_38XX)
-__intrinsic struct pkt_cntr_addr pkt_cntr_get_addr(__emem __addr40 void *base);
-#endif
+__intrinsic struct pkt_cntr_addr pkt_cntr_get_addr(__mem __addr40 void *base);
+
 
 /**
  * Clears a packets and bytes counter.
