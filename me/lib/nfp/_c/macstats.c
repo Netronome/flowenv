@@ -284,7 +284,7 @@ __macstats_head_drop_accum(unsigned int nbi, unsigned int core,
     __gpr uint32_t drop_pair;
     __gpr int add_even;
     __gpr int add_odd;
-    int i;
+    unsigned int i;
     int ret = 0;
 
     ctassert(__is_ct_const(break_cpp_burst));
@@ -341,7 +341,7 @@ __macstats_head_drop_accum(unsigned int nbi, unsigned int core,
     __gpr uint32_t addr;
     __gpr uint32_t drop_cnt;
     __xwrite uint64_t add_val;
-    int i;
+    unsigned int i;
     int ret = 0;
 
     ctassert(__is_ct_const(break_cpp_burst));
