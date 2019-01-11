@@ -37,11 +37,6 @@
 #define ALARM_TICKS 32
 #endif
 
-/*
- * Pre-Load Error checks
- */
- blm_compatability_check()
-
 #ifndef BLM_RESERVE_NUM_CTM_PARTITIONS
 /**
  * Macro to reserve N/8ths of CTM for data buffers.
@@ -51,6 +46,12 @@
  */
 #define BLM_RESERVE_NUM_CTM_PARTITIONS 4
 #endif
+
+
+/*
+ * Pre-Load Error checks
+ */
+ blm_compatability_check()
 
 #if IS_NFPTYPE(__NFP6000)
     #if BLM_RESERVE_NUM_CTM_PARTITIONS > 0

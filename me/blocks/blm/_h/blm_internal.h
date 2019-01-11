@@ -177,8 +177,19 @@
     /* --------- Load time error checks --------- */
 
     /* Make sure NOT entire CTM is used for packet buffers. Leave room for BLM memory requirements */
-    .init_csr xpb:CTMXpbMap.MuPacketReg.MUPEMemConfig 1 const
+
+#if BLM_RESERVE_NUM_CTM_PARTITIONS > 0
+#if IS_NFPTYPE(__NFP6000)
+#define BLM_MUPEMEMCONFIG 1
+#else
+#define_eval BLM_MUPEMEMCONFIG (8 - BLM_RESERVE_NUM_CTM_PARTITIONS)
+#endif
+#endif /* BLM_RESERVE_NUM_CTM_PARTITIONS > 0 */
+
+#ifdef BLM_MUPEMEMCONFIG
+    .init_csr xpb:CTMXpbMap.MuPacketReg.MUPEMemConfig BLM_MUPEMEMCONFIG const
     .init_csr xpb:CTMXpbMap.MuPacketReg.MUPEMemConfig 0 invalid
+#endif
 
     /* If event routing is not set, set it to default */
 
