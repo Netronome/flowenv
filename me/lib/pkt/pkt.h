@@ -486,6 +486,7 @@ struct pkt_iref_palu {
  *  - Total length                              (len)
  *  - Starting offset                           ((offset & 0x3) << 14)
  *  - Packet number                             (pnum << 16)
+ *  - Is drop bit                               (drop << 27)
  *  - Data master (based on ME ID)              ((meid & 0x1 | 0x2) << 28)
  *  - Data master island (island ID)            (iid << 32)
  *  - NBI ID                                    (nbi << 38)
@@ -497,9 +498,11 @@ struct pkt_iref_palu {
 #define PKT_READY_ADDR_LO_OFFSET_msk      0x3
 #define PKT_READY_ADDR_LO_OFFSET_shf      14
 #define PKT_READY_ADDR_LO_PNUM_shf        16
+#define PKT_READY_ADDR_LO_DROP_shf        27
 
-#define PKT_READY_ADDR_LO_FIELDS(_pnum, _offset, _len) \
-    (((_pnum) << PKT_READY_ADDR_LO_PNUM_shf) |         \
+#define PKT_READY_ADDR_LO_FIELDS(_pnum, _offset, _len, _drop) \
+    (((_drop) << PKT_READY_ADDR_LO_DROP_shf) |         \
+     ((_pnum) << PKT_READY_ADDR_LO_PNUM_shf) |         \
      (((_offset) & PKT_READY_ADDR_LO_OFFSET_msk) <<    \
       PKT_READY_ADDR_LO_OFFSET_shf) | (_len))
 
@@ -1159,6 +1162,22 @@ __intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
                                   unsigned int nbi, unsigned int txq,
                                   unsigned int seqr, unsigned int seq,
                                   enum PKT_CTM_SIZE ctm_buf_size);
+
+/**
+ * Drop a packet from an NBI port. This will return CTM and MU
+ * buffers as well as drop the sequence number. The drop will be
+ * accounted for in the provided TM queue's drop counter.
+ * @param isl           Island of the CTM packet
+ * @param pnum          Packet number of the CTM packet
+ * @param nbi           NBI TM to send the packet to
+ * @param txq           NBI TM TX queue for drop accounting
+ * @param seqr          NBI TM sequencer to send the packet to
+ * @param seq           NBI TM sequence number of the packet
+ */
+__intrinsic void pkt_nbi_drop(unsigned char isl, unsigned int pnum,
+                              unsigned int nbi, unsigned int txq,
+                              unsigned int seqr, unsigned int seq);
+
 
 /*
  *  For NFP 3800, the following sequence of actions is expected to properly

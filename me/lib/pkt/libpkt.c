@@ -528,7 +528,7 @@ pkt_nbi_send(unsigned char isl, unsigned int pnum, unsigned int len,
      */
     adj_offset = offset - 8;
     addr_hi = PKT_READY_ADDR_HI_FIELDS(nbi, isl, __ME());
-    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, adj_offset, len + offset);
+    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, adj_offset, len + offset, 0);
 
     csr0.__raw = 0;
     csr0.drop_prec = drop_prec;
@@ -584,7 +584,7 @@ pkt_nbi_send_dont_free(unsigned char isl, unsigned int pnum, unsigned int len,
      */
     adj_offset = offset - 8;
     addr_hi = PKT_READY_ADDR_HI_FIELDS(nbi, isl, __ME());
-    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, adj_offset, len + offset);
+    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, adj_offset, len + offset, 0);
 
     csr0.__raw = 0;
     csr0.drop_prec = drop_prec;
@@ -640,7 +640,7 @@ pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum, unsigned int len,
      */
     adj_offset = offset - 8;
     addr_hi = PKT_READY_ADDR_HI_FIELDS(nbi, isl, __ME());
-    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, adj_offset, len + offset);
+    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, adj_offset, len + offset, 0);
 
     /* XXX cheat and initialize the structure to 0 by assigning the
      * sequencer to the whole value. */
@@ -660,6 +660,47 @@ pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum, unsigned int len,
         nbi[packet_ready_drop, --, addr_hi, <<8, addr_lo], indirect_ref;
     }
 }
+
+__intrinsic void
+pkt_nbi_drop(unsigned char isl, unsigned int pnum, unsigned int nbi,
+             unsigned int txq, unsigned int seqr, unsigned int seq)
+{
+    __gpr unsigned int addr_hi;
+    __gpr unsigned int addr_lo;
+    __gpr struct pkt_iref_csr0 csr0;
+    __gpr struct pkt_iref_palu palu;
+    /*
+     * The packet drop is a specialization of the "packet ready" command
+     * that uses the same fields, though many are set to zero as they are
+     * unused.
+     *
+     * See NFP 3800 Databook Section 7.2.5.9 "Target Commands", and Section
+     * 8.2.2.6.8 "Processing and Transmitting the Packets".
+     */
+    addr_hi = PKT_READY_ADDR_HI_FIELDS(nbi, isl, __ME());
+    addr_lo = PKT_READY_ADDR_LO_FIELDS(pnum, 0, 0, 1);
+
+    csr0.__raw = 0;
+    csr0.seqr = seqr;
+    csr0.seq = seq;
+
+    local_csr_write(local_csr_cmd_indirect_ref_0, csr0.__raw);
+
+    /*
+     * XXX We clear the reserved bits of the previous ALU instruction
+     * structure by assigning the whole 32-bit value the MAGIC constant.
+     * This constant starts at bit 0 of the structure anyways.
+     */
+    palu.__raw = PKT_IREF_PALU_MAGIC;
+    palu.txq = txq; /* the drop will be accounted for in the txq */
+
+    __asm {
+        alu[--, --, B, palu.__raw];
+        nbi[packet_ready_unicast, --, addr_hi, <<8, addr_lo], indirect_ref;
+    }
+}
+
+
 
 #endif /* !defined(__NFP_IS_6XXX) */
 
