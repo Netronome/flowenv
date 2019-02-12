@@ -776,7 +776,7 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
             wait_for_all(&mac_write_sig);
 #endif
             __critical_path();
-            dst_q = CHANNEL_TO_TMQ(dst_q);
+            dst_q = CHANNEL_TO_TMQ(dst_q) + pkt.p_tmq_offset;
 
 #ifdef PKTIO_GRO_ENABLED
             if (pkt.p_is_gro_seq) {

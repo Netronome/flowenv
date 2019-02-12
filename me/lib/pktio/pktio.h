@@ -492,13 +492,6 @@ struct pktio_nbi_meta {
 };
 #endif /* NBI_PKT_PREPEND_BYTES >= 8 */
 
-
-#ifdef PKTIO_VLAN_ENABLED
- #define PKTIO_NBI_META_LW_VLAN 1
-#else
- #define PKTIO_NBI_META_LW_VLAN 0
-#endif
-
 /*
  * LSO and MAC timestamp shares a 32-bit word
  */
@@ -510,7 +503,7 @@ struct pktio_nbi_meta {
 #define PKTIO_NBI_META_LW_LSO 0
 #endif
 
-#define PKTIO_NBI_META_LW (5 + PKTIO_NBI_META_LW_VLAN + PKTIO_NBI_META_LW_LSO)
+#define PKTIO_NBI_META_LW (6 + PKTIO_NBI_META_LW_LSO)
 
 /**
  * Global packet metadata.
@@ -576,8 +569,13 @@ struct pktio_meta {
 #ifdef PKTIO_VLAN_ENABLED
             unsigned int p_vlan:16;             /**< VLAN id for RX and TX VLAN
                                                   *  offloading */
+#else
             unsigned int resv3:16;              /**< Reserved */
 #endif
+
+            unsigned int p_tmq_offset:10;       /**< Offset relative to base
+                                                  *  TMQ */
+            unsigned int resv5:6;               /**< Reserved */
         };
 
         uint32_t __raw[PKTIO_NBI_META_LW];
