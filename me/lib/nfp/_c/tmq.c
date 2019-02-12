@@ -105,3 +105,31 @@ tmq_status_read(__xread void *status, uint32_t nbi, uint32_t qnum,
 
     __tmq_status_read(status, nbi, qnum, num_qs, ctx_swap, &sig);
 }
+
+__intrinsic uint32_t
+tmq_get_config_addr(unsigned int nbi, unsigned int qnum)
+{
+    return NFP_NBI_TM_XPB_OFF(nbi) + NFP_NBI_TM_QUEUE_REG +
+           NFP_NBI_TM_QUEUE_CONFIG(qnum);
+}
+
+__intrinsic void
+__nfp_nbi_tm_queue_config_read(__xread void *cfg, uint32_t nbi, uint32_t qnum,
+                               sync_t sync, SIGNAL *sig)
+{
+    uint32_t addr = tmq_get_config_addr(nbi, qnum);
+
+    try_ctassert(nbi < MAX_NBI_NUMBER);
+    try_ctassert(qnum < MAX_TM_QUEUE_NUM);
+
+    __xpb_read(cfg, addr, 4, 4, sync, sig);
+}
+
+
+__intrinsic void
+nfp_nbi_tm_queue_config_read(__xread void *cfg, uint32_t nbi, uint32_t qnum)
+{
+    SIGNAL sig;
+
+    __nfp_nbi_tm_queue_config_read(cfg, nbi, qnum, ctx_swap, &sig);
+}
