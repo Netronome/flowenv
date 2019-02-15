@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2019,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,10 +258,6 @@ cls_hash(__xwrite void *key, __cls void *mask, uint32_t size, uint32_t idx)
     return data;
 }
 
-/*
- * NOTE: This function assumes the caller has set the INDIRECT_PREDICATE_CC
- *       register for N condition code.
- */
 __intrinsic static uint32_t
 hash_toeplitz_block(uint32_t input, __gpr uint32_t prev_result,
                     __gpr uint32_t*sk0, __gpr uint32_t *sk1)
@@ -283,12 +279,15 @@ hash_toeplitz_block(uint32_t input, __gpr uint32_t prev_result,
 
         /*
          * Need to take care of the most significant bit of input outside the
-         * loop as the loop starts by shifting left the input for predicate_cc.
+         * loop as the loop starts by shifting left the input.
          */
         alu[bit_val, --, B, input]
-        alu[result, result, XOR, *sk0], predicate_cc
+        bpl[toeplitz_block_skip_1]
+        alu[result, result, XOR, *sk0]
+toeplitz_block_skip_1:
         dbl_shf[*sk0, *sk0, *sk1, >> 31]
         alu_shf[*sk1, --, B, *sk1, << 1]
+
 
         /*
          * Go through the rest of the bits in bitval, looking at the
@@ -300,15 +299,17 @@ hash_toeplitz_block(uint32_t input, __gpr uint32_t prev_result,
         immed[iter, 14]
 
 do_repeat_loop:
-
         alu_shf[bit_val, --, B, bit_val, << 1]
-        alu[result, result, XOR, *sk0], predicate_cc
+        bpl[toeplitz_block_skip_2]
+        alu[result, result, XOR, *sk0]
+toeplitz_block_skip_2:
         dbl_shf[*sk0, *sk0, *sk1, >> 31]
         alu_shf[*sk1, --, B, *sk1, << 1]
 
         alu_shf[bit_val, --, B, bit_val, << 1]
-        alu[result, result, XOR, *sk0], predicate_cc
-
+        bpl[toeplitz_block_skip_3]
+        alu[result, result, XOR, *sk0]
+toeplitz_block_skip_3:
         alu[iter, iter, -, 1]
         bge[do_repeat_loop], defer[2]
         dbl_shf[*sk0, *sk0, *sk1, >> 31]
@@ -316,7 +317,9 @@ do_repeat_loop:
 
         /* Take care of the last bit. */
         alu_shf[bit_val, --, B, bit_val, << 1]
-        alu[result, result, XOR, *sk0], predicate_cc
+        bpl[toeplitz_block_skip_4]
+        alu[result, result, XOR, *sk0]
+toeplitz_block_skip_4:
         dbl_shf[*sk0, *sk0, *sk1, >> 31]
         alu_shf[*sk1, --, B, *sk1, << 1]
     }
@@ -417,8 +420,6 @@ hash_toeplitz(void *s, size_t n, void *k, size_t nk)
 
     local_csr_write(local_csr_csr_ctx_pointer, current_ctx);
     __asm __attribute(LITERAL_ASM) { {nop} {nop} {nop} };
-    local_csr_write(local_csr_indirect_predicate_cc, 0x2);
-    __asm __attribute(LITERAL_ASM) { {nop} {nop} {nop} {nop} {nop} }
 
     result = hash_toeplitz_block(t[0], result, &sk[0], &sk[1]);
     __hash_toeplitz_copy(sk, num_words - 1);
