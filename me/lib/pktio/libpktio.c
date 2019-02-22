@@ -301,8 +301,8 @@ compute_ctm_size(__xread struct pktio_nbi_meta *rxd)
     } else {
         __critical_path();
         len = (len >> 8) & 3;
-        x = (len >> 1) & 1;
-        len = len ^ x;
+        x = (len >> 1);
+        len &= ~x; /* 00->00, 01->01, 10->10, 11->10 */
     }
 
 #endif /* SPLIT_LENGTH == 3 */
