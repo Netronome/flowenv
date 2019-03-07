@@ -207,7 +207,7 @@ __intrinsic void cntr64_add(unsigned int base, unsigned int offset,
  *                (must be 256 bytes aligned_
  * @return Base address as expected for the cls counters APIs
  */
-__intrinsic unsigned int cntr64_cls_get_addr(__cls void *base);
+__intrinsic unsigned int cntr64_cls_get_addr(__cls40 void *base);
 
 /**
  * Clear a 64 bits CLS counter.
