@@ -94,7 +94,7 @@ cntr64_add(unsigned int base, unsigned int offset, unsigned int count)
 
 
 __intrinsic unsigned int
-cntr64_cls_get_addr(__cls void *base)
+cntr64_cls_get_addr(__cls40 void *base)
 {
     unsigned int addr_256b_aligned;
 
