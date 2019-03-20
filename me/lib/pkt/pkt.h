@@ -180,15 +180,24 @@
 struct nbi_meta_pkt_info {
     union {
         struct {
-            unsigned int isl:6;    /**< Island of the CTM of the packet */
-            unsigned int pnum:10;  /**< Packet number of the packet */
-            unsigned int bls:2;    /**< Buffer list of the MU buffer */
-            unsigned int len:14;   /**< Length of the packet in bytes
+            unsigned int isl:6;       /**< Island of the CTM of the packet */
+#if defined(__NFP_IS_6XXX)
+            unsigned int pnum:10;     /**< Packet number of the packet */
+#else
+            unsigned int alloc_sz0:2; /**< Alloc size [1:0] */
+            unsigned int pnum:8;      /**< Packet number of the packet */
+#endif
+            unsigned int bls:2;       /**< Buffer list of the MU buffer */
+            unsigned int len:14;      /**< Length of the packet in bytes
                                         (includes possible MAC prepend bytes) */
 
-            unsigned int split:1;  /**< Set if pkt split between CTM/MU */
-            unsigned int resv0:2;  /**< Reserved */
-            unsigned int muptr:29; /**< Pointer to the MU buffer >>11 */
+            unsigned int split:1;     /**< Set if pkt split between CTM/MU */
+#if defined(__NFP_IS_6XXX)
+            unsigned int resv0:2;     /**< Reserved */
+#else
+            unsigned int alloc_sz1:2; /**< Alloc size [3:2] */
+#endif
+            unsigned int muptr:29;    /**< Pointer to the MU buffer >>11 */
         };
         uint32_t __raw[2];
     };
