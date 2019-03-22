@@ -700,6 +700,51 @@ pkt_nbi_drop(unsigned char isl, unsigned int pnum, unsigned int nbi,
     }
 }
 
+__intrinsic void
+pkt_nbi_wq_reorder(unsigned char isl, unsigned int pnum, unsigned int nbi,
+                     unsigned int wq_msg, unsigned int dst_idx,
+                     unsigned int dst_rnum, unsigned int seqr,
+                     unsigned int seq)
+{
+    __gpr unsigned int addr_hi;
+    __gpr unsigned int addr_lo;
+    __gpr struct pkt_iref_csr0 csr0;
+    __gpr struct pkt_iref_palu palu;
+
+    /*
+     * The "pcie reorder" command passes an opaque work queue message to
+     * a chosen destination ring within the chip. One can select from
+     * a number of different destination types whose preprogrammed ring
+     * command encoding is selected by the destination index.
+     * These values are encoded in the TM command in a similar fashion
+     * to the "packet ready" command.
+     *
+     * See NFP 3800 Databook Section 7.2.5.9 "Target Commands", and Section
+     * 2.1.15 Reordering and VM-QoS for PCIe Traffic
+     */
+    addr_hi = PKT_WQ_REORDER_ADDR_HI_FIELDS(nbi, isl);
+    addr_lo = PKT_WQ_REORDER_ADDR_LO_FIELDS(wq_msg);
+
+    csr0.__raw = 0;
+    csr0.seqr = seqr;
+    csr0.seq = seq;
+
+    local_csr_write(local_csr_cmd_indirect_ref_0, csr0.__raw);
+
+    /*
+     * XXX We clear the reserved bits of the previous ALU instruction
+     * structure by assigning the whole 32-bit value the MAGIC constant.
+     * This constant starts at bit 0 of the structure anyways.
+     */
+    palu.__raw = PKT_IREF_PALU_MAGIC;
+    palu.rnum = dst_rnum;
+    palu.lookup_addr = dst_idx;
+
+    __asm {
+        alu[--, --, B, palu.__raw];
+        nbi[pcie_reorder, --, addr_hi, <<8, addr_lo], indirect_ref;
+    }
+}
 
 
 #endif /* !defined(__NFP_IS_6XXX) */

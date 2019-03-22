@@ -467,6 +467,14 @@ struct pkt_iref_palu {
             unsigned int offset_mid:5;   /**< Starting offset, bits [6:2] */
             unsigned int magic:8;        /**< PKT_IREF_PALU_MAGIC: see below */
         };
+        struct { /* format for pcie_reorder command */
+            unsigned int resv1:6;        /**< Reserved: set to 0 */
+            unsigned int rnum:10;      /**< Ring number for PCIe reorder */
+            unsigned int resv3:4;        /**< No override sig num, sig ctx,
+                                          **  or length[4] */
+            unsigned int lookup_addr:4;  /**< PCIe destination select */
+            unsigned int pcie_magic:8;   /**< PKT_IREF_PALU_MAGIC: see below */
+        };
         uint32_t __raw;
     };
 };
@@ -514,6 +522,25 @@ struct pkt_iref_palu {
      ((_pnum) << PKT_READY_ADDR_LO_PNUM_shf) |         \
      (((_offset) & PKT_READY_ADDR_LO_OFFSET_msk) <<    \
       PKT_READY_ADDR_LO_OFFSET_shf) | (_len))
+
+/**
+ * NBI workqueue reorder fields
+ *  must overide:
+ *  - Data master island (island ID)            (iid << 32)
+ *  - NBI ID                                    (nbi << 38)
+ *
+ * Packet info value is placed in low address field
+ * NOTE: bit 31 is reserved for VM-QoS and bit 24 must be zero on
+ *       Kestrel A0
+ */
+#define PKT_WQ_REORDER_ADDR_HI_FIELDS(_nbi, _iid)    \
+    ((_nbi << PKT_READY_ADDR_HI_NBI_shf)             \
+     | (_iid << PKT_READY_ADDR_HI_DMASTER_ISL_shf))
+
+#define PKT_WQ_REORDER_ADDR_LO_MASK (~((1 << 31) | (1 << 24)))
+#define PKT_WQ_REORDER_ADDR_LO_FIELDS(_wq_msg) \
+            ((_wq_msg) & PKT_WQ_REORDER_ADDR_LO_MASK)
+
 
 #endif /* !defined(__NFP_IS_6XXX) */
 
@@ -1187,6 +1214,25 @@ __intrinsic void pkt_nbi_drop(unsigned char isl, unsigned int pnum,
                               unsigned int nbi, unsigned int txq,
                               unsigned int seqr, unsigned int seq);
 
+/**
+ * Sumbit workqueue packet to TM for reorder. The TM will put the packet
+ * through reorder processing and submit an opaque work queue message to the
+ * provided ring. The dst_idx parameter must point to a suitably
+ * configured NbiTmPcieCmdOutCfg CSR entry.
+ * @param isl           Island of the CTM packet
+ * @param pnum          Packet number of the CTM packet
+ * @param nbi           NBI TM to send the packet to
+ * @param wq_msg        Opaque packet info data sent to destination ring
+ * @param dst_idx       Workqueue reorder destination index
+ * @param dst_rnum      Workqueue reorder destination ring number
+ * @param seqr          NBI TM sequencer to send the packet to
+ * @param seq           NBI TM sequence number of the packet
+ */
+__intrinsic void pkt_nbi_wq_reorder(unsigned char isl, unsigned int pnum,
+                                    unsigned int nbi, unsigned int wq_msg,
+                                    unsigned int dst_idx,
+                                    unsigned int dst_rnum,
+                                    unsigned int seqr, unsigned int seq);
 
 /*
  *  For NFP 3800, the following sequence of actions is expected to properly
