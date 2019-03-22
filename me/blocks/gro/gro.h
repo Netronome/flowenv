@@ -115,6 +115,20 @@ struct gro_meta_nbi {
     };
 };
 
+struct gro_meta_nfdk {
+    union {
+        struct {
+            unsigned int unused0:25;
+            unsigned int pcie:4;
+            unsigned int type:3;
+            uint32_t nfd_meta;
+            uint32_t unused1;
+            uint32_t unused2;
+        };
+        uint32_t __raw[4];
+    };
+};
+
 
 /* Max supported starting offset for an NFD packet sent via GRO */
 #define GRO_NFD_MAX_OFFSET 255
@@ -180,6 +194,7 @@ union gro_meta {
     struct gro_meta_drop drop;
     struct gro_meta_nbi nbi;
     struct gro_meta_nfd3 nfd;
+    struct gro_meta_nfdk nfdk;
     struct gro_meta_memq memq;
 };
 

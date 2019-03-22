@@ -277,6 +277,17 @@ __intrinsic void gro_cli_build_nbi_meta_no_pm(
 
 #endif
 
+/**
+ * gro_cli_nfdk_desc2meta()
+ *
+ * Build a GRO descriptor to send to Kestrel Native NFD.
+ *
+ * @param meta          The location to store the GRO metadata.
+ * @param idescp        The opaque input NFD metadata word
+ * @param pci           The PCI unit to send to.
+ */
+__intrinsic void gro_cli_nfdk_desc2meta(__xwrite struct gro_meta_nfdk *meta,
+                                        void *idescp, unsigned int pci);
 
 /**
  * gro_cli_nfd_desc2meta()

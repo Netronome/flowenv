@@ -1444,6 +1444,26 @@ done#:
 .end
 #endm
 
+/**
+ * Populate GRO nfd metadata for NFD kestrel native
+ * In this case in_nfdd is the 32-bit opaque value to be used
+ * for the TM pcie reorder command
+ */
+#macro gro_cli_nfdk_desc2meta(out_grod, in_nfdd, in_pcie)
+.begin
+    #if (!is_ct_const(in_pcie) || (in_pcie != 0))
+        .reg word
+
+        alu[word, --, B, in_pcie, <<GRO_META_DEST_shf]
+        alu[out_grod[0], word, OR, GRO_DTYPE_NFD, <<GRO_META_TYPE_shf]
+    #else
+        alu[out_grod[0], --, B, GRO_DTYPE_NFD, <<GRO_META_TYPE_shf]
+    #endif
+
+    move(out_grod[1], in_nfdd)
+.end
+#endm
+
 
 #ifndef NFD_USE_MOCKUP
 

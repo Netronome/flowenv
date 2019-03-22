@@ -909,6 +909,50 @@ wait_mem_ring1_input#:
 
 #ifndef NFD_USE_MOCKUP
 
+#if (defined(NFD_VERSION) && (NFD_VERSION == 0x04000000))
+
+/* For Kestrel Native NFD we are just provided a single 32-bit value to put on the
+ * NFD ring that was set up on initialization
+ */
+#macro gro_nfd_xmit(in_meta, out_xfer, OUTSIG, CUR_BUF, ONE_REQ_LABEL, TWO_REQ_LABEL)
+.begin
+    .reg addr_hi
+    .reg addr_lo
+
+    #if (!streq('TWO_REQ_LABEL', '--'))
+        #define_eval _GRO_H_NINST 16
+    #else
+        #define_eval _GRO_H_NINST 15
+        local_csr_wr[SAME_ME_SIGNAL, g_sig_next_worker]
+    #endif
+
+    move(out_xfer[0], in_meta[1])
+    alu[addr_hi, LM_DEST_NFD3_RING_ENC, AND, 0xFF, <<24]
+    alu[addr_lo, g_ringlo_mask, AND, LM_DEST_NFD3_RING_ENC, >>GRO_DEST_NFD3_RINGLO_shf]
+    mem[qadd_work, out_xfer[0], addr_hi, <<8, addr_lo, 1], sig_done[OUTSIG]
+
+    #if (!streq('TWO_REQ_LABEL', '--'))
+        br_bset[CUR_BUF[LM_XBUF_FLAGS_wrd], XBUF_FLAG_TWOPKTS_bit, TWO_REQ_LABEL], defer[1]
+        alu[g_sigmask, CUR_BUF[LM_XBUF_SIGMASK_wrd], OR, mask(OUTSIG), <<(&OUTSIG)]
+
+        local_csr_wr[SAME_ME_SIGNAL, g_sig_next_worker]
+        ctx_arb[--], br[ONE_REQ_LABEL], defer[2]
+        alu[CUR_BUF[LM_XBUF_FLAGS_wrd], --, B, XBUF_FLAG_READY]
+        local_csr_wr[ACTIVE_CTX_WAKEUP_EVENTS, g_sigmask]
+    #else
+        alu[g_sigmask, g_sigmask, OR, mask(OUTSIG), <<(&OUTSIG)]
+        ctx_arb[--], br[ONE_REQ_LABEL], defer[2]
+        alu[CUR_BUF[LM_XBUF_FLAGS_wrd], --, B, XBUF_FLAG_READY]
+        local_csr_wr[ACTIVE_CTX_WAKEUP_EVENTS, g_sigmask]
+    #endif
+
+    _pad_macro_len(_GRO_H_NINST, GRO_OUT_HANDLER_ILEN)
+    #undef _GRO_H_NINST
+
+.end
+#endm
+#else /* (defined(NFD_VERSION) && (NFD_VERSION == 0x04000000)) */
+/* NFD B0 */
 
 // TODO:  Use real offsets and add thorough documentation of what we're doing
 // here...
@@ -970,7 +1014,7 @@ wait_mem_ring1_input#:
 
 .end
 #endm
-
+#endif /* !((defined(NFD_VERSION) && (NFD_VERSION == 0x04000000))) */
 
 #else /* NFD_USE_MOCKUP */
 

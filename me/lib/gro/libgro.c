@@ -371,6 +371,17 @@ gro_cli_build_nbi_meta_no_pm(__xwrite struct gro_meta_nbi *meta,
 #undef __NBI_IREF_LO8
 }
 
+/* Kestrel Native, just a single 32-bit metadata value, ring parms
+ * are set at compile time in gro output ME
+ */
+__intrinsic void
+gro_cli_nfdk_desc2meta(__xwrite struct gro_meta_nfdk *odesc, void *idescp,
+                       unsigned int pci)
+{
+    odesc->__raw[0] = (GRO_DTYPE_NFD << GRO_META_TYPE_shf |
+                                    (pci << GRO_META_DEST_shf));
+    odesc->nfd_meta = *((unsigned int *)idescp);
+}
 
 /* TODO: use real NFD headers for this: but they don't have the */
 /* #defines we need yet.  Also, not thrilled about making GRO   */
