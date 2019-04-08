@@ -231,6 +231,12 @@ __shared __gpr uint32_t pktio_cntrs_base;
 
 #define NFD_CTM_SIZE (256 << NFD_CTM_TYPE)
 
+#if defined(__NFP_IS_38XX)
+#define NBI_RO_CTX_UNSEQUENCED 16
+#define NBI_RO_CTX_UNSEQUENCED_BIT (1 << 4)
+#else
+#define NBI_RO_CTX_UNSEQUENCED 0
+#endif
 
 #if defined(__NFP_IS_6XXX)
 
@@ -312,6 +318,29 @@ compute_ctm_size(__xread struct pktio_nbi_meta *rxd)
 #endif /* SPLIT_LENGTH > 0 */
 }
 
+__intrinsic static int is_sequenced(void)
+{
+#ifndef PKTIO_NBI_SEQR_ENABLED
+    return 0;
+#elif defined(NBI_TM_ENABLE_SEQUENCER0) && NBI_TM_ENABLE_SEQUENCER0 != 0
+    /* if NBI_TM_ENABLE_SEQUENCER0 is set, all sequencer values indicate
+     * a sequenced packet; NBI_TM_ENABLE_SEQUENCER0 not being defined
+     * means NBI_TM_ENABLE_SEQUENCER0 will be disabled
+     */
+    return 1;
+#elif defined(__NFP_IS_6XXX)
+    return pkt.p_ro_ctx > 0;
+#else
+    /* Sequencers 16 and above mean unsequenced on Kestrel */
+    return (pkt.p_ro_ctx & NBI_RO_CTX_UNSEQUENCED_BIT) == 0;
+#endif
+}
+
+__intrinsic static void set_unsequenced(void)
+{
+    pkt.p_ro_ctx = NBI_RO_CTX_UNSEQUENCED;
+}
+
 
 #ifdef PKTIO_GRO_ENABLED
 __intrinsic void
@@ -325,41 +354,7 @@ drop_packet(__xwrite struct gro_meta_drop *gmeta)
 
     if (pkt.p_is_gro_seq)  {
         gro_cli_build_drop_seq_meta(gmeta);
-    } else
-#ifdef PKTIO_NBI_SEQR_ENABLED
-    if (pkt.p_ro_ctx) {
-        /* Notify the NBI to ignore this packet's sequence number */
-#if defined(__NFP_IS_6XXX)
-        __gpr struct pkt_ms_info msi = {0,0}; /* dummy msi */
-        pkt_nbi_drop_seq(pkt.p_isl,
-                         pkt.p_pnum,
-                         &msi,
-                         pkt.p_len,
-                         0,
-                         0,
-                         pkt.p_ro_ctx,
-                         pkt.p_seq,
-                         pkt.p_ctm_size);
-#else
-        pkt_nbi_drop_seq(pkt.p_isl, pkt.p_pnum, pkt.p_len, pkt.p_offset, 0, 0,
-                         pkt.p_ro_ctx, pkt.p_seq, pkt.p_ctm_size);
-#endif
-    } else
-#endif
-    ;
-}
-
-#else
-
-__intrinsic void
-drop_packet()
-{
-    blm_buf_free(pkt.p_muptr, pkt.p_bls);
-    pkt_ctm_free(pkt.p_isl, pkt.p_pnum);
-
-    /* If ordered packet, drop with seq number in NBI. */
-#ifdef PKTIO_NBI_SEQR_ENABLED
-    if (pkt.p_ro_ctx) {
+    } else if (is_sequenced()) {
         /* Notify the NBI to ignore this packet's sequence number */
 #if defined(__NFP_IS_6XXX)
         __gpr struct pkt_ms_info msi = {0,0}; /* dummy msi */
@@ -377,7 +372,35 @@ drop_packet()
                          pkt.p_ro_ctx, pkt.p_seq, pkt.p_ctm_size);
 #endif
     }
+}
+
+#else
+
+__intrinsic void
+drop_packet()
+{
+    blm_buf_free(pkt.p_muptr, pkt.p_bls);
+    pkt_ctm_free(pkt.p_isl, pkt.p_pnum);
+
+    /* If ordered packet, drop with seq number in NBI. */
+    if (is_sequenced()) {
+        /* Notify the NBI to ignore this packet's sequence number */
+#if defined(__NFP_IS_6XXX)
+        __gpr struct pkt_ms_info msi = {0,0}; /* dummy msi */
+        pkt_nbi_drop_seq(pkt.p_isl,
+                         pkt.p_pnum,
+                         &msi,
+                         pkt.p_len,
+                         0,
+                         0,
+                         pkt.p_ro_ctx,
+                         pkt.p_seq,
+                         pkt.p_ctm_size);
+#else
+        pkt_nbi_drop_seq(pkt.p_isl, pkt.p_pnum, pkt.p_len, pkt.p_offset, 0, 0,
+                         pkt.p_ro_ctx, pkt.p_seq, pkt.p_ctm_size);
 #endif
+    }
 }
 
 #endif
@@ -427,6 +450,8 @@ pktio_rx_wire_process(__xread void *nbi_meta)
         pkt.p_is_gro_seq = PKTIO_NBI_SEQD_MAP_ISGRO(nbi_rxd->nbi.meta_type,
                                                     nbi_rxd->nbi.seqr);
 #endif
+    } else {
+        set_unsequenced();
     }
 
 #if NBI_PKT_PREPEND_BYTES >= 8
@@ -672,7 +697,7 @@ pktio_rx_wq(int ring_num, mem_ring_addr_t ring_addr)
     mem_read32(&xpm, p, sizeof(xpm));
     pkt = xpm;
     pkt.p_is_gro_seq = 0;
-    pkt.p_ro_ctx = 0;
+    set_unsequenced();
     pkt.p_dst = PKT_DROP;
 }
 
