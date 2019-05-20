@@ -136,6 +136,15 @@ __packed struct ip6_hdr {
 };
 
 /**
+ * IPv6 extension generic header
+ */
+__packed struct ip6_ext {
+    uint8_t nh;
+    uint8_t len;
+    uint16_t padding; /* pad struct to 4B */
+};
+
+/**
  * IPv6 Hop-by-Hop options header (NET_IP_PROTO_HOPOPT)
  */
 __packed struct ip6_hbh {

@@ -284,6 +284,26 @@ __intrinsic int he_ip6_fit(sz, off);
  */
 __intrinsic unsigned int he_ip6(void *src_buf, int off, void *dst);
 
+/**
+ * Process an IPv6 extension header
+ * @param src_buf  Source buffer
+ * @param off      Byte offset within @src_buf where the extension starts
+ * @param proto    Next protocol header indication from previous he_ip6 or
+ *                 he_ip6_ext_skip call
+ * @return         Length and next protocol header indication.
+ *
+ * Note this function will not extract the extension header, but will only
+ * use the TLV portion of the extension as well as @proto to determine the
+ * next protocol header and length.
+ * @proto must be that of an extension header, ie must pass the test
+ * (proto & HE_IP6_EXT != 0) && (proto != HE_UNKNOWN)
+ * The next protocol encoded in the return value is one of HE_TCP,
+ * HE_UDP, HE_GRE, HE_ESP, HE_IP6_HBH, HE_IP6_RT, HE_IP6_FRAG,
+ * HE_IP6_NONE, HE_IP6_DST, or HE_UNKNOWN.
+ */
+__intrinsic unsigned int he_ip6_ext_skip(void *src_buf, int off,
+                                         unsigned int proto);
+
 
 /**
  * Check if the buffer of size @sz with current offset @off has

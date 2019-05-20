@@ -495,6 +495,39 @@ he_ip6_fit(sz, off)
     ret = HE_RES(next_proto, sizeof(struct ip6_hdr));
 
 __intrinsic unsigned int
+he_ip6_ext_skip(void *src_buf, int off, unsigned int proto)
+{
+    __gpr unsigned int next_proto;
+    __gpr int ret, len;
+    struct ip6_ext ext;
+
+    ctassert(__is_in_lmem(src_buf));
+
+    /* populate the generic extension structure even if it isn't needed */
+    ext = *(__lmem struct ip6_ext *)(((__lmem char *)src_buf) + off);
+
+    /* proto must be an extension header */
+    switch (proto) {
+#ifndef OMIT_NET_IP_PROTO_FRAG
+    case HE_IP6_FRAG:
+        /* sadly the frag len is reserved and needs to be a special case */
+        len = sizeof(struct ip6_frag);
+        break;
+#endif
+    default:
+        /* ext.len is in 8-octet words, 0 indicates 8B */
+        len = (ext.len + 1) * 8;
+    }
+
+    switch (ext.nh) {
+    _IP6_PROTO_SWITCH;
+    }
+
+    return HE_RES(next_proto, len);
+}
+
+
+__intrinsic unsigned int
 he_ip6(void *src_buf, int off, void *dst)
 {
     __gpr unsigned int next_proto;
