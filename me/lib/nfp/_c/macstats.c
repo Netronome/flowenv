@@ -71,6 +71,9 @@
 #define MAC_HEAD_DROP_SLEEP 2000
 #endif
 
+/* Chink of mac stats in bytes that get operated on per retrieve iteration */
+#define STATS_CHUNK 32
+
 /* Read 8 stats values from nbi and write to destination */
 __intrinsic static void
 mac_stats_load(__gpr unsigned int src_hi, __gpr unsigned int src_lo,
@@ -93,36 +96,47 @@ mac_stats_load(__gpr unsigned int src_hi, __gpr unsigned int src_lo,
     }
 }
 
-/* Read 8 stats values from nbi and add to destination */
+/* Read 8 stats values from nbi and prepare output buffer */
 __intrinsic static void
-mac_stats_add(__gpr unsigned int src_hi, __gpr unsigned int src_lo,
-              __gpr unsigned int dst_hi, __gpr unsigned int dst_lo)
+mac_stats_fetch(__xread unsigned int *stats_xr,
+                __xwrite unsigned int *stats_xw,
+                __gpr unsigned int src_hi, __gpr unsigned int src_lo)
 {
-    __xrw unsigned int stats[8];
     SIGNAL sig;
-    __gpr unsigned int dst_lo2 = dst_lo + 32;
 
     __asm {
-        nbi[read, stats[0], src_hi, <<8, src_lo, 4], ctx_swap[sig];
-        alu[stats[0], --, B, stats[0]];
-        alu[stats[1], --, B, 0];
-        alu[stats[2], --, B, stats[1]];
-        alu[stats[3], --, B, 0];
-        alu[stats[4], --, B, stats[2]];
-        alu[stats[5], --, B, 0];
-        alu[stats[6], --, B, stats[3]];
-        alu[stats[7], --, B, 0];
-        mem[add64, stats[0], dst_hi, <<8, dst_lo, 4], ctx_swap[sig];
-        alu[stats[0], --, B, stats[4]];
-        alu[stats[1], --, B, 0];
-        alu[stats[2], --, B, stats[5]];
-        alu[stats[3], --, B, 0];
-        alu[stats[4], --, B, stats[6]];
-        alu[stats[5], --, B, 0];
-        alu[stats[6], --, B, stats[7]];
-        alu[stats[7], --, B, 0];
-        mem[add64, stats[0], dst_hi, <<8, dst_lo2, 4], ctx_swap[sig];
+        nbi[read, *stats_xr, src_hi, <<8, src_lo, 4], ctx_swap[sig];
+        alu[stats_xw[0], --, B, stats_xr[0]];
+        alu[stats_xw[1], --, B, 0];
+        alu[stats_xw[2], --, B, stats_xr[1]];
+        alu[stats_xw[3], --, B, 0];
+        alu[stats_xw[4], --, B, stats_xr[2]];
+        alu[stats_xw[5], --, B, 0];
+        alu[stats_xw[6], --, B, stats_xr[3]];
+        alu[stats_xw[7], --, B, 0];
+        alu[stats_xw[8], --, B, stats_xr[4]];
+        alu[stats_xw[9], --, B, 0];
+        alu[stats_xw[10], --, B, stats_xr[5]];
+        alu[stats_xw[11], --, B, 0];
+        alu[stats_xw[12], --, B, stats_xr[6]];
+        alu[stats_xw[13], --, B, 0];
+        alu[stats_xw[14], --, B, stats_xr[7]];
+        alu[stats_xw[15], --, B, 0];
     }
+}
+/* Write 8 stats values to destination */
+__intrinsic void
+mac_stats_commit(__xwrite uint32_t *stats_xw,
+                 unsigned int dst_hi, unsigned int dst_lo)
+{
+    SIGNAL sig;
+    __xwrite uint32_t *xw;
+    __gpr unsigned int dst_lo2 = dst_lo + 32;
+
+    xw = stats_xw;
+    __asm mem[add64, *xw, dst_hi, <<8, dst_lo, 4], ctx_swap[sig];
+    xw += 8;
+    __asm mem[add64, *xw, dst_hi, <<8, dst_lo2, 4], ctx_swap[sig];
 }
 
 int
@@ -161,10 +175,55 @@ macstats_port_read(unsigned int mac, unsigned int port,
     return 0;
 }
 
-int
-macstats_port_accum(unsigned int mac, unsigned int port,
-                    __mem40 struct macstats_port_accum *port_stats)
+__intrinsic void static
+stats_hi_fixup(__xread unsigned int stats_xr[8],
+               __xwrite unsigned int stats_xw[16],
+               unsigned int hi_in_offb,
+               unsigned int val_out_offb,
+               unsigned int offb,
+               unsigned int chunk_size)
 {
+    unsigned int lw_out, lw_in;
+
+    lw_in = (hi_in_offb % chunk_size) / sizeof(uint32_t);
+
+    /* there are two 'out' words for every 'in' word */
+    lw_out = (val_out_offb % (chunk_size * 2)) / sizeof(uint32_t);
+    lw_out += 1; /* atomic engine want high in the odd word */
+
+    /* write in the hi word, also clear the unused hi word */
+    stats_xw[lw_out] = stats_xr[lw_in];
+    stats_xw[lw_in * 2] = 0;
+}
+
+__intrinsic void static
+stats_patchup(__xwrite unsigned int stats_xw[16],
+              unsigned int val_out_offb,
+              uint32_t patch_value,
+              unsigned int offb,
+              unsigned int chunk_size)
+{
+    unsigned int lw_out, lw_in;
+
+    /* first we see if the out value is in the chunk;
+     * NOTE: there are two 'out' words for every 'in' word hence the "* 2"
+     * NOTE: we check the patch value to allow the compiler to optimize out
+     *       the patchup, O accumulation means do nothing
+     */
+    if (__is_ct_const(patch_value) && patch_value == 0)
+        return;
+
+    lw_out = (val_out_offb % (chunk_size * 2)) / sizeof(uint32_t);
+    stats_xw[lw_out] = patch_value;
+}
+
+__intrinsic int
+macstats_port_accum_all(unsigned int mac, unsigned int port,
+                        __mem40 struct macstats_port_accum *port_stats,
+                        uint32_t rx_mac_head_drops, uint32_t tx_queue_drops)
+{
+    __xread unsigned int stats_xr[8];
+    __xwrite unsigned int stats_xw[16];
     unsigned char core;
     unsigned char seg;
     __gpr unsigned int src_hi;
@@ -172,12 +231,25 @@ macstats_port_accum(unsigned int mac, unsigned int port,
     __gpr unsigned int dst_hi;
     __gpr unsigned int dst_lo;
     __gpr unsigned int off;
+    int ret;
 
-    if (mac > MAX_MAC_NUMBER)
-        return -1;
+    /* this code expects RxMacHeadDrop and TxQueueDrop to be in the
+     * same chunk, enforce with a ct assert
+     */
+    ctassert(offsetof(struct macstats_port_accum, TxQueueDrop) / (STATS_CHUNK * 2) ==
+             offsetof(struct macstats_port_accum, RxMacHeadDrop) / (STATS_CHUNK * 2));
 
-    if (port > MAX_PORT_NUMBER)
-        return -1;
+
+    if (mac > MAX_MAC_NUMBER) {
+        ret = -1;
+        goto out;
+    }
+
+    if (port > MAX_PORT_NUMBER) {
+        ret = -1;
+        goto out;
+    }
+
 
     if (port >= PORTS_PER_MAC_CORE)
         core = 1;
@@ -191,16 +263,45 @@ macstats_port_accum(unsigned int mac, unsigned int port,
     dst_hi = (((unsigned long long)port_stats) >> 8) & 0xFF000000;
     dst_lo = ((unsigned long long)port_stats) & 0xFFFFFFFF;
 
-    for (off = 0; off < sizeof(struct macstats_port); off += 32)
-        mac_stats_add(src_hi, src_lo + off, dst_hi, dst_lo + 2*off);
+    for (off = 0; off < sizeof(struct macstats_port); off += STATS_CHUNK) {
+        /* get the NBI stats */
+        mac_stats_fetch(stats_xr, stats_xw, src_hi, src_lo + off);
 
-    /* Fix 40 bit stats accumulation */
-    port_stats->RxPIfInOctets += (port_stats->RxPIfInOctets_unused << 32);
-    port_stats->RxPIfInOctets_unused = 0;
-    port_stats->TxPIfOutOctets += (port_stats->TxPIfOutOctets_unused << 32);
-    port_stats->TxPIfOutOctets_unused = 0;
+        /* Do high word fixup and patch in non-nbi values */
+        if (off / STATS_CHUNK ==
+                offsetof(struct macstats_port, RxPIfInOctetsHi) / STATS_CHUNK) {
+            stats_hi_fixup(stats_xr, stats_xw,
+                           offsetof(struct macstats_port, RxPIfInOctetsHi),
+                           offsetof(struct macstats_port_accum, RxPIfInOctets),
+                           off, STATS_CHUNK);
+        } else if (off / STATS_CHUNK ==
+                offsetof(struct macstats_port, TxPIfOutOctetsLo) / STATS_CHUNK) {
+            stats_hi_fixup(stats_xr, stats_xw,
+                           offsetof(struct macstats_port, TxPIfOutOctetsHi),
+                           offsetof(struct macstats_port_accum, TxPIfOutOctets),
+                           off, STATS_CHUNK);
+        } else if (off / STATS_CHUNK ==
+                offsetof(struct macstats_port_accum, RxMacHeadDrop) / (STATS_CHUNK * 2)) {
+            stats_patchup(stats_xw,
+                          offsetof(struct macstats_port_accum, RxMacHeadDrop),
+                          rx_mac_head_drops, off, STATS_CHUNK);
+            stats_patchup(stats_xw,
+                          offsetof(struct macstats_port_accum, TxQueueDrop),
+                          tx_queue_drops, off, STATS_CHUNK);
+        }
 
-    return 0;
+        mac_stats_commit(stats_xw, dst_hi, dst_lo + 2*off);
+    }
+out:
+    return ret;
+}
+
+
+int
+macstats_port_accum(unsigned int mac, unsigned int port,
+                    __mem40 struct macstats_port_accum *port_stats)
+{
+    return macstats_port_accum_all(mac, port, port_stats, 0, 0);
 }
 
 int
@@ -226,21 +327,30 @@ macstats_channel_read(unsigned int mac, unsigned int channel,
     dst_hi = (((unsigned long long)channel_stats) >> 8) & 0xFF000000;
     dst_lo = ((unsigned long long)channel_stats) & 0xFFFFFFFF;
 
-    for (off = 0; off < sizeof(struct macstats_channel); off += 32)
+    for (off = 0; off < sizeof(struct macstats_channel); off += STATS_CHUNK)
         mac_stats_load(src_hi, src_lo + off, dst_hi, dst_lo + off);
 
     return 0;
 }
 
-int
+__intrinsic int
 macstats_channel_accum(unsigned int mac, unsigned int channel,
                        __mem40 struct macstats_channel_accum *channel_stats)
 {
+    __xread unsigned int stats_xr[8];
+    __xwrite unsigned int stats_xw[16];
     __gpr unsigned int src_hi;
     __gpr unsigned int src_lo;
     __gpr unsigned int dst_hi;
     __gpr unsigned int dst_lo;
     __gpr unsigned int off;
+
+    /* RxCIfInOctetsLo and RxCStatsOctetsLo should be in the same chunk */
+    ctassert(offsetof(struct macstats_channel, RxCIfInOctetsHi) / STATS_CHUNK ==
+             offsetof(struct macstats_channel, RxCStatsOctetsHi) / STATS_CHUNK);
+
+    src_hi = MACSTATS_CHAN_ADDR_HI(mac);
+    src_lo = MACSTATS_CHAN_ADDR_LO(channel);
 
     if (mac > MAX_MAC_NUMBER)
         return -1;
@@ -248,25 +358,37 @@ macstats_channel_accum(unsigned int mac, unsigned int channel,
     if (channel > MAX_CHANNEL_NUMBER)
         return -1;
 
-    src_hi = MACSTATS_CHAN_ADDR_HI(mac);
-    src_lo = MACSTATS_CHAN_ADDR_LO(channel);
-
     dst_hi = (((unsigned long long)channel_stats) >> 8) & 0xFF000000;
     dst_lo = ((unsigned long long)channel_stats) & 0xFFFFFFFF;
 
-    for (off = 0; off < sizeof(struct macstats_channel); off += 32)
-        mac_stats_add(src_hi, src_lo + off, dst_hi, dst_lo + 2*off);
+    for (off = 0; off < sizeof(struct macstats_channel); off += STATS_CHUNK) {
+        __xread uint32_t foo;
+        __xwrite uint32_t foo2;
 
-    /* Fix 40 bit stats accumulation */
-    channel_stats->RxCIfInOctets +=
-            (channel_stats->RxCIfInOctets_unused << 32);
-    channel_stats->RxCIfInOctets_unused = 0;
-    channel_stats->RxCStatsOctets +=
-            (channel_stats->RxCStatsOctets_unused << 32);
-    channel_stats->RxCStatsOctets_unused = 0;
-    channel_stats->TxCIfOutOctets +=
-            (channel_stats->TxCIfOutOctets_unused << 32);
-    channel_stats->TxCIfOutOctets_unused = 0;
+        mac_stats_fetch(stats_xr, stats_xw, src_hi, src_lo + off);
+
+        /* Do high word fixup */
+        if (off / STATS_CHUNK ==
+                    offsetof(struct macstats_channel, RxCIfInOctetsLo) / STATS_CHUNK) {
+            stats_hi_fixup(stats_xr, stats_xw,
+                           offsetof(struct macstats_channel, RxCIfInOctetsHi),
+                           offsetof(struct macstats_channel_accum, RxCIfInOctets),
+                           off, STATS_CHUNK);
+            stats_hi_fixup(stats_xr, stats_xw,
+                           offsetof(struct macstats_channel, RxCStatsOctetsHi),
+                           offsetof(struct macstats_channel_accum, RxCStatsOctets),
+                           off, STATS_CHUNK);
+        } else if (off / STATS_CHUNK ==
+                    offsetof(struct macstats_channel, TxCIfOutOctetsLo) / STATS_CHUNK) {
+            stats_hi_fixup(stats_xr, stats_xw,
+                           offsetof(struct macstats_channel, TxCIfOutOctetsHi),
+                           offsetof(struct macstats_channel_accum, TxCIfOutOctets),
+                           off, STATS_CHUNK);
+        }
+
+        mac_stats_commit(stats_xw, dst_hi, dst_lo + 2*off);
+    }
+
 
     return 0;
 }

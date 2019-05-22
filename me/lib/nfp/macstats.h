@@ -430,6 +430,22 @@ int macstats_port_read(unsigned int mac, unsigned int port,
 int macstats_port_accum(unsigned int mac, unsigned int port,
                         __mem40 struct macstats_port_accum *port_stats);
 
+/**
+ * Accumulate MAC stats for a given port, including MAC head drops and TM queue
+ * drops.
+ * @param mac                The mac to read from (0/1)
+ * @param port               The port number (0-23)
+ * @param port_stats         A pointer to the accumulate stats struct to
+ *                           update, must be in ctm/imem/emem only
+ * @param rx_mac_head_drops  Rx MAC head drops since last accum call
+ * @param tx_queue_drops     Tx queue drops since last accum call
+ * @return 0 on success, -1 on error
+ */
+int macstats_port_accum_all(unsigned int mac, unsigned int port,
+                            __mem40 struct macstats_port_accum *port_stats,
+                            uint32_t rx_mac_head_drops,
+                            uint32_t tx_queue_drops);
+
 
 /**
  * Reads and clears MAC stats for a given channel.
