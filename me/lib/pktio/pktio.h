@@ -38,11 +38,9 @@
  * latter transmits the packet to the destination (selected from many
  * possible targets) stored in that metadata.  The packet metadata is a
  * thread-local global variable and most of the routines in this library
- * access that state implicitly.  This is generally poor interface
- * design, but its selection was purposeful.  The nfcc compiler has the
- * unfortunate property that it can spill variables with no location
- * declaration to external memory.  This is generally a horrible idea
- * and leads to all sorts of unexpected performance instabilities.
+ * access that state implicitly.  This approach is taken to avoid the
+ * nfcc compiler spilling function parameters to memory, which can cause
+ * unexpected performance degradation.
  *
  * While the API could have passed location-qualified packet metadata as
  * parameters to avoid spilling, this would force all packet metadata to
