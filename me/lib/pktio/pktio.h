@@ -338,6 +338,14 @@
  * PKTIO_NFD_CPY_START      Specifies the offset to start copying host packet
  *                          data from in MU into CTM.  Must be 64B aligned.
  *                          Defaults to "NFD_IN_DATA_OFFSET & ~0x3F".
+ *
+ * KESTREL SPECIFIC
+ *
+ * Kestrel supports dropping packets entirely in the NBI TM. To enable
+ * this feature one must define PKTIO_NBI_DROP_TXQ to a number between
+ * 0 and 1023. The TM queue drop counter at that offset will reflect the
+ * drop. This should be set to an unused queue within the system, 1023
+ * is a sensible choice.
  */
 
 #ifndef __PKTIO_H__
@@ -396,6 +404,15 @@
 #ifndef NBI_PKT_PREPEND_BYTES
 #define NBI_PKT_PREPEND_BYTES 0
 #warning "NBI_PKT_PREPEND_BYTES not defined, setting it to 0."
+#endif
+
+#ifdef PKTIO_NBI_DROP_TXQ
+#if PKTIO_NBI_DROP_TXQ < 0 || PKTIO_NBI_DROP_TXQ > 1023
+#error "PKTIO_NBI_DROP_TXQ must be in the range 0-1023"
+#endif
+#if defined(__NFP_IS_6XXX)
+#error "PKTIO_NBI_DROP_TXQ cannot be set on 6XXX"
+#endif
 #endif
 
 #if (NBI_PKT_PREPEND_BYTES >= 8)
