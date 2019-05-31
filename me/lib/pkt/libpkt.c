@@ -780,7 +780,8 @@ pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
 
     /* Allocate one packet credit and one buffer credit if requested */
     if (alloc_internal)
-        pkt_ctm_get_credits(credits, 1, 1, replenish_credits);
+        pkt_ctm_get_credits(credits, 1, 1, replenish_credits,
+                            PKT_CREDITS_INDEFINITE_RETRY);
 
     if (isl != 0)
         addr_hi = (0x80 | isl) << 24;
@@ -839,13 +840,37 @@ pkt_ctm_poll_pe_credit(__cls struct ctm_pkt_credits *credits)
 }
 
 __intrinsic void
+pkt_ctm_return_credits(__cls struct ctm_pkt_credits *credits,
+                       unsigned int pkt_credits, unsigned int buf_credits,
+                       int replenish_credits)
+{
+    SIGNAL sig_cls, sig_pe;
+    __xread struct pe_credit_get_res pe_res;
+    __xwrite struct ctm_pkt_credits credits_update;
+    __gpr unsigned int master = 0;
+
+    if (replenish_credits) {
+        __asm mem[packet_credit_get, pe_res, 0, <<8, master, 1], ctx_swap[sig_pe];
+        credits_update.pkts = pkt_credits + pe_res.pkt_credit;
+        credits_update.bufs = buf_credits + pe_res.buf_credit;
+    } else {
+        credits_update.pkts = pkt_credits;
+        credits_update.bufs = buf_credits;
+    }
+
+    __asm cls[add, credits_update, credits, 0, 2], ctx_swap[sig_cls];
+}
+
+__intrinsic int
 pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
                     unsigned int pkt_credits, unsigned int buf_credits,
-                    int replenish_credits)
+                    int replenish_credits, int retries)
 {
     __xrw struct ctm_pkt_credits credits_update;
     __xwrite struct ctm_pkt_credits credits_add_back;
     SIGNAL sig_cls;
+    unsigned int ret = 0;
+    int n = retries;
 
     credits_update.pkts = pkt_credits;
     credits_update.bufs = buf_credits;
@@ -878,12 +903,19 @@ pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
         if (replenish_credits)
             pkt_ctm_poll_pe_credit(credits);
 
+        if (retries >= 0 && n-- <= 0) {
+            ret = -1;
+            break;
+        }
+
         /* Try again */
         credits_update.pkts = pkt_credits;
         credits_update.bufs = buf_credits;
         __asm cls[test_subsat, credits_update, credits, 0, 2],  \
             ctx_swap[sig_cls];
     }
+
+    return ret;
 }
 
 #else /* !defined(__NFP_IS_6XXX) */

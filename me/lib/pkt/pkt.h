@@ -1034,9 +1034,11 @@ __intrinsic void pkt_nbi_drop_seq(unsigned char isl, unsigned int pnum,
  *
  *  3. Get credits for the packets to be allocated (could be skipped if done
  *     internally in the pkt_ctm_alloc function).
- *      pkt_ctm_get_credits(&my_credits, NUM_PKTS, NUM_BUFS, 0);
+ *      pkt_ctm_get_credits(&my_credits, NUM_PKTS, NUM_BUFS, 0,
+ *                          PKT_CREDITS_INDEFINITE_RETRY);
  *     or
- *      pkt_ctm_get_credits(&my_credits, NUM_PKTS, NUM_BUFS, 1);
+ *      pkt_ctm_get_credits(&my_credits, NUM_PKTS, NUM_BUFS, 1,
+ *                          PKT_CREDITS_INDEFINITE_RETRY);
  *
  *  4. Allocate packets (one at a time, in this example 256 bytes)
  *     (do not allocate or replenish credits; already performed):
@@ -1115,20 +1117,48 @@ __intrinsic void pkt_ctm_init_credits(__cls struct ctm_pkt_credits *credits,
  */
 __intrinsic void pkt_ctm_poll_pe_credit(__cls struct ctm_pkt_credits *credits);
 
+/** pkt_ctm_get_credits retries value indicating attempts to claim credits should
+ *  continue indefinitely
+ */
+#define PKT_CREDITS_INDEFINITE_RETRY -1
+
 /**
  * Get credits for allocation of packet(s) in CTM.
  * @param pkt_credits       Desired amount of packet credits
  * @param buf_credits       Desired amount of buffer credits
  * @param replenish_credits Try and replenish credits internally
+ * @param retries           Number of retries to attempt
+ * @return                  0 on success, -1 on failure
  *
- * This function gets credits from the credits mangment structure
- * in a safe way.
- * Will block until the requested packet and buffer credits could be acquired.
+ * This function gets credits from the credits management structure
+ * in a safe way. Note that if replenish_credits is enabled it is best to
+ * set retry to 1 to get the opportunity to use the credits returned from NBI.
+ * Will block until the requested packet and buffer credits could be acquired
+ * if retries is set to PKT_CREDITS_INDEFINITE_RETRY. Setting retries to 0
+ * will try once.
  */
-__intrinsic void pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
-                                     unsigned int pkt_credits,
-                                     unsigned int buf_credits,
-                                     int replenish_credits);
+__intrinsic int pkt_ctm_get_credits(__cls struct ctm_pkt_credits *credits,
+                                    unsigned int pkt_credits,
+                                    unsigned int buf_credits,
+                                    int replenish_credits,
+                                    int retries);
+
+/**
+ * Return credits to CTM credits pool
+ * @param pkt_credits       Desired amount of packet credits
+ * @param buf_credits       Desired amount of buffer credits
+ * @param replenish_credits Try and replenish credits from NBI at the same time
+ *
+ * This function returns unused credits back to the credits management
+ * structure. Note that this only applies to preallocated credits that have
+ * not had packets allocated from the CTM, ie pkt_ctm_get_credits() has been
+ * called but not pkt_ctm_alloc().
+ *
+ */
+__intrinsic void pkt_ctm_return_credits(__cls struct ctm_pkt_credits *credits,
+                                        unsigned int pkt_credits,
+                                        unsigned int buf_credits,
+                                        int replenish_credits);
 
 #else /* !defined(__NFP_IS_6XXX) */
 
