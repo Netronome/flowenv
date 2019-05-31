@@ -62,10 +62,7 @@
         #define_eval NBI_ID (NBI_ID + 1)
     #endloop
 
-    #ifndef NBI_TM_INIT_SKIP
     Nbi_TrafficManager_Init(NBI_COUNT)
-    #endif
-
 #endm
 
 #endif /* _INIT_NBI_UC_ */

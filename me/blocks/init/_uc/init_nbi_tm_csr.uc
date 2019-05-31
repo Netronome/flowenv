@@ -46,9 +46,26 @@
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.TrafficManagerConfig.NumSequencers          NUMSEQUENCERS      const
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.TrafficManagerConfig.OOBFCEnable            OOBFCENABLE        const
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.TrafficManagerConfig.SchedulerEnable        SCHEDULERENABLE    const
+#if IS_NFPTYPE(__NFP6000)
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.TrafficManagerConfig.Sequencer0Enable       SEQUENCER0ENABLE   const
+#endif
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.TrafficManagerConfig.ShaperEnable           SHAPERENABLE       const
 
+#endm
+
+/** Nbi_TrafficManager_TrafficManagerReg_TrafficManagerConfigSeq
+ *
+ * Configures the NBI Traffic Manager Config Register fields related to reorder
+ *
+ * @param NBI_ID                The NBI number, can be 0 or 1
+ * @param NUMSEQUENCERS         Number of active sequencers. Specifies the number of active sequencers in the traffic manager.
+ * @param SEQUENCER0ENABLE      Sequencer 0 Enable bit. Set this bit to enable reordering for sequencer 0.
+ */
+#macro Nbi_TrafficManager_TrafficManagerReg_TrafficManagerConfigSeq(NBI_ID,NUMSEQUENCERS,SEQUENCER0ENABLE)
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.TrafficManagerConfig.NumSequencers          NUMSEQUENCERS      const
+#if IS_NFPTYPE(__NFP6000)
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.TrafficManagerConfig.Sequencer0Enable       SEQUENCER0ENABLE   const
+#endif
 #endm
 
 

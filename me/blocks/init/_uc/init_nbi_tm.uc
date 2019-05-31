@@ -740,6 +740,23 @@
  *
  * @param NBI_COUNT  Number of NBIs to initialize (can be 1 or 2)
  */
+
+#ifdef NBI_TM_INIT_SKIP
+#macro Nbi_TrafficManager_Init(NBI_COUNT)
+    #if (NBI_COUNT < 1) || (NBI_COUNT > 2)
+        #error "NBI_COUNT can only be 1 or 2"
+    #endif
+
+    #define_eval NBI_ID (0)
+    #while (NBI_ID < NBI_COUNT)
+        Nbi_TrafficManager_TrafficManagerReg_TrafficManagerConfigSeq(NBI_ID,
+        NBI_TM_NUM_SEQUENCERS,      //NumSequencers
+        NBI_TM_ENABLE_SEQUENCER0    //Sequencer0Enable
+        )
+        #define_eval NBI_ID (NBI_ID + 1)
+    #endloop
+#endm
+#else /* defined(NBI_TM_INIT_SKIP) */
 #macro Nbi_TrafficManager_Init(NBI_COUNT)
     #if (NBI_COUNT < 1) || (NBI_COUNT > 2)
         #error "NBI_COUNT can only be 1 or 2"
@@ -1431,6 +1448,7 @@
     #undef TM_Q_CNT
     #undef NBI_ID
 #endm
+#endif /* !defined(NBI_TM_INIT_SKIP) */
 
 
 #endif /* _INIT_NBI_TM_UC_ */
