@@ -920,9 +920,9 @@ wait_mem_ring1_input#:
     .reg addr_lo
 
     #if (!streq('TWO_REQ_LABEL', '--'))
-        #define_eval _GRO_H_NINST 16
+        #define_eval _GRO_H_NINST 10
     #else
-        #define_eval _GRO_H_NINST 15
+        #define_eval _GRO_H_NINST 9
         local_csr_wr[SAME_ME_SIGNAL, g_sig_next_worker]
     #endif
 
