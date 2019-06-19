@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2018,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2012-2019,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,6 +158,14 @@
 #define PKT_CNTR_GET_ADDR_SYM(_name) \
     pkt_cntr_get_addr((__mem __addr40 void *) __link_sym(#_name))
 
+/**
+ * Get the atomic packets and bytes counters base address from a symbol name.
+ * @param base    40 bits address of the counters memory
+ *                (must be 256 bytes aligned)
+ * @return Base address as expected for the atomic counters APIs
+ */
+#define PKT_CNTR_ATMC_GET_ADDR_SYM(_name) \
+    pkt_cntr_atmc_get_addr((__mem __addr40 void *) __link_sym(#_name))
 
 
 /**
@@ -387,4 +395,103 @@ __intrinsic void pkt_cntr_read_and_clr(struct pkt_cntr_addr base,
                                        unsigned int *pkt_count,
                                        unsigned long long  *byte_count);
 
+/*
+ * Packets and bytes counters API lookalikes.
+ * Handled using the atomics engine in the MU, these provide the similar
+ * functionality to the pkt_cntr_xyz() function without using the stats
+ * engine.  They are intended to be a drop-in replacement for cases where
+ * the stats engine cannot be used.
+ *
+ * Each counter is 64 bits wide where the packets count uses 29 bits
+ * and the bytes count uses 35 bits.  The counters are implemented using
+ * a single 64bit atomic, so the API still uses a single mem[] op per call
+ * (although slightly differ xfers and signals are required in some cases).
+ *
+ * If the counters are not accumulated timeously, they will overflow after
+ * 2^29 packets or 2^35 bytes have been counted.  If an overflow occurs,
+ * the carry out of the byte count spills into the packet count and
+ * vise versa.
+ */
+
+/**
+ * Get the Packets and bytes counters base address.
+ * @param base    40 bits address of the counters memory
+ *                (must be 256 bytes aligned)
+ * @return Base address as expected for the counters APIs
+ *
+ * The packets and bytes counter address is held in a 64 bit structure
+ * (pkt_cntr_addr) which splits the 40 bits address to "hi" and "low" parts,
+ * as for the API which uses the stats engine.  In this case, only the hi part
+ * is actually used.  It holds "base >> 8". The low part is filled with zero.
+ */
+__intrinsic struct pkt_cntr_addr pkt_cntr_atmc_get_addr(
+    __mem __addr40 void *base);
+
+
+/**
+ * Clears an atomic packets and bytes counter.
+ * @param base         Counters base address as returned from
+ *                     @cntrs_get_pkt_cntr_addr()
+ * @param offset       Offset (counter index) of the counter from the base
+ * @param base_select  Ignored in this API
+ * @param sync         Required sync type (sig_done / ctx_swap)
+ * @param sig          Signal to use
+ */
+__intrinsic void pkt_cntr_atmc_clr(struct pkt_cntr_addr base,
+                                   unsigned int offset,
+                                   unsigned int base_select,
+                                   sync_t sync, SIGNAL *sig);
+
+/**
+ * Add to the atomic packets and bytes counter.
+ * @param base         Counters base address as returned from
+ *                     @cntrs_get_pkt_cntr_addr()
+ * @param offset       Offset (counter index) of the counter from the base
+ * @param base_select  Ignored in this API
+ * @param byte_count   Byte count
+ * @param sync         Sync type (sig_done / ctx_swap)
+ * @param sig          Signal to use
+ *
+ * Packet count is incremented by 1, bytes count is incremented by
+ * the given byte_count.
+ */
+__intrinsic void pkt_cntr_atmc_add(struct pkt_cntr_addr base,
+                                   unsigned int offset,
+                                   unsigned int base_select,
+                                   unsigned short byte_count,
+                                   sync_t sync, SIGNAL *sig);
+
+/**
+ * Reads the packets and bytes counts from an atomic counter.
+ * @param base         Counters base address as returned from
+ *                     @cntrs_get_pkt_cntr_addr()
+ * @param offset       Offset (counter index) of the counter from the base
+ * @param base_select  Selects the wanted MUSEBaseAddr CSR to be used
+ * @param base_select  Ignored in this API
+ * @param byte_count   Byte count
+ *
+ * Always swaps out to wait for the result.
+ */
+__intrinsic void pkt_cntr_atmc_read(struct pkt_cntr_addr base,
+                                    unsigned int offset,
+                                    unsigned int base_select,
+                                    unsigned int *pkt_count,
+                                    unsigned long long *byte_count);
+
+/**
+ * Reads and clear the packets and bytes from an atomic counter.
+ * @param base         Counters base address as returned from
+ *                     @cntrs_get_pkt_cntr_addr()
+ * @param offset       Offset (counter index) of the counter from the base
+ * @param base_select  Ignored in this API
+ * @param pkt_count    Packet count
+ * @param byte_count   Byte count
+ *
+ * Always swaps out to wait for the result.
+ */
+__intrinsic void pkt_cntr_atmc_read_and_clr(struct pkt_cntr_addr base,
+                                            unsigned int offset,
+                                            unsigned int base_select,
+                                            unsigned int *pkt_count,
+                                            unsigned long long  *byte_count);
 #endif /* !_STD__CNTRS_H_ */

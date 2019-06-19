@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2018,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2012-2019,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,4 +256,81 @@ pkt_cntr_read_and_clr(struct pkt_cntr_addr base, unsigned int offset,
 
     *pkt_count  = (read_val >> 3) & 0x1fffffff;
     *byte_count = ((read_val >> 32) | (read_val << 32)) & 0x7ffffffff;
+}
+
+
+__intrinsic struct pkt_cntr_addr
+pkt_cntr_atmc_get_addr(__mem __addr40 void *base)
+{
+    struct pkt_cntr_addr cntr_addr;
+
+    cntr_addr.hi = ((unsigned long long int)base >> 8) & 0xffffffff;
+    cntr_addr.lo = 0;
+
+    return cntr_addr;
+}
+
+__intrinsic void
+pkt_cntr_atmc_clr(struct pkt_cntr_addr base, unsigned int offset,
+                  unsigned int base_select, sync_t sync, SIGNAL *sig)
+{
+    __gpr unsigned int byte_offset = offset << 3;
+    __xwrite unsigned long long clr_val = 0;
+
+    if (sync == sig_done) {
+        __asm mem[atomic_write, clr_val, base.hi, <<8, byte_offset, 2], sig_done[*sig];
+    } else {
+        __asm mem[atomic_write, clr_val, base.hi, <<8, byte_offset, 2], ctx_swap[*sig];
+    }
+}
+
+__intrinsic void
+pkt_cntr_atmc_add(struct pkt_cntr_addr base, unsigned int offset,
+                  unsigned int base_select, unsigned short byte_count,
+                  sync_t sync, SIGNAL *sig)
+{
+    __gpr unsigned int byte_offset = offset << 3;
+    __xwrite unsigned int xfer[2];
+
+    xfer[0] = byte_count;
+    xfer[1] = 1 << 3;
+
+    if (sync == sig_done) {
+        __asm mem[add64, xfer[0], base.hi, <<8, byte_offset, 1], sig_done[*sig];
+    } else {
+        __asm mem[add64, xfer[0], base.hi, <<8, byte_offset, 1], ctx_swap[*sig];
+    }
+}
+
+__intrinsic void
+pkt_cntr_atmc_read(struct pkt_cntr_addr base, unsigned int offset,
+                   unsigned int base_select, unsigned int *pkt_count,
+                   unsigned long long *byte_count)
+{
+    __gpr unsigned int byte_offset = offset << 3;
+    __xread unsigned long long read_val;
+    SIGNAL read_sig;
+
+    __asm mem[read_atomic, read_val, base.hi, <<8, byte_offset, 2], ctx_swap[read_sig];
+
+    *pkt_count  = (read_val >> 3) & 0x1fffffff;
+    *byte_count = ((read_val >> 32) | (read_val << 32)) & 0x7ffffffff;
+}
+
+__intrinsic void
+pkt_cntr_atmc_read_and_clr(struct pkt_cntr_addr base, unsigned int offset,
+                           unsigned int base_select, unsigned int *pkt_count,
+                           unsigned long long  *byte_count)
+{
+    __gpr unsigned int byte_offset = offset << 3;
+    __xrw unsigned long long rw_val;
+    SIGNAL_PAIR rw_sig;
+
+    rw_val = 0xffffffffffffffff;
+    __asm mem[test_clr, rw_val, base.hi, <<8, byte_offset, 2], sig_done[rw_sig];
+
+    __wait_for_all(&rw_sig);
+
+    *pkt_count  = (rw_val >> 3) & 0x1fffffff;
+    *byte_count = ((rw_val >> 32) | (rw_val << 32)) & 0x7ffffffff;
 }
