@@ -70,6 +70,11 @@
  *  pkt_cntr_clr(pkt_cntr_base, 0, 0, ctx_swap, &sig);
  *  //add 128 to counter at index 5, use base 0, don't swap out
  *  pkt_cntr_add(pkt_cntr_base, 5, 0, 128, sig_done, &sig);
+ *  //accumulate values from counter at index 5, use base 0
+ *  //values must be accumulated regularly to ensure the counter does
+ *  //not wrap.  The minimum time to wrap is approximately 274 / G
+ *  //seconds, where G is the maximum data rate for the counter in Gbps.
+ *  pkt_cntr_read_and_clr(pkt_cntr_base, 5, 0, &pkt_count, &byte_count);
  *
  *  Note: For NFP3800, "my_pkt_counters" should be located in "__emem".
  *
@@ -388,6 +393,10 @@ __intrinsic void pkt_cntr_read(struct pkt_cntr_addr base, unsigned int offset,
  * @param byte_count   Byte count
  *
  * Always swaps out to wait for the result.
+ *
+ * This function must be called regularly to ensure the counter does
+ * not wrap.  The minimum time to wrap is approximately 274 / G
+ * seconds, where G is the maximum data rate for the counter in Gbps.
  */
 __intrinsic void pkt_cntr_read_and_clr(struct pkt_cntr_addr base,
                                        unsigned int offset,
@@ -488,6 +497,10 @@ __intrinsic void pkt_cntr_atmc_read(struct pkt_cntr_addr base,
  * @param byte_count   Byte count
  *
  * Always swaps out to wait for the result.
+ *
+ * This function must be called regularly to ensure the counter does
+ * not wrap.  The minimum time to wrap is approximately 274 / G
+ * seconds, where G is the maximum data rate for the counter in Gbps.
  */
 __intrinsic void pkt_cntr_atmc_read_and_clr(struct pkt_cntr_addr base,
                                             unsigned int offset,
