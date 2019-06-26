@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @file        blm_iface_asm.h
+ * @file        blm_uc.h
  * @brief
  */
 
-#ifndef __NFP_BLM_IFACE_ASM_H__
-#define __NFP_BLM_IFACE_ASM_H__
+#ifndef __NFP_BLM_UC_H__
+#define __NFP_BLM_UC_H__
 
 #include <nfp_chipres.h>
 
@@ -28,6 +28,7 @@
 #include "../blm_cfg.h"
 
 #define BLM_INIT_DONE                       0xd043
+/* Single event threshold for all event sources */
 #define BLQ_EVENT_THRESHOLD                 32 /* 0:16, 1:32, 2:64, 3:128 */
 
 
@@ -62,8 +63,30 @@
     #error "NBI9_BLQ_EMU_3_PKTBUF_SIZE must be a multiple of 2048"
 #endif
 
+#if BLM_PCI_BLQ_ENABLE_MASK != 0
+
+#if (PCI4_BLQ_EMU_0_PKTBUF_SIZE % 2048)
+    #error "PCI4_BLQ_EMU_0_PKTBUF_SIZE must be a multiple of 2048"
+#endif
+#if (PCI4_BLQ_EMU_1_PKTBUF_SIZE % 2048)
+    #error "PCI4_BLQ_EMU_1_PKTBUF_SIZE must be a multiple of 2048"
+#endif
+#if (PCI4_BLQ_EMU_2_PKTBUF_SIZE % 2048)
+    #error "PCI4_BLQ_EMU_2_PKTBUF_SIZE must be a multiple of 2048"
+#endif
+#if (PCI4_BLQ_EMU_3_PKTBUF_SIZE % 2048)
+    #error "PCI4_BLQ_EMU_3_PKTBUF_SIZE must be a multiple of 2048"
+#endif
+
+#endif /* BLM_PCI_BLQ_ENABLE_MASK != 0 */
+
 
 #ifdef SPLIT_EMU_RINGS
+
+    #if BLM_PCI_BLQ_ENABLE_MASK != 0
+        #error "BLM_PCI_BLQ_ENABLE_MASK cannot be used with SPLIT_EMU_RINGS"
+    #endif
+
     /* resource declaration */
     /**
      * If two NBI's do not share same EMU rings for packet buffers
@@ -160,7 +183,7 @@
     #undef _NBI_
     #undef _RING_
 
-#else
+#else /* SPLIT_EMU_RINGS */
     /* resource declaration */
     /**
      * Two NBI's share EMU rings for packet buffers.
@@ -188,6 +211,21 @@
     #define _BLM_NBI9_BLQ2_EMU_Q_BASE      _BLM_NBI8_BLQ2_EMU_Q_BASE
     #define _BLM_NBI9_BLQ3_EMU_Q_BASE      _BLM_NBI8_BLQ3_EMU_Q_BASE
 
+    #define BLM_PCI4_BLQ0_EMU_QID          BLM_NBI8_BLQ0_EMU_QID
+    #define BLM_PCI4_BLQ1_EMU_QID          BLM_NBI8_BLQ1_EMU_QID
+    #define BLM_PCI4_BLQ2_EMU_QID          BLM_NBI8_BLQ2_EMU_QID
+    #define BLM_PCI4_BLQ3_EMU_QID          BLM_NBI8_BLQ3_EMU_QID
+
+    #define _BLM_PCI4_BLQ0_EMU_QD_BASE    _BLM_NBI8_BLQ0_EMU_QD_BASE
+    #define _BLM_PCI4_BLQ1_EMU_QD_BASE    _BLM_NBI8_BLQ1_EMU_QD_BASE
+    #define _BLM_PCI4_BLQ2_EMU_QD_BASE    _BLM_NBI8_BLQ2_EMU_QD_BASE
+    #define _BLM_PCI4_BLQ3_EMU_QD_BASE    _BLM_NBI8_BLQ3_EMU_QD_BASE
+
+    #define _BLM_PCI4_BLQ0_EMU_Q_BASE     _BLM_NBI8_BLQ0_EMU_Q_BASE
+    #define _BLM_PCI4_BLQ1_EMU_Q_BASE     _BLM_NBI8_BLQ1_EMU_Q_BASE
+    #define _BLM_PCI4_BLQ2_EMU_Q_BASE     _BLM_NBI8_BLQ2_EMU_Q_BASE
+    #define _BLM_PCI4_BLQ3_EMU_Q_BASE     _BLM_NBI8_BLQ3_EMU_Q_BASE
+
     /* allocate memory for NBI8 EMU Ring Qdescriptors */
     .alloc_mem _BLM_NBI8_BLQ0_EMU_QD_BASE   i/**/BLM_NBI8_BLQ0_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  16                      16
     .alloc_mem _BLM_NBI8_BLQ1_EMU_QD_BASE   i/**/BLM_NBI8_BLQ1_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  16                      16
@@ -198,6 +236,87 @@
     .alloc_mem _BLM_NBI8_BLQ1_EMU_Q_BASE    i/**/BLM_NBI8_BLQ1_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI8_BLQ1_Q_SIZE    BLM_NBI8_BLQ1_Q_SIZE
     .alloc_mem _BLM_NBI8_BLQ2_EMU_Q_BASE    i/**/BLM_NBI8_BLQ2_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI8_BLQ2_Q_SIZE    BLM_NBI8_BLQ2_Q_SIZE
     .alloc_mem _BLM_NBI8_BLQ3_EMU_Q_BASE    i/**/BLM_NBI8_BLQ3_EMU_Q_ISLAND.BLM_BLQ_EMEM_TYPE  global  BLM_NBI8_BLQ3_Q_SIZE    BLM_NBI8_BLQ3_Q_SIZE
+
+    #if BLM_PCI_BLQ_ENABLE_MASK != 0
+        #ifndef BLM_PCI_BLQ_STASH_MEM
+            #define BLM_PCI_BLQ_STASH_MEM emem0
+        #endif
+
+        #define_eval _PCI_ 4
+        #define_eval _RING_ 0
+
+        #while (_PCI_ < 5)
+            #define_eval _RING_ 0
+            /* We stash the init_csr for PCI BDSRAM config in memory which we commit
+             * at initialization time.
+             */
+            .alloc_mem blm_pci/**/_PCI_/**/_blq_stash BLM_PCI_BLQ_STASH_MEM global 8192
+
+            #while (_RING_ < 4)
+                /* Allocate buffers for the BLQ rings */
+
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_IMEM0_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_IMEM0_BUFS_BASE imem0 global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_IMEM0_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_IMEM1_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_IMEM1_BUFS_BASE imem1 global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_IMEM1_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM0_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM0_BUFS_BASE emem0 global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM0_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM1_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM1_BUFS_BASE emem1 global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM1_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_BUFS_BASE emem2 global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+
+                /* Buffers from EMEM cache */
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM0_CACHE_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM0_CACHE_BUFS_BASE emem0.emem_cache_upper global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM0_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM1_CACHE_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM1_CACHE_BUFS_BASE emem1.emem_cache_upper global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM1_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_CACHE_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_CACHE_BUFS_BASE emem2.emem_cache_upper global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_EMU_EMEM2_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_IMEM0_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_IMEM0_BUFS_BASE imem0 global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_IMEM0_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_IMEM1_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_IMEM1_BUFS_BASE imem1 global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_IMEM1_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM0_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM0_BUFS_BASE emem0 global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM0_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM1_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM1_BUFS_BASE emem1 global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM1_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_BUFS_BASE emem2 global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM0_CACHE_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM0_CACHE_BUFS_BASE emem0.emem_cache_upper global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM0_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM1_CACHE_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM1_CACHE_BUFS_BASE emem1.emem_cache_upper global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM1_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+                #if (BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_CACHE_NUM_BUFS > 0)
+                    .alloc_mem _BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_CACHE_BUFS_BASE emem2.emem_cache_upper global (PCI/**/_PCI_/**/_BLQ_EMU_/**/_RING_/**/_PKTBUF_SIZE * BLM_PCI/**/_PCI_/**/_BLQ/**/_RING_/**/_BDSRAM_EMEM2_CACHE_NUM_BUFS) EMU_PKTBUF_ALIGNMENT
+                #endif
+
+                #define_eval _RING_ (_RING_ + 1)
+
+            #endloop
+
+            #define_eval _PCI_ (_PCI_ + 1)
+        #endloop
+        #undef _PCI_
+        #undef _RING_
+    #endif /* BLM_PCI_BLQ_ENABLE_MASK != 0 */
 
     #define_eval _NBI_  8
     #define_eval _RING_ 0
@@ -275,4 +394,4 @@
 
 #endif // __NFP_LANG_ASM
 
-#endif // __NFP_BLM_IFACE_ASM_H__
+#endif // __NFP_BLM_UC_H__

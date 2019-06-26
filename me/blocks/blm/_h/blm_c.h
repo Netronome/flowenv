@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2020,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,11 @@
 #endif
 
 #ifdef SPLIT_EMU_RINGS
+
+#if BLM_PCI_BLQ_ENABLE_MASK != 0
+#error "BLM_PCI_BLQ_ENABLE_MASK cannot be used with SPLIT_EMU_RINGS"
+#endif
+
 __asm {
     .declare_resource BLQ_EMU_RINGS global 8 emem0_queues+8
     .alloc_resource BLM_NBI8_BLQ0_EMU_QID BLQ_EMU_RINGS+0 global 1
@@ -884,6 +889,10 @@ __asm {
 #define BLM_EMU_RING_ID(_NBI_,_BLQ_)                    \
     __link_sym("BLM_NBI8_BLQ" #_BLQ_ "_EMU_QID")
 
+/* Get a BLM ring number for a given PCIe (4) and BLQ (0-3) */
+#define BLM_PCI_EMU_RING_ID(_PCI_,_BLQ_)       \
+    __link_sym("BLM_NBI8_BLQ" #_BLQ_ "_EMU_QID")
+
 /* The NFCC application can get the 4 ring numbers using :
  *
  * BLM_EMU_RING_ID(8,0);
@@ -895,6 +904,11 @@ __asm {
  * BLM_EMU_RING_ID(9,1);
  * BLM_EMU_RING_ID(9,2);
  * BLM_EMU_RING_ID(9,3);
+ *
+ * BLM_PCI_EMU_RING_ID(4,0);
+ * BLM_PCI_EMU_RING_ID(4,1);
+ * BLM_PCI_EMU_RING_ID(4,2);
+ * BLM_PCI_EMU_RING_ID(4,3);
  */
 
 #define BLM_NBI9_BLQ0_EMU_QD_BASE     BLM_NBI8_BLQ0_EMU_QD_BASE
