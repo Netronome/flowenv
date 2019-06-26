@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2020,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,9 @@
 #define AUTOPUSH_FILTER_MASK             0xFFC00F
 
 /* Event related constants */
-#define_eval NBI_BLQ_EVENT_THRESHOLD_ENCODING   (LOG2(NBI_BLQ_EVENT_THRESHOLD) - LOG2(16))
-#define_eval BLM_RECYCLE_LEN                    ((NBI_BLQ_EVENT_THRESHOLD / 2) - 1)
-#define_eval BLM_RECYCLE_LEN_PLUS_ONE           (NBI_BLQ_EVENT_THRESHOLD / 2)
+#define_eval BLQ_EVENT_THRESHOLD_ENCODING   (LOG2(BLQ_EVENT_THRESHOLD) - LOG2(16))
+#define_eval BLM_RECYCLE_LEN                ((BLQ_EVENT_THRESHOLD / 2) - 1)
+#define_eval BLM_RECYCLE_LEN_PLUS_ONE       (BLQ_EVENT_THRESHOLD / 2)
 #define MASK_10b        0x3ff
 #define_eval NBII_lsb   (NBII & 1)
 
@@ -68,7 +68,7 @@
 #define BLM_LM_BLQ_CACHE_RDWR_BUSY_OFFSET       4
 
 #define BLM_MAX_DMA_PENDING_EVNTS               5
-#define BLM_NBI_BLQ_CACHE_DEFICIT               47
+#define BLM_BLQ_CACHE_DEFICIT                   47
 
 /* BLM Stats */
 #define BLQ_STATS_SIZE                    128

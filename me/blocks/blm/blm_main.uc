@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2020,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +82,11 @@
 #endif
 
 /* Allocate BLM Stats memory for 4 BLQ's in each BLM instance Island. */
-#for id [CTM_NBI_BLQ0_STATS_BASE, CTM_NBI_BLQ1_STATS_BASE, CTM_NBI_BLQ2_STATS_BASE, CTM_NBI_BLQ3_STATS_BASE]
-    .alloc_mem id        i0.ctm                 island  BLQ_STATS_SIZE 8
+/* XXX no spaces in ID list */
+#for id [BLQ0_STATS_BASE,BLQ1_STATS_BASE,BLQ2_STATS_BASE,BLQ3_STATS_BASE]
+    .alloc_mem CTM_/**/id                i0.ctm         island      BLQ_STATS_SIZE      8
+    .declare_resource CTM_/**/id/**/_res                island      BLQ_STATS_SIZE      CTM_/**/id
+    .alloc_resource CTM_NBI_/**/id	CTM_/**/id/**/_res  island      BLQ_STATS_SIZE      8
 #endloop
 
 #ifndef SINGLE_NBI
@@ -122,13 +125,12 @@
 
         /* Allocate CTM Cache memory for 2 BLQ's in each BLM instance Island. */
         #for id [0,1]
-            #define_eval __CACHE_ID     BLM_NBI_BLQ/**/id/**/_CACHE_BASE
-            #define_eval __CACHE_SIZE   (BLM_NBI_BLQ/**/id/**/_CACHE_SIZE * 4)
+            #define_eval __CACHE_ID     BLM_BLQ/**/id/**/_CACHE_BASE
+            #define_eval __CACHE_SIZE   (BLM_BLQ/**/id/**/_CACHE_SIZE * 4)
             #if __CACHE_SIZE != 0
                 .alloc_mem __CACHE_ID        i0.ctm                 island  __CACHE_SIZE 8
             #endif
         #endloop
-
         #define BLQ_OFFSET          (BLM_INSTANCE_ID * 2)
         // Ingress Filter
         #define CTX0_FILTER_MATCH   (0x5 | (BLQ_OFFSET + 0x0) <<14 | 8 <<18)
@@ -146,8 +148,8 @@
         #define BLM_BLQ_OP_MODE     BLM_BLQ_NON_SPLIT_MODE
         /* Allocate CTM Cache memory for all BLQ's */
         #for id [0,1,2,3]
-            #define_eval __CACHE_ID     BLM_NBI_BLQ/**/id/**/_CACHE_BASE
-            #define_eval __CACHE_SIZE   (BLM_NBI_BLQ/**/id/**/_CACHE_SIZE * 4)
+            #define_eval __CACHE_ID     BLM_BLQ/**/id/**/_CACHE_BASE
+            #define_eval __CACHE_SIZE   (BLM_BLQ/**/id/**/_CACHE_SIZE * 4)
 
             #if __CACHE_SIZE != 0
                 .alloc_mem __CACHE_ID        i0.ctm                 island  __CACHE_SIZE 8
@@ -171,8 +173,8 @@
 
     /* Allocate CTM Cache memory for all BLQ's */
     #for id [0,1,2,3]
-        #define_eval __CACHE_ID     BLM_NBI_BLQ/**/id/**/_CACHE_BASE
-        #define_eval __CACHE_SIZE   (BLM_NBI_BLQ/**/id/**/_CACHE_SIZE * 4)
+        #define_eval __CACHE_ID     BLM_BLQ/**/id/**/_CACHE_BASE
+        #define_eval __CACHE_SIZE   (BLM_BLQ/**/id/**/_CACHE_SIZE * 4)
         #if __CACHE_SIZE != 0
             .alloc_mem __CACHE_ID        i0.ctm                 island  __CACHE_SIZE 8
         #endif
@@ -276,7 +278,7 @@
 
         #for id [0,1,2,3]
             #if BLM_NBI_BLQ/**/id/**/_CACHE_SIZE > 0
-                .init BLQ/**/id/**/_DESC_LMEM_BASE+BLM_LM_BLQ_CACHE_ADDR_OFFSET BLM_NBI_BLQ/**/id/**/_CACHE_BASE
+                .init BLQ/**/id/**/_DESC_LMEM_BASE+BLM_LM_BLQ_CACHE_ADDR_OFFSET BLM_BLQ/**/id/**/_CACHE_BASE
             #endif
             .init BLQ/**/id/**/_DESC_LMEM_BASE+BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET 0
             .init BLQ/**/id/**/_DESC_LMEM_BASE+BLM_LM_BLQ_DMA_EVNT_PEND_CNT_OFFSET 0
@@ -335,7 +337,7 @@
         #endif
         #if (streq(TH_12713,'ZERO_LEN'))
             #define_eval _MAX_PULL_DATA_LEN     2
-            #define_eval __ITER     (NBI_BLQ_EVENT_THRESHOLD / _MAX_PULL_DATA_LEN)
+            #define_eval __ITER     (BLQ_EVENT_THRESHOLD / _MAX_PULL_DATA_LEN)
             #define_eval __LOOP 0
             #while __LOOP < __ITER
                 blm_pop2emu_ring(NbiNum, blq, addr, ringid, _MAX_PULL_DATA_LEN)
@@ -347,7 +349,7 @@
         #elif (streq(TH_12713,'NBI_READ'))
             #define_eval _MAX_PULL_DATA_LEN     16
             .sig sig_pull_buf2emu
-            #define_eval _MAX_ITER     (NBI_BLQ_EVENT_THRESHOLD /_MAX_PULL_DATA_LEN)
+            #define_eval _MAX_ITER     (BLQ_EVENT_THRESHOLD /_MAX_PULL_DATA_LEN)
             #define_eval _LOOP_ITER    0
             #while _LOOP_ITER < _MAX_ITER
                 blm_poptome(NbiNum, blq, $nbitmbuf[0], (_MAX_PULL_DATA_LEN >>1), sig_pull_buf2emu, SIG_WAIT)
@@ -362,7 +364,7 @@
             #undef _MAX_ITER
         #else
             #define_eval _MAX_PULL_DATA_LEN     16
-            #define_eval __ITER     (NBI_BLQ_EVENT_THRESHOLD / _MAX_PULL_DATA_LEN)
+            #define_eval __ITER     (BLQ_EVENT_THRESHOLD / _MAX_PULL_DATA_LEN)
             #define_eval __LOOP 0
             #while __LOOP < __ITER
                 blm_pop2emu_ring(NbiNum, blq, addr, ringid, _MAX_PULL_DATA_LEN)
@@ -374,7 +376,7 @@
         #endif
     #else
         #define_eval _MAX_PULL_DATA_LEN     16
-        #define_eval __ITER     (NBI_BLQ_EVENT_THRESHOLD / _MAX_PULL_DATA_LEN)
+        #define_eval __ITER     (BLQ_EVENT_THRESHOLD / _MAX_PULL_DATA_LEN)
         #define_eval __LOOP 0
         #while __LOOP < __ITER
             blm_pop2emu_ring(NbiNum, blq, addr, ringid, _MAX_PULL_DATA_LEN)
@@ -592,7 +594,7 @@
     .sig sig_cache_fill
 
     alu[--, --, b, ((0xf <<1)|1), <<7]
-    mem[pop, $nbidmabuf[0], addr, <<8, ringid, max_16], sig_done[sig_memget0], indirect_ref
+    mem[pop, $dmabuf[0], addr, <<8, ringid, max_16], sig_done[sig_memget0], indirect_ref
     ctx_arb[sig_memget0[0]]
     /* if there are not enough buffers in MU ring, skip cache fill */
     br_signal[sig_memget0[1], emu_ring_underflow#]
@@ -600,11 +602,11 @@
 
     D(MAILBOX3, 0x3334)
 
-    aggregate_copy($nbidmabuf, $nbidmabuf, 16)
+    aggregate_copy($dmabuf, $dmabuf, 16)
     blm_cache_acquire_lock()
     alu[cache_offset, --, b, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET], <<2]
     alu[cache_offset, cache_offset, +, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ADDR_OFFSET]]
-    mem[write, $nbidmabuf[0], 0, <<8,  cache_offset, 8], sig_done[sig_cache_fill]
+    mem[write, $dmabuf[0], 0, <<8, cache_offset, 8], sig_done[sig_cache_fill]
     ctx_arb[sig_cache_fill]
     blm_incr_cache_cnt(16)
     blm_cache_release_lock()
@@ -1244,25 +1246,25 @@ ctx0#:
         #undef _mem_type
 #endif /* BLM_INIT_EMU_RINGS */
 
-    blm_cfg_blq_evnts(NBII_lsb, 0, ingress, NBI_BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
-    blm_cfg_blq_evnts(NBII_lsb, 1, ingress, NBI_BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
-    blm_cfg_blq_evnts(NBII_lsb, 2, ingress, NBI_BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
-    blm_cfg_blq_evnts(NBII_lsb, 3, ingress, NBI_BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
-    blm_cfg_blq_evnts(NBII_lsb, 0, egress, NBI_BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
-    blm_cfg_blq_evnts(NBII_lsb, 1, egress, NBI_BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
-    blm_cfg_blq_evnts(NBII_lsb, 2, egress, NBI_BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
-    blm_cfg_blq_evnts(NBII_lsb, 3, egress, NBI_BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+    blm_cfg_blq_evnts(NBII_lsb, 0, ingress, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+    blm_cfg_blq_evnts(NBII_lsb, 1, ingress, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+    blm_cfg_blq_evnts(NBII_lsb, 2, ingress, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+    blm_cfg_blq_evnts(NBII_lsb, 3, ingress, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+    blm_cfg_blq_evnts(NBII_lsb, 0, egress, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+    blm_cfg_blq_evnts(NBII_lsb, 1, egress, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+    blm_cfg_blq_evnts(NBII_lsb, 2, egress, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+    blm_cfg_blq_evnts(NBII_lsb, 3, egress, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
 
-    move(blq_stats_base, (CTM_NBI_BLQ0_STATS_BASE & 0xffffffff))
+    move(blq_stats_base, (CTM_BLQ0_STATS_BASE & 0xffffffff))
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, ((_BLM_NBI/**/_NBIX/**/_BLQ0_EMU_Q_BASE >>8)&0xFF000000))
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ0_EMU_QID)
-#if BLM_NBI_BLQ0_CACHE_SIZE > 0
-    move(cache_hwm, (BLM_NBI_BLQ0_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#if BLM_BLQ0_CACHE_SIZE > 0
+    move(cache_hwm, (BLM_BLQ0_CACHE_SIZE - BLM_BLQ_CACHE_DEFICIT))
 #else
     move(cache_hwm, 0)
 #endif
-    move(cache_size, BLM_NBI_BLQ0_CACHE_SIZE)
+    move(cache_size, BLM_BLQ0_CACHE_SIZE)
     #undef _NBIX
     blm_init_stats()
     blm_init_filter_match(cls_ap_filter_match, CTX0_FILTER_MATCH)
@@ -1272,21 +1274,21 @@ ctx0#:
     /* Setup per BLQ LM index */
     blm_init_blq_lm_index(BLQ0_DESC_LMEM_BASE)
     /* Initialize LM */
-    blm_init_lm(BLM_BLQ_LM_REF, 0, BLM_NBI_BLQ0_CACHE_BASE)
+    blm_init_lm(BLM_BLQ_LM_REF, 0, BLM_BLQ0_CACHE_BASE)
     blm_init_info_section()
     /* This should be last macro to be called per context */
     blm_is_blq_enable(0, blm_ingress_blq_processing#)
 ctx1#:
-    move(blq_stats_base, (CTM_NBI_BLQ0_STATS_BASE & 0xffffffff))
+    move(blq_stats_base, (CTM_BLQ0_STATS_BASE & 0xffffffff))
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ0_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ0_EMU_QID)
-#if BLM_NBI_BLQ0_CACHE_SIZE > 0
-    move(cache_hwm, (BLM_NBI_BLQ0_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#if BLM_BLQ0_CACHE_SIZE > 0
+    move(cache_hwm, (BLM_BLQ0_CACHE_SIZE - BLM_BLQ_CACHE_DEFICIT))
 #else
     move(cache_hwm, 0)
 #endif
-    move(cache_size, BLM_NBI_BLQ0_CACHE_SIZE)
+    move(cache_size, BLM_BLQ0_CACHE_SIZE)
     #undef _NBIX
     blm_init_filter_match(cls_ap_filter_match, CTX1_FILTER_MATCH)
     blm_init_filter_number(cls_ap_filter_number, BLM_BLQ1_AP_FILTER_NUM)
@@ -1294,16 +1296,16 @@ ctx1#:
     blm_init_blq_lm_index(BLQ0_DESC_LMEM_BASE)
     blm_is_blq_enable(4, blm_egress_blq_processing#)
 ctx2#:
-    move(blq_stats_base, (CTM_NBI_BLQ1_STATS_BASE & 0xffffffff))
+    move(blq_stats_base, (CTM_BLQ1_STATS_BASE & 0xffffffff))
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ1_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ1_EMU_QID)
-#if BLM_NBI_BLQ1_CACHE_SIZE > 0
-    move(cache_hwm, (BLM_NBI_BLQ1_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#if BLM_BLQ1_CACHE_SIZE > 0
+    move(cache_hwm, (BLM_BLQ1_CACHE_SIZE - BLM_BLQ_CACHE_DEFICIT))
 #else
     move(cache_hwm, 0)
 #endif
-    move(cache_size, BLM_NBI_BLQ1_CACHE_SIZE)
+    move(cache_size, BLM_BLQ1_CACHE_SIZE)
     #undef _NBIX
     blm_init_stats()
     blm_init_filter_match(cls_ap_filter_match, CTX2_FILTER_MATCH)
@@ -1311,19 +1313,19 @@ ctx2#:
     /* Setup per BLQ LM index */
     blm_init_blq_lm_index(BLQ1_DESC_LMEM_BASE)
     /* Initialize LM */
-    blm_init_lm(BLM_BLQ_LM_REF, 1, BLM_NBI_BLQ1_CACHE_BASE)
+    blm_init_lm(BLM_BLQ_LM_REF, 1, BLM_BLQ1_CACHE_BASE)
     blm_is_blq_enable(1, blm_ingress_blq_processing#)
 ctx3#:
-    move(blq_stats_base, (CTM_NBI_BLQ1_STATS_BASE & 0xffffffff))
+    move(blq_stats_base, (CTM_BLQ1_STATS_BASE & 0xffffffff))
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ1_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ1_EMU_QID)
-#if BLM_NBI_BLQ1_CACHE_SIZE > 0
-    move(cache_hwm, (BLM_NBI_BLQ1_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#if BLM_BLQ1_CACHE_SIZE > 0
+    move(cache_hwm, (BLM_BLQ1_CACHE_SIZE - BLM_BLQ_CACHE_DEFICIT))
 #else
     move(cache_hwm, 0)
 #endif
-    move(cache_size, BLM_NBI_BLQ1_CACHE_SIZE)
+    move(cache_size, BLM_BLQ1_CACHE_SIZE)
     #undef _NBIX
     blm_init_filter_match(cls_ap_filter_match, CTX3_FILTER_MATCH)
     blm_init_filter_number(cls_ap_filter_number, BLM_BLQ3_AP_FILTER_NUM)
@@ -1331,16 +1333,16 @@ ctx3#:
     blm_init_blq_lm_index(BLQ1_DESC_LMEM_BASE)
     blm_is_blq_enable(5, blm_egress_blq_processing#)
 ctx4#:
-    move(blq_stats_base, (CTM_NBI_BLQ2_STATS_BASE & 0xffffffff))
+    move(blq_stats_base, (CTM_BLQ2_STATS_BASE & 0xffffffff))
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ2_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ2_EMU_QID)
-#if BLM_NBI_BLQ2_CACHE_SIZE > 0
-    move(cache_hwm, (BLM_NBI_BLQ2_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#if BLM_BLQ2_CACHE_SIZE > 0
+    move(cache_hwm, (BLM_BLQ2_CACHE_SIZE - BLM_BLQ_CACHE_DEFICIT))
 #else
     move(cache_hwm, 0)
 #endif
-    move(cache_size, BLM_NBI_BLQ2_CACHE_SIZE)
+    move(cache_size, BLM_BLQ2_CACHE_SIZE)
     #undef _NBIX
     blm_init_stats()
     blm_init_filter_match(cls_ap_filter_match, CTX4_FILTER_MATCH)
@@ -1348,19 +1350,19 @@ ctx4#:
     /* Setup per BLQ LM index */
     blm_init_blq_lm_index(BLQ2_DESC_LMEM_BASE)
     /* Initialize LM */
-    blm_init_lm(BLM_BLQ_LM_REF, 2, BLM_NBI_BLQ2_CACHE_BASE)
+    blm_init_lm(BLM_BLQ_LM_REF, 2, BLM_BLQ2_CACHE_BASE)
     blm_is_blq_enable(2, blm_ingress_blq_processing#)
 ctx5#:
-    move(blq_stats_base, (CTM_NBI_BLQ2_STATS_BASE & 0xffffffff))
+    move(blq_stats_base, (CTM_BLQ2_STATS_BASE & 0xffffffff))
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ2_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ2_EMU_QID)
-#if BLM_NBI_BLQ2_CACHE_SIZE > 0
-    move(cache_hwm, (BLM_NBI_BLQ2_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#if BLM_BLQ2_CACHE_SIZE > 0
+    move(cache_hwm, (BLM_BLQ2_CACHE_SIZE - BLM_BLQ_CACHE_DEFICIT))
 #else
     move(cache_hwm, 0)
 #endif
-    move(cache_size, BLM_NBI_BLQ2_CACHE_SIZE)
+    move(cache_size, BLM_BLQ2_CACHE_SIZE)
     #undef _NBIX
     blm_init_filter_match(cls_ap_filter_match, CTX5_FILTER_MATCH)
     blm_init_filter_number(cls_ap_filter_number, BLM_BLQ5_AP_FILTER_NUM)
@@ -1368,16 +1370,16 @@ ctx5#:
     blm_init_blq_lm_index(BLQ2_DESC_LMEM_BASE)
     blm_is_blq_enable(6, blm_egress_blq_processing#)
 ctx6#:
-    move(blq_stats_base, (CTM_NBI_BLQ3_STATS_BASE & 0xffffffff))
+    move(blq_stats_base, (CTM_BLQ3_STATS_BASE & 0xffffffff))
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ3_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ3_EMU_QID)
-#if BLM_NBI_BLQ3_CACHE_SIZE > 0
-    move(cache_hwm, (BLM_NBI_BLQ3_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#if BLM_BLQ3_CACHE_SIZE > 0
+    move(cache_hwm, (BLM_BLQ3_CACHE_SIZE - BLM_BLQ_CACHE_DEFICIT))
 #else
     move(cache_hwm, 0)
 #endif
-    move(cache_size, BLM_NBI_BLQ3_CACHE_SIZE)
+    move(cache_size, BLM_BLQ3_CACHE_SIZE)
     #undef _NBIX
     blm_init_stats()
     blm_init_filter_match(cls_ap_filter_match, CTX6_FILTER_MATCH)
@@ -1385,19 +1387,19 @@ ctx6#:
     /* Setup per BLQ LM index */
     blm_init_blq_lm_index(BLQ3_DESC_LMEM_BASE)
     /* Initialize LM */
-    blm_init_lm(BLM_BLQ_LM_REF, 3, BLM_NBI_BLQ3_CACHE_BASE)
+    blm_init_lm(BLM_BLQ_LM_REF, 3, BLM_BLQ3_CACHE_BASE)
     blm_is_blq_enable(3, blm_ingress_blq_processing#)
 ctx7#:
-    move(blq_stats_base, (CTM_NBI_BLQ3_STATS_BASE & 0xffffffff))
+    move(blq_stats_base, (CTM_BLQ3_STATS_BASE & 0xffffffff))
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ3_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ3_EMU_QID)
-#if BLM_NBI_BLQ3_CACHE_SIZE > 0
-    move(cache_hwm, (BLM_NBI_BLQ3_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#if BLM_BLQ3_CACHE_SIZE > 0
+    move(cache_hwm, (BLM_BLQ3_CACHE_SIZE - BLM_BLQ_CACHE_DEFICIT))
 #else
     move(cache_hwm, 0)
 #endif
-    move(cache_size, BLM_NBI_BLQ3_CACHE_SIZE)
+    move(cache_size, BLM_BLQ3_CACHE_SIZE)
     #undef _NBIX
     blm_init_filter_match(cls_ap_filter_match, CTX7_FILTER_MATCH)
     blm_init_filter_number(cls_ap_filter_number, BLM_BLQ7_AP_FILTER_NUM)
@@ -1441,14 +1443,14 @@ blm_ctx_init_end#:
     .init_ctx 7 cls_ap_filter_number BLM_BLQ7_AP_FILTER_NUM
 
     /* Initialize stats base address */
-    .init_ctx 0 blq_stats_base CTM_NBI_BLQ0_STATS_BASE
-    .init_ctx 1 blq_stats_base CTM_NBI_BLQ0_STATS_BASE
-    .init_ctx 2 blq_stats_base CTM_NBI_BLQ1_STATS_BASE
-    .init_ctx 3 blq_stats_base CTM_NBI_BLQ1_STATS_BASE
-    .init_ctx 4 blq_stats_base CTM_NBI_BLQ2_STATS_BASE
-    .init_ctx 5 blq_stats_base CTM_NBI_BLQ2_STATS_BASE
-    .init_ctx 6 blq_stats_base CTM_NBI_BLQ3_STATS_BASE
-    .init_ctx 7 blq_stats_base CTM_NBI_BLQ3_STATS_BASE
+    .init_ctx 0 blq_stats_base CTM_BLQ0_STATS_BASE
+    .init_ctx 1 blq_stats_base CTM_BLQ0_STATS_BASE
+    .init_ctx 2 blq_stats_base CTM_BLQ1_STATS_BASE
+    .init_ctx 3 blq_stats_base CTM_BLQ1_STATS_BASE
+    .init_ctx 4 blq_stats_base CTM_BLQ2_STATS_BASE
+    .init_ctx 5 blq_stats_base CTM_BLQ2_STATS_BASE
+    .init_ctx 6 blq_stats_base CTM_BLQ3_STATS_BASE
+    .init_ctx 7 blq_stats_base CTM_BLQ3_STATS_BASE
 
     /* Initialize Ring number */
     #if BLM_INSTANCE_ID == 0
@@ -1499,9 +1501,9 @@ blm_ctx_init_end#:
     .xfer_order $event_data
     .xfer_order $xfer
     .set $event_data[0]
-    .reg $nbidmabuf[16]
-    .xfer_order $nbidmabuf
-    aggregate_directive(.set, $nbidmabuf, 16)
+    .reg $dmabuf[16]
+    .xfer_order $dmabuf
+    aggregate_directive(.set, $dmabuf, 16)
 
     /* Signals */
     .sig volatile auto_push_event_sig
@@ -1555,13 +1557,13 @@ blm_egress_blq_processing#:
 
         blm_stats(BLM_STATS_NUM_TM_EVNTS_RCVD)
         .if (BLM_BLQ_LM_REF[BLM_LM_BLQ_NULL_RECYCLE_OFFSET] & 2)
-            .while (deficit >= NBI_BLQ_EVENT_THRESHOLD)
-                blm_egress_null_buffer_recycle(NbiNum, blq, NBI_BLQ_EVENT_THRESHOLD)
-                alu[deficit, deficit, -, NBI_BLQ_EVENT_THRESHOLD]
+            .while (deficit >= BLQ_EVENT_THRESHOLD)
+                blm_egress_null_buffer_recycle(NbiNum, blq, BLQ_EVENT_THRESHOLD)
+                alu[deficit, deficit, -, BLQ_EVENT_THRESHOLD]
                 blm_stats(BLM_STATS_TM_NULL_RECYCLE)
             .endw
         .else
-            .while ( deficit >= NBI_BLQ_EVENT_THRESHOLD)
+            .while ( deficit >= BLQ_EVENT_THRESHOLD)
                 /* If there is any pending DMA Evnt, push egress to ingress directly */
                 .if (BLM_BLQ_LM_REF[BLM_LM_BLQ_DMA_EVNT_PEND_CNT_OFFSET] != 0)
                     blm_recycle(NbiNum, blq, NbiNum, blq, BLM_RECYCLE_LEN)
@@ -1575,11 +1577,11 @@ blm_egress_blq_processing#:
                         blm_egress_pull_buffers_to_emu_ring(NbiNum, blq, addr, ringid)
                         blm_stats(BLM_STATS_RECYCLE_TM_TO_EMU)
                     .else
-                        blm_egress_pull_buffers_to_cache(NbiNum, blq, NBI_BLQ_EVENT_THRESHOLD)
+                        blm_egress_pull_buffers_to_cache(NbiNum, blq, BLQ_EVENT_THRESHOLD)
                         blm_stats(BLM_STATS_RECYCLE_TM_TO_CACHE)
                     .endif
                 .endif
-                alu[deficit, deficit, -, NBI_BLQ_EVENT_THRESHOLD]
+                alu[deficit, deficit, -, BLQ_EVENT_THRESHOLD]
             .endw
         .endif
 
@@ -1661,15 +1663,15 @@ service_check#:
 
         .if (BLM_BLQ_LM_REF[BLM_LM_BLQ_NULL_RECYCLE_OFFSET] & 1)
             D(MAILBOX2, 0x2222)
-            .while (deficit >= NBI_BLQ_EVENT_THRESHOLD)
-                blm_ingress_null_buffer_recycle(NbiNum, blq, NBI_BLQ_EVENT_THRESHOLD)
-                alu[deficit, deficit, -, NBI_BLQ_EVENT_THRESHOLD]
+            .while (deficit >= BLQ_EVENT_THRESHOLD)
+                blm_ingress_null_buffer_recycle(NbiNum, blq, BLQ_EVENT_THRESHOLD)
+                alu[deficit, deficit, -, BLQ_EVENT_THRESHOLD]
                 blm_stats(BLM_STATS_DMA_NULL_RECYCLE)
             .endw
         .else
             D(MAILBOX2, 0x3333)
-            .while (deficit >= NBI_BLQ_EVENT_THRESHOLD)
-                alu[deficit, deficit, -, NBI_BLQ_EVENT_THRESHOLD]
+            .while (deficit >= BLQ_EVENT_THRESHOLD)
+                alu[deficit, deficit, -, BLQ_EVENT_THRESHOLD]
                 blm_incr_dma_evnt_pend_cnt()
             .endw
 
@@ -1677,9 +1679,9 @@ service_check#:
                 blm_cache_acquire_lock()
                 alu[cache_cnt, --, b, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET]]
                 blm_cache_release_lock()
-                .if (cache_cnt >= NBI_BLQ_EVENT_THRESHOLD)
+                .if (cache_cnt >= BLQ_EVENT_THRESHOLD)
                     D(MAILBOX3, 0x1111)
-                    blm_ingress_push_buffers_from_cache(NbiNum, blq, NBI_BLQ_EVENT_THRESHOLD)
+                    blm_ingress_push_buffers_from_cache(NbiNum, blq, BLQ_EVENT_THRESHOLD)
                     blm_decr_dma_evnt_pend_cnt()
                     blm_stats(BLM_STATS_RECYCLE_CACHE_TO_DMA)
                 .else

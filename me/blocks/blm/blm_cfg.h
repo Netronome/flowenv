@@ -1246,60 +1246,76 @@
                 BLM_NBI9_BLQ3_EMU_EMEM2_NUM_BUFS, _BLM_NBI9_BLQ3_EMU_EMEM2_BUFS_BASE, BLM_NBI9_BLQ3_EMU_EMEM2_DENSITY
 #endif
 
-#ifndef BLM_NBI_BLQ0_CACHE_SIZE
-	#define BLM_NBI_BLQ0_CACHE_SIZE 128
+/* BLM_BLQX_CACHE_SIZE defines are preferred as the cache serves both
+ * PCIe and NBI, but maintain the BLM_NBI_BLQX_CACHE_SIZE interface
+ * for backwards compatibility.  */
+#ifdef BLM_NBI_BLQ0_CACHE_SIZE
+#define BLM_BLQ0_CACHE_SIZE BLM_NBI_BLQ0_CACHE_SIZE
+#endif
+#ifdef BLM_NBI_BLQ1_CACHE_SIZE
+#define BLM_BLQ1_CACHE_SIZE BLM_NBI_BLQ1_CACHE_SIZE
+#endif
+#ifdef BLM_NBI_BLQ2_CACHE_SIZE
+#define BLM_BLQ2_CACHE_SIZE BLM_NBI_BLQ2_CACHE_SIZE
+#endif
+#ifdef BLM_NBI_BLQ3_CACHE_SIZE
+#define BLM_BLQ3_CACHE_SIZE BLM_NBI_BLQ3_CACHE_SIZE
+#endif
+
+#ifndef BLM_BLQ0_CACHE_SIZE
+	#define BLM_BLQ0_CACHE_SIZE 128
 #else
-    #if ((BLM_NBI_BLQ0_CACHE_SIZE & (BLM_NBI_BLQ0_CACHE_SIZE - 1)) != 0)
-        #error "BLM_NBI_BLQ0_CACHE_SIZE is not power of 2."
+    #if ((BLM_BLQ0_CACHE_SIZE & (BLM_BLQ0_CACHE_SIZE - 1)) != 0)
+        #error "BLM_BLQ0_CACHE_SIZE is not power of 2."
     #endif
-    #if BLM_NBI_BLQ0_CACHE_SIZE == 0
+    #if BLM_BLQ0_CACHE_SIZE == 0
         #if BLM_BLQ_ENABLE_MASK & (1 << 0)
-            #error "BLM_NBI_BLQ0_CACHE_SIZE cannot be 0 when BLQ0 ingress thread is enabled"
+            #error "BLM_BLQ0_CACHE_SIZE cannot be 0 when BLQ0 ingress thread is enabled"
         #endif
-    #elif (BLM_NBI_BLQ0_CACHE_SIZE < 64)
-        #error "BLM_NBI_BLQ0_CACHE_SIZE shoud be at least 64."
+    #elif (BLM_BLQ0_CACHE_SIZE < 64)
+        #error "BLM_BLQ0_CACHE_SIZE shoud be at least 64."
     #endif
 #endif
-#ifndef BLM_NBI_BLQ1_CACHE_SIZE
-	#define BLM_NBI_BLQ1_CACHE_SIZE 128
+#ifndef BLM_BLQ1_CACHE_SIZE
+	#define BLM_BLQ1_CACHE_SIZE 128
 #else
-    #if ((BLM_NBI_BLQ1_CACHE_SIZE & (BLM_NBI_BLQ1_CACHE_SIZE - 1)) != 0)
-        #error "BLM_NBI_BLQ1_CACHE_SIZE is not power of 2."
+    #if ((BLM_BLQ1_CACHE_SIZE & (BLM_BLQ1_CACHE_SIZE - 1)) != 0)
+        #error "BLM_BLQ1_CACHE_SIZE is not power of 2."
     #endif
-    #if BLM_NBI_BLQ1_CACHE_SIZE == 0
+    #if BLM_BLQ1_CACHE_SIZE == 0
         #if BLM_BLQ_ENABLE_MASK & (1 << 1)
             #error "BLM_NBI_BLQ1_CACHE_SIZE cannot be 0 when BLQ1 ingress thread is enabled"
         #endif
-    #elif (BLM_NBI_BLQ1_CACHE_SIZE < 64)
-        #error "BLM_NBI_BLQ1_CACHE_SIZE shoud be at least 64."
+    #elif (BLM_BLQ1_CACHE_SIZE < 64)
+        #error "BLM_BLQ1_CACHE_SIZE shoud be at least 64."
     #endif
 #endif
-#ifndef BLM_NBI_BLQ2_CACHE_SIZE
-	#define BLM_NBI_BLQ2_CACHE_SIZE 128
+#ifndef BLM_BLQ2_CACHE_SIZE
+	#define BLM_BLQ2_CACHE_SIZE 128
 #else
-    #if ((BLM_NBI_BLQ2_CACHE_SIZE & (BLM_NBI_BLQ2_CACHE_SIZE - 1)) != 0)
-        #error "BLM_NBI_BLQ2_CACHE_SIZE is not power of 2."
+    #if ((BLM_BLQ2_CACHE_SIZE & (BLM_BLQ2_CACHE_SIZE - 1)) != 0)
+        #error "BLM_BLQ2_CACHE_SIZE is not power of 2."
     #endif
-    #if BLM_NBI_BLQ2_CACHE_SIZE == 0
+    #if BLM_BLQ2_CACHE_SIZE == 0
         #if BLM_BLQ_ENABLE_MASK & (1 << 2)
             #error "BLM_NBI_BLQ2_CACHE_SIZE cannot be 0 when BLQ2 ingress thread is enabled"
         #endif
-    #elif (BLM_NBI_BLQ2_CACHE_SIZE < 64)
-        #error "BLM_NBI_BLQ2_CACHE_SIZE shoud be at least 64."
+    #elif (BLM_BLQ2_CACHE_SIZE < 64)
+        #error "BLM_BLQ2_CACHE_SIZE shoud be at least 64."
     #endif
 #endif
-#ifndef BLM_NBI_BLQ3_CACHE_SIZE
-	#define BLM_NBI_BLQ3_CACHE_SIZE 64
+#ifndef BLM_BLQ3_CACHE_SIZE
+	#define BLM_BLQ3_CACHE_SIZE 64
 #else
-    #if ((BLM_NBI_BLQ3_CACHE_SIZE & (BLM_NBI_BLQ3_CACHE_SIZE - 1)) != 0)
-        #error "BLM_NBI_BLQ3_CACHE_SIZE is not power of 2."
+    #if ((BLM_BLQ3_CACHE_SIZE & (BLM_BLQ3_CACHE_SIZE - 1)) != 0)
+        #error "BLM_BLQ3_CACHE_SIZE is not power of 2."
     #endif
-    #if BLM_NBI_BLQ3_CACHE_SIZE == 0
+    #if BLM_BLQ3_CACHE_SIZE == 0
         #if BLM_BLQ_ENABLE_MASK & (1 << 3)
             #error "BLM_NBI_BLQ3_CACHE_SIZE cannot be 0 when BLQ3 ingress thread is enabled"
         #endif
-    #elif (BLM_NBI_BLQ3_CACHE_SIZE < 64)
-        #error "BLM_NBI_BLQ3_CACHE_SIZE shoud be at least 64."
+    #elif (BLM_BLQ3_CACHE_SIZE < 64)
+        #error "BLM_BLQ3_CACHE_SIZE shoud be at least 64."
     #endif
 #endif
 

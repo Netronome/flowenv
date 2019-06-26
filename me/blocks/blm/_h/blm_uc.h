@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2020,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@
 /* BLM default configuration file */
 #include "../blm_cfg.h"
 
-#define BLM_INIT_DONE                           0xd043
-#define NBI_BLQ_EVENT_THRESHOLD                 32 /* 0:16, 1:32, 2:64, 3:128 */
+#define BLM_INIT_DONE                       0xd043
+#define BLQ_EVENT_THRESHOLD                 32 /* 0:16, 1:32, 2:64, 3:128 */
 
 
 /* Check EMU buffers size and alignment */
