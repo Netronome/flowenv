@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2020,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@
  * @brief
  */
 
-#ifndef __BLM_API_UC__
-#define __BLM_API_UC__
+#ifndef __BLM_NBI_UC__
+#define __BLM_NBI_UC__
 
 #include <stdmac.uc>
 #include <ring_utils.uc>
+#include "blm_common.uc"
 
-/** @file blm_api.uc Buffer List Manager Macros
+/** @file blm_nbi.uc Buffer List Manager Macros
  * @addtogroup blm_api Buffer List Manager
  * @{
  *
@@ -33,7 +34,6 @@
  */
 
 // API Quick Reference:
-// blm_create_global_bpool(nbuffers, rtype, rnum, bbase, bsize)
 // blm_cfg_blq(NbiNum, blq, size, head, tail, direction)
 // blm_cfg_blq_evnts(NbiNum, blq, direction, ethres, estatus, enotfull)
 // blm_init_blq_mu(NbiNum, blq, mu_base, buf_size, num_buffers, head)
@@ -49,39 +49,7 @@
 // blm_set_dma_credits(NbiNum, credit0, credit1, credit2, credit3, thrs0, thrs1, thrs2, thrs3)
 // blm_set_dma_credit_rate(NbiNum, cr0, cr1, cr2, cr3)
 
-#define xpb_csr_addr(island, slave_idx, tgt_dev, csr_offset)    ((0 <<31)       | \
-                                                                (0 <<30)        | \
-                                                                (8 <<24)        | \
-                                                                (island <<24)   | \
-                                                                (slave_idx <<22)| \
-                                                                (tgt_dev <<16)  | \
-                                                                (csr_offset))
-
-#define NBI_CPP_ADDRESS(NbiNum)          ((0x000000)   | (NbiNum <<30))
-#define NBI_DMA_CPP_BLQ_OFFSET(blq)      ((0x008000)   | (blq <<3))
-#define NBI_TM_CPP_BLQ_OFFSET(blq)       ((0x288000)   | (blq <<3)) /* NBITMCPP base = 0x200000 + TM BLQ offset = 0x88000 */
-#define NBI_TM_CPP_BLQ_RD_OFFSET(blq)    ((0x280000)   | (blq <<7)) /* NBITMCPP base = 0x200000 + TM BLQ_RD CSR offset = 0x90000 */
-
 /// @cond INTERNAL_MACROS
-/**
- */
-#macro _blm_immed32(_reg, val)
-    #ifdef __L16
-        #undef __L16
-    #endif
-    #ifdef __H16
-        #undef __H16
-    #endif
-    #define_eval __L16        (val & 0xffff)
-    #define_eval __H16        ((val >>16) & 0xffff)
-    immed[_reg, __L16]
-    #if __H16 > 0
-        immed_w1[_reg, __H16]
-    #endif
-    #undef __L16
-    #undef __H16
-#endm /* _blm_immed32 */
-
 /**
  *  Wait for signal to be asserted, optionally swapping out
  *
@@ -99,60 +67,6 @@
 
 .end
 #endm /* _blm_signal_wait */
-
-/**
- *  Get NBI CPP base address
- *
- *  @param oaddr        Out GPR which contains the NBI CPP base address
- *  @param NbiNum       NBI number. 0: NBI Island 8, 1: NBI Island 9
- */
-#macro GET_NBI_CPP_BASE_ADDRESS(oaddr, NbiNum)
-    #if (isnum(NbiNum))
-        #define_eval __addr    NBI_CPP_ADDRESS(NbiNum)
-        _blm_immed32(oaddr, __addr)
-    #else
-        #define_eval __addr    NBI_CPP_ADDRESS(0)
-        _blm_immed32(oaddr, __addr)
-        alu[oaddr, oaddr, OR, NbiNum, <<30]
-    #endif
-    #undef __addr
-#endm /* NBI_CPP_ADDRESS */
-
-#macro GET_NBI_DMA_CPP_BLQ_OFFSET(ooffset, blq)
-    #if (isnum(blq))
-        #define_eval __offset  NBI_DMA_CPP_BLQ_OFFSET(blq)
-        _blm_immed32(ooffset, __offset)
-    #else
-        #define_eval __offset  NBI_DMA_CPP_BLQ_OFFSET(0)
-        _blm_immed32(ooffset, __offset)
-        alu[ooffset, ooffset, OR, blq, <<3]
-    #endif
-    #undef __offset
-#endm /* GET_NBI_DMA_CPP_BLQ_OFFSET */
-
-#macro GET_NBI_TM_CPP_BLQ_OFFSET(ooffset, blq)
-    #if (isnum(blq))
-        #define_eval __offset  NBI_TM_CPP_BLQ_OFFSET(blq)
-        _blm_immed32(ooffset, __offset)
-    #else
-        #define_eval __offset  NBI_TM_CPP_BLQ_OFFSET(0)
-        _blm_immed32(ooffset, __offset)
-        alu[ooffset, ooffset, OR, blq, <<3]
-    #endif
-    #undef __offset
-#endm /* GET_NBI_TM_CPP_BLQ_OFFSET */
-
-#macro GET_NBI_TM_CPP_BLQ_RD_OFFSET(ooffset, blq)
-    #if (isnum(blq))
-        #define_eval __offset  NBI_TM_CPP_BLQ_RD_OFFSET(blq)
-        _blm_immed32(ooffset, __offset)
-    #else
-        #define_eval __offset  NBI_TM_CPP_BLQ_RD_OFFSET(0)
-        _blm_immed32(ooffset, __offset)
-        alu[ooffset, ooffset, OR, blq, <<7]
-    #endif
-    #undef __offset
-#endm /* GET_NBI_TM_CPP_BLQ_RD_OFFSET */
 
 /**
  *  Generic nbi XPB read macro for xpb_read/xpb_write
@@ -252,50 +166,6 @@
     #endif
 .end
 #endm /* blm_push */
-
-/** This macro creates a global buffer pool ring and fills it with buffers
- *
- * @param nbuffers      Number of buffers
- * @param bsize         Size of each buffer (at 2KB boundary, in bytes)
- * @param bbase         40-bit MU start address for buffers right shifted by 11-bits - IMU or EMU only (byte address)
-                        Example: If IMU base address(island 28) = 0x9c00100000, bbase = 0x9c00100000 >>11 = 0x13800200
- * @param rtype         Type of ring: DDR_RING, CLS_RING, CTM_RING
- *                      NOTE: Ring must be initailized prior to calling this macro. Ring size >= nbuffers
- * @param rnum          Ring number
- */
-#macro blm_create_global_bpool(nbuffers, bsize, bbase, rtype, rnum)
-.begin
-    .reg $pkt_buf[2]
-    .reg tmp_pkt_buf
-    .reg num_pkt_buffers
-    .reg tmp_buf_size
-    .sig dram_pkt_sig
-    .xfer_order $pkt_buf
-
-    #if (isnum(bbase))
-        immed32(tmp_pkt_buf, bbase)
-    #else
-        alu[tmp_pkt_buf, --, b, bbase]
-    #endif
-    #if (isnum(bsize))
-       #define_eval __INCR  (bsize >> 11)
-       immed32(tmp_buf_size, __INCR)
-       #undef __INCR
-    #else
-       alu[tmp_buf_size, --, b, bsize,>>11]
-    #endif
-    immed32(num_pkt_buffers, 0)
-    alu[$pkt_buf[0], --, b, tmp_pkt_buf]
-
-    .while (num_pkt_buffers < nbuffers)
-        ru_enq_to_ring($pkt_buf, rtype, 1, rnum, dram_pkt_sig, SIG_WAIT, PUT_BLIND)
-        alu[num_pkt_buffers, num_pkt_buffers, +, 1]
-        alu[tmp_pkt_buf, tmp_pkt_buf, +, tmp_buf_size]
-        alu[$pkt_buf[0], --, b, tmp_pkt_buf]
-    .endw
-
-.end
-#endm /* blm_create_global_bpool */
 
 /** This macro configures a buffer list queue in NBI DMA or NBI TM
  *
@@ -460,8 +330,10 @@
  * @param blq           Buffer list queue number, 0,1,2,or 3
  * @param mu_base       Memory unit start address for buffers (byte address and right shifted by 11-bits)
  * @param bsize         Buffer size @ 2K boundaries (in bytes)
- * @nbuffers            Number of buffers (not to exceed BLQ size as configured using API: 'blm_cfg_blq')
- * @head                Head pointer for blq. Must be multiple of 512 and in range [0, 4096].
+ * @param nbuffers      Number of buffers (not to exceed BLQ size as configured using API: 'blm_cfg_blq')
+ * @param head          Head pointer for blq.
+ * @note For NFP-6xxx, 'head' must be a multiple of 512 and in range [0, 4096).
+ * @note For NFP-38xx, 'head' must be a multiple of 256 and in range [0, 2048).
  */
 #macro blm_init_blq_mu(NbiNum, blq, mu_base, bsize, nbuffers, head)
 .begin
@@ -518,8 +390,10 @@
  * @param blq           Buffer list queue number, 0,1,2,or 3
  * @grnum               Ring number
  * @param rtype         Type of memory for ring, DRAM, CLS, CTM
- * @nbuffers            Number of buffers (not to exceed BLQ size as configured using API: 'blm_cfg_blq')
- * @head                Head pointer for blq. Must be multiple of 512 and in range [0, 4096].
+ * @param nbuffers      Number of buffers (not to exceed BLQ size as configured using API: 'blm_cfg_blq')
+ * @param head          Head pointer for blq.
+ * @note For NFP-6xxx, 'head' must be a multiple of 512 and in range [0, 4096).
+ * @note For NFP-38xx, 'head' must be a multiple of 256 and in range [0, 2048).
  */
 #macro blm_init_blq(NbiNum, blq, grnum, rtype, nbuffers, head)
 .begin
@@ -1409,4 +1283,4 @@
  * @}
  */
 
-#endif /* __BLM_API_UC__ */
+#endif /* __BLM_NBI_UC__ */
