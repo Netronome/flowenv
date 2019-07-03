@@ -342,7 +342,7 @@
                 blm_poptome(NbiNum, blq, $nbitmbuf[0], (_MAX_PULL_DATA_LEN >>1), sig_pull_buf2emu, SIG_WAIT)
                 aggregate_copy($nbitmbuf, $nbitmbuf, 16)
                 alu[--, --, b, ((0xf <<1)|1), <<7]
-                mem[journal, $nbitmbuf[0], addr, <<8, ringid, max_15], indirect_ref, sig_done[sig_pull_buf2emu]
+                mem[journal, $nbitmbuf[0], addr, <<8, ringid, max_16], indirect_ref, sig_done[sig_pull_buf2emu]
                 ctx_arb[sig_pull_buf2emu]
                 #define_eval _LOOP_ITER     (_LOOP_ITER + 1)
             #endloop
