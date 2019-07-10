@@ -417,22 +417,25 @@ pktio_rx_wire_issue(__xread void *nbi_meta, size_t nbi_meta_size, sync_t sync,
                              sync, sig);
 }
 
-__intrinsic int
-pktio_rx_wire_process(__xread void *nbi_meta)
+static __intrinsic void
+pe_process_common(__xread struct pktio_nbi_meta *nbi_rxd)
 {
-    __xread struct pktio_nbi_meta *nbi_rxd = nbi_meta;
-
     reg_zero((void *)pkt.__raw, sizeof(pkt));
-    pkt.p_offset = PKT_NBI_OFFSET + NBI_PKT_PREPEND_BYTES;
     pkt.p_nbi = nbi_rxd->nbi.pkt_info;
-    pkt.p_len -= NBI_PKT_PREPEND_BYTES;
     pkt.p_orig_len = pkt.p_len;
-    pkt.p_src = PKT_WIRE_PORT(nbi_rxd->nbi.meta_type,
-                              PORT_TO_CHANNEL(nbi_rxd->nbi.port));
 #if defined(__NFP_IS_6XXX)
     compute_ctm_size(nbi_rxd);
 #endif
+    pkt.p_seq = nbi_rxd->nbi.seq;
+}
 
+static __intrinsic int
+pe_process_wire(__xread struct pktio_nbi_meta *nbi_rxd)
+{
+    pkt.p_offset = PKT_NBI_OFFSET + NBI_PKT_PREPEND_BYTES;
+    pkt.p_len -= NBI_PKT_PREPEND_BYTES;
+    pkt.p_src = PKT_WIRE_PORT(nbi_rxd->nbi.meta_type,
+                              PORT_TO_CHANNEL(nbi_rxd->nbi.port));
     /**
      * If sequencer > 0, we set the reorder context.
      * The reorder context can be either GRO or NBI.
@@ -446,7 +449,6 @@ pktio_rx_wire_process(__xread void *nbi_meta)
      * Sequencer 0 is for unsequenced packets, leave reorder context at 0 for
      * no reordering
      */
-    pkt.p_seq = nbi_rxd->nbi.seq;
     if (nbi_rxd->nbi.seqr) {
         __critical_path();
         /* map NBI seqr's to GRO or map NBI seqr's to NBI if GRO disabled */
@@ -508,6 +510,21 @@ pktio_rx_wire_process(__xread void *nbi_meta)
     if (NBI_METADATA_ERR_CHECK(nbi_rxd->nbi)) {
         HANDLE_NBI_METADATA_ERR(*nbi_rxd);
     }
+
+    return 0;
+}
+
+__intrinsic int
+pktio_rx_wire_process(__xread void *nbi_meta)
+{
+    __xread struct pktio_nbi_meta *nbi_rxd = nbi_meta;
+    int ret;
+
+    pe_process_common(nbi_rxd);
+
+    ret = pe_process_wire(nbi_rxd);
+    if (ret < 0)
+        return ret;
 
     PKTIO_CNTR_INC(PKTIO_CNTR_RX_FROM_WIRE);
     return 0;
