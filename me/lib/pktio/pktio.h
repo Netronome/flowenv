@@ -346,6 +346,14 @@
  * 0 and 1023. The TM queue drop counter at that offset will reflect the
  * drop. This should be set to an unused queue within the system, 1023
  * is a sensible choice.
+ *
+ * Kestrel adds the ability to use packet mode DMA for host packets. This
+ * feature allows host packets to be delivered via the CTM packet engine using
+ * the same workqueue as wire packets. Packets can also be added to the same
+ * queue using mem[packet_add_packet]. To use this feature define
+ * PKTIO_UNIFIED_RX and use the functions pktio_rx_pe, or pktio_rx_pe_issue
+ * and pktio_rx_pe_process.
+ *
  */
 
 #ifndef __PKTIO_H__
@@ -415,6 +423,26 @@
 #endif
 #endif
 
+#ifdef PKTIO_NFD_KESTREL_NATIVE
+#ifndef PKTIO_UNIFIED_RX
+#define PKTIO_UNIFIED_RX
+#endif
+#ifndef PKTIO_NFD_SEND_BY_REF
+#define PKTIO_NFD_SEND_BY_REF
+#endif
+#endif /* PKTIO_NFD_KESTREL_NATIVE */
+
+#ifdef PKTIO_UNIFIED_RX
+#if defined(__NFP_IS_6XXX)
+#error "PKTIO_UNIFIED_RX cannot be set on 6XXX"
+#endif
+#endif
+
+#if defined(PKTIO_UNIFIED_RX) && defined(PKTIO_NFD_ENABLED)
+#include <vnic/pci_in.h>
+#endif
+
+
 #if (NBI_PKT_PREPEND_BYTES >= 8)
 /*
  * MAC prepend
@@ -481,6 +509,8 @@ struct pktio_mac_prepend {
 /**
  * NBI metadata struct comprised of 24 bytes of catamaran metadata as well
  * as 8 bytes of prepended MAC metadata (pkt/pkt.h).
+ * This may also contain NFD metadata, which comprises of a structure equivalent
+ * to nbi_meta_catamaran as well prepended metadata
  */
 struct pktio_nbi_meta {
     union {
@@ -488,6 +518,11 @@ struct pktio_nbi_meta {
             struct nbi_meta_catamaran   nbi;
             struct pktio_mac_prepend    mac;
         };
+#if defined(PKTIO_UNIFIED_RX) && defined(PKTIO_NFD_ENABLED)
+        struct {
+            struct nfd_in_pkt_desc_meta nfd;
+        };
+#endif
         uint32_t __raw[8];
     };
 };
@@ -496,13 +531,22 @@ struct pktio_nbi_meta {
 /**
  * NBI metadata struct comprised of 24 bytes of catamaran metadata with no
  * MAC prepended data.
+ * This may also contain NFD metadata, which comprises of a structure equivalent
+ * to nbi_meta_catamaran as well prepended metadata
  */
 struct pktio_nbi_meta {
     union {
         struct {
             struct nbi_meta_catamaran   nbi;
         };
+#ifdef defined(PKTIO_UNIFIED_RX) && defined(PKTIO_NFD_ENABLED)
+        struct {
+            struct nfd_in_pkt_desc_meta nfd;
+        };
+        uint32_t __raw[7];
+#else
         uint32_t __raw[6];
+#endif
     };
 };
 #endif /* NBI_PKT_PREPEND_BYTES >= 8 */
@@ -861,4 +905,42 @@ void pktio_rx_init(void);
  */
 void pktio_tx_init(void);
 
+/**
+ * Issue a request for a CTM packet engine packet. This should be followed by a
+ * pktio_rx_pe_process call once the request is signalled complete.
+ * The packet source can be from wire or host.
+ * Note that 'nbi_meta' must be at least the size of the 'pktio_nbi_meta'.
+ * It may also be up to 128 bytes. All data beyond the size of 'pktio_nbi_meta'
+ * will be packet data copied from the offset PKT_NBI_OFFSET. Note that
+ * if the MAC prepend is enabled, the prepend data will be included in the
+ * 'pktio_nbi_meta' data and the effective packet data offset or NBI packets
+ * will be sizeof(pktio_nbi_meta.nbi) + NBI_PKT_PREPEND_BYTES
+ *
+ * @param nbi_meta       Pointer to NBI metadata read transfer buffer to use
+ * @param nbi_meta_size  Size of the NBI metadata buffer
+ * @param sync           Type of synchronisation (sig_done or ctx_swap)
+ * @param sig            Signal to use
+ *
+ */
+__intrinsic void pktio_rx_pe_issue(__xread void *nbi_meta, size_t nbi_meta_size,
+                                   sync_t sync, SIGNAL *sig);
+
+/**
+ * Process the result of a CTM packet engine RX issue. This should be preceded
+ * by a pktio_rx_pe_issue call.
+ *
+ * @param nbi_meta  Pointer to NBI metadata read transfer buffer to use
+ *
+ * @return -1 on error and 0 otherwise
+ *
+ */
+__intrinsic int pktio_rx_pe_process(__xread void *nbi_meta);
+
+/**
+ * Receive a packet from the CTM packet engine.
+ *
+ * @return -1 on error and 0 otherwise
+ *
+ */
+__intrinsic int pktio_rx_pe();
 #endif /* __PKTIO_H__ */

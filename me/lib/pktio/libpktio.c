@@ -408,6 +408,7 @@ __intrinsic void drop_packet()
 #endif /* !defined(PKTIO_NBI_DROP_TXQ)) */
 }
 
+#if !defined(PKTIO_UNIFIED_RX)
 __intrinsic void
 pktio_rx_wire_issue(__xread void *nbi_meta, size_t nbi_meta_size, sync_t sync,
                     SIGNAL *sig)
@@ -523,8 +524,30 @@ pktio_rx_wire(void)
     return pktio_rx_wire_process(&nbi_rxd);
 }
 
+#else /* !defined(PKTIO_UNIFIED_RX) */
 
-#ifdef PKTIO_NFD_ENABLED
+__intrinsic void
+pktio_rx_wire_issue(__xread void *nbi_meta, size_t nbi_meta_size, sync_t sync,
+                    SIGNAL *sig)
+{
+    cterror("Function disabled");
+}
+
+__intrinsic int
+pktio_rx_wire_process(__xread void *nbi_meta)
+{
+    cterror("Function disabled");
+    return -1;
+}
+
+__intrinsic int pktio_rx_wire(void)
+{
+    cterror("Function disabled");
+    return -1;
+}
+#endif /* defined(PKTIO_UNIFIED_RX) */
+
+#if defined(PKTIO_NFD_ENABLED) && !defined(PKTIO_UNIFIED_RX)
 __intrinsic int
 pktio_rx_host_issue(__xread struct nfd_in_pkt_desc *nfd_rxd, sync_t sync,
                     SIGNAL *sig)
@@ -688,7 +711,29 @@ pktio_rx_host(void)
 
     return pktio_rx_host_process(&nfd_rxd, ctm_pnum);
 }
-#endif
+#else /* defined(PKTIO_NFD_ENABLED) && !defined(PKTIO_UNIFIED_RX) */
+__intrinsic int
+pktio_rx_host_issue(__xread struct nfd_in_pkt_desc *nfd_rxd, sync_t sync,
+                    SIGNAL *sig)
+{
+    cterror("Function disabled");
+    return -1;
+}
+
+__intrinsic int
+pktio_rx_host_process(__xread struct nfd_in_pkt_desc *nfd_rxd, int ctm_pnum)
+{
+    cterror("Function disabled");
+    return -1;
+}
+
+__intrinsic int
+pktio_rx_host(void)
+{
+    cterror("Function disabled");
+    return -1;
+}
+#endif /* !(defined(PKTIO_NFD_ENABLED) && !defined(PKTIO_UNIFIED_RX)) */
 
 __intrinsic void
 pktio_rx_wq(int ring_num, mem_ring_addr_t ring_addr)
@@ -826,7 +871,7 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                                              len + offset, dst_subsys, dst_q);
 #endif
             } else
-#endif
+#endif /* PKTIO_GRO_ENABLED */
             {
 #if defined(__NFP_IS_6XXX)
                 pkt_nbi_send(pkt.p_isl,
@@ -1006,3 +1051,54 @@ pktio_tx_init()
     gro_cli_init();
 #endif
 }
+
+#ifdef PKTIO_UNIFIED_RX
+__intrinsic void
+pktio_rx_pe_issue(__xread void *nbi_meta, size_t nbi_meta_size, sync_t sync,
+                    SIGNAL *sig)
+{
+    cterror("Function not implemented");
+}
+
+__intrinsic int
+pktio_rx_pe_process(__xread void *nbi_meta)
+{
+    cterror("Function not implemented");
+    return -1;
+}
+
+__intrinsic int
+pktio_rx_pe(void)
+{
+    SIGNAL sig;
+    __xread struct pktio_nbi_meta nbi_rxd;
+
+    pktio_rx_pe_issue(&nbi_rxd, sizeof(nbi_rxd), ctx_swap, &sig);
+
+    return pktio_rx_pe_process(&nbi_rxd);
+}
+
+#else /* PKTIO_UNIFIED_RX */
+
+__intrinsic void
+pktio_rx_pe_issue(__xread void *nbi_meta, size_t nbi_meta_size, sync_t sync,
+                    SIGNAL *sig)
+{
+    cterror("Function disabled");
+}
+
+__intrinsic int
+pktio_rx_pe_process(__xread void *nbi_meta)
+{
+    cterror("Function disabled");
+    return -1;
+}
+
+__intrinsic int
+pktio_rx_pe(void)
+{
+    cterror("Function disabled");
+    return -1;
+}
+
+#endif /* !PKTIO_UNIFIED_RX */
