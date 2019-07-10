@@ -529,7 +529,12 @@ struct pktio_meta {
             struct nbi_meta_pkt_info p_nbi;     /**< Std NBI-formatted metadata
                                                   *  accessor #defines below */
 
+#if defined(__NFP_IS_6XXX)
             unsigned int p_ctm_size:2;          /**< CTM buffer encoded size */
+#else
+            /* non-6XXX chips encode the length in p_nbi.alloc_szX */
+            unsigned int resv6:2;               /**< Reserved */
+#endif
             unsigned int p_orig_len:14;         /**< Original RX pkt length */
             unsigned int p_offset:16;           /**< Offset of data in buffer*/
 
@@ -693,6 +698,26 @@ enum {
 
 /* Thread-local pkt metadata */
 extern PKTIO_META_TYPE struct pktio_meta pkt;
+
+/**
+ * Get the CTM buffer size, see PKT_CTM_SIZE_* in pkt.h; this function
+ * should be used in place of using the p_ctm_size struct entry as it isn't
+ * present on all platforms
+ *
+ * @return the CTM buffer size
+ *
+ */
+__intrinsic enum PKT_CTM_SIZE pktio_ctm_size_get(void);
+
+/**
+ * Set the CTM buffer size, see PKT_CTM_SIZE_* in pkt.h; this function
+ * should be used in place of using the p_ctm_size struct entry as it isn't
+ * present on all platforms
+ *
+ * @param ctm_size      CTM buffer size
+ *
+ */
+__intrinsic void pktio_ctm_size_set(enum PKT_CTM_SIZE ctm_size);
 
 /**
  * Receive a packet from the wire and populate the packet metadata.

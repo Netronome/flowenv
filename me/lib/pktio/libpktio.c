@@ -252,6 +252,24 @@ __export __shared __cls struct ctm_pkt_credits ctm_credits =
 /* Declaration of pkt */
 PKTIO_META_TYPE struct pktio_meta pkt;
 
+__intrinsic enum PKT_CTM_SIZE pktio_ctm_size_get()
+{
+#if defined(__NFP_IS_6XXX)
+    return pkt.p_ctm_size;
+#else
+    return pkt.p_nbi.alloc_sz0 | (pkt.p_nbi.alloc_sz1 << 2);
+#endif
+}
+
+__intrinsic void pktio_ctm_size_set(enum PKT_CTM_SIZE ctm_size)
+{
+#if defined(__NFP_IS_6XXX)
+    pkt.p_ctm_size = ctm_size;
+#else
+    pkt.p_nbi.alloc_sz0 = ctm_size & 0x3;
+    pkt.p_nbi.alloc_sz1 = (ctm_size >> 2) & 0x3;
+#endif
+}
 
 /*
  * This routine takes about 7 cycles to execute in the worst case for small
@@ -313,7 +331,7 @@ compute_ctm_size(__xread struct pktio_nbi_meta *rxd)
 
 #endif /* SPLIT_LENGTH == 3 */
 
-    pkt.p_ctm_size = len;
+    pktio_ctm_size_set(len);
 
 #endif /* SPLIT_LENGTH > 0 */
 }
@@ -380,10 +398,10 @@ __intrinsic void drop_packet()
         __gpr struct pkt_ms_info msi = {0,0}; /* dummy msi */
         pkt_nbi_drop_seq(pkt.p_isl, pkt.p_pnum, &msi, pkt.p_len,
                          0, 0, ro_ctx, pkt.p_seq,
-                         pkt.p_ctm_size);
+                         pktio_ctm_size_get());
 #else /* defined(__NFP_IS_6XXX) */
         pkt_nbi_drop_seq(pkt.p_isl, pkt.p_pnum, pkt.p_len, pkt.p_offset, 0, 0,
-                         ro_ctx, pkt.p_seq, pkt.p_ctm_size);
+                         ro_ctx, pkt.p_seq, pktio_ctm_size_get());
 #endif /* !defined(__NFP_IS_6XXX) */
     }
 
@@ -410,7 +428,9 @@ pktio_rx_wire_process(__xread void *nbi_meta)
     pkt.p_orig_len = pkt.p_len;
     pkt.p_src = PKT_WIRE_PORT(nbi_rxd->nbi.meta_type,
                               PORT_TO_CHANNEL(nbi_rxd->nbi.port));
+#if defined(__NFP_IS_6XXX)
     compute_ctm_size(nbi_rxd);
+#endif
 
     /**
      * If sequencer > 0, we set the reorder context.
@@ -553,7 +573,7 @@ pktio_rx_host_process(__xread struct nfd_in_pkt_desc *nfd_rxd, int ctm_pnum)
 
     pkt.p_offset = NFD_IN_DATA_OFFSET;
     pkt.p_orig_len = pkt.p_len;
-    pkt.p_ctm_size = NFD_CTM_TYPE;
+    pktio_ctm_size_set(NFD_CTM_TYPE);
 
     pkt.p_src = PKT_HOST_PORT_FROMQ(nfd_rxd->intf, nfd_rxd->q_num);
 
@@ -795,14 +815,14 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                 gro_cli_build_nbi_meta(&gmeta.nbi,
                                        pkt.p_isl,
                                        pkt.p_pnum,
-                                       pkt.p_ctm_size,
+                                       pktio_ctm_size_get(),
                                        ((msi.off_enc + 1) << 3),
                                        len + offset,
                                        dst_subsys,
                                        dst_q);
 #else
                 gro_cli_build_nbi_meta_no_pm(&gmeta.nbi, pkt.p_isl, pkt.p_pnum,
-                                             pkt.p_ctm_size, offset,
+                                             pktio_ctm_size_get(), offset,
                                              len + offset, dst_subsys, dst_q);
 #endif
             } else
@@ -817,11 +837,11 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                              dst_q,
                              pkt.p_ro_ctx,
                              pkt.p_seq,
-                             pkt.p_ctm_size);
+                             pktio_ctm_size_get());
 #else
                 pkt_nbi_send(pkt.p_isl, pkt.p_pnum, len, offset, dst_subsys,
                              dst_q, pkt.p_ro_ctx, pkt.p_seq, drop_prec,
-                             pkt.p_ctm_size);
+                             pktio_ctm_size_get());
 #endif
             }
             PKTIO_CNTR_INC(PKTIO_CNTR_TX_TO_WIRE);
@@ -840,7 +860,7 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                 nfd_out_fill_desc(&noi,
                                   (void *)&pkt.p_nbi,
                                   0,
-                                  pkt.p_ctm_size,
+                                  pktio_ctm_size_get(),
                                   pkt.p_offset,
                                   meta_len);
                 nfd_out_check_ctm_only(&noi);
