@@ -354,6 +354,12 @@
  * PKTIO_UNIFIED_RX and use the functions pktio_rx_pe, or pktio_rx_pe_issue
  * and pktio_rx_pe_process.
  *
+ * Kestrel also adds the ability to use NBI traffic manager to perform all
+ * reordering. To enable this feature set PKTIO_HW_REORDER_ENABLED; you
+ * should also set PKTIO_HW_REORDER_MUISL to the WQ ring's MU island number
+ * and PKTIO_HW_REORDER_CMDOUT_IDX to the NBI TM ring command index to be used
+ * when reordering WQ packets.
+ *
  */
 
 #ifndef __PKTIO_H__

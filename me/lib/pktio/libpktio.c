@@ -67,11 +67,45 @@
 #include <blm/blm.h>
 #include <pktio/pktio.h>
 
+#if defined(PKTIO_HW_REORDER_ENABLED)
+
+#ifndef PKTIO_HW_REORDER_MUISL
+#define PKTIO_HW_REORDER_MUISL 24
+#warning "PKTIO_HW_REORDER_MUISL not set; using default of 24"
+#endif
+
+#ifndef PKTIO_HW_REORDER_CMDOUT_IDX
+#define PKTIO_HW_REORDER_CMDOUT_IDX 15
+#warning "PKTIO_HW_REORDER_CMDOUT_IDX not set; using default of 15"
+#endif
+
+/* Set up workqueue reorder details, we use the indirect macro so the compiler
+ * correctly expands the parameters. Note that only the command parameters are
+ * needed. The ring number is retrieved from the IO directly.
+ */
+#define PKTIO_TM_WQ_CFG_IND(_nbi, _cmdidx, _mu_isl) \
+    _NFP_CHIPRES_ASM(.init_csr xpb:Nbi##_nbi##IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.NbiTmPcieCmdOutCfg##_cmdidx##.RingNumber 0x0) \
+    _NFP_CHIPRES_ASM(.init_csr xpb:Nbi##_nbi##IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.NbiTmPcieCmdOutCfg##_cmdidx##.OutputPort 0x0) \
+    _NFP_CHIPRES_ASM(.init_csr xpb:Nbi##_nbi##IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.NbiTmPcieCmdOutCfg##_cmdidx##.Island _mu_isl) \
+    _NFP_CHIPRES_ASM(.init_csr xpb:Nbi##_nbi##IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.NbiTmPcieCmdOutCfg##_cmdidx##.Token 0x3) \
+    _NFP_CHIPRES_ASM(.init_csr xpb:Nbi##_nbi##IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.NbiTmPcieCmdOutCfg##_cmdidx##.Action 0x19) \
+    _NFP_CHIPRES_ASM(.init_csr xpb:Nbi##_nbi##IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.NbiTmPcieCmdOutCfg##_cmdidx##.Target 0x7)
+
+#define PKTIO_TM_WQ_CFG(_nbi, _cmdidx, _mu_isl) PKTIO_TM_WQ_CFG_IND(_nbi, _cmdidx, _mu_isl);
+
+PKTIO_TM_WQ_CFG(0, PKTIO_HW_REORDER_CMDOUT_IDX, PKTIO_HW_REORDER_MUISL);
+#endif
+
 struct pktio_handle {
     union {
         struct {
+#if defined(PKTIO_HW_REORDER_ENABLED)
+            uint8_t pad; /* must be zero to avoid reserved bits 31 and 24 */
+            uint8_t ph_isl;
+#else
             uint8_t ph_isl;
             uint8_t pad;
+#endif
             uint16_t ph_pnum;
         };
         uint32_t __raw;
@@ -1021,6 +1055,7 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
         case PKT_PTYPE_WQ: {
             struct pktio_handle ph;
             __xwrite struct pktio_meta xwq;
+
             xwq = pkt;
             ctm_ptr = pkt_ctm_ptr40(pkt.p_isl, pkt.p_pnum, 0);
             mem_write32(&xwq, ctm_ptr, sizeof(xwq));
@@ -1028,7 +1063,15 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
             ph.ph_isl = pkt.p_isl;
             ph.ph_pnum = pkt.p_pnum;
 
-#ifdef PKTIO_GRO_ENABLED
+#if defined(PKTIO_HW_REORDER_ENABLED)
+            if (is_sequenced()) {
+                pkt_nbi_wq_reorder(pkt.p_isl, pkt.p_pnum, 0,
+                                   *((unsigned int *)&ph),
+                                   PKTIO_HW_REORDER_CMDOUT_IDX,
+                                   dst_q, pkt.p_ro_ctx, pkt.p_seq);
+
+            } else
+#elif defined(PKTIO_GRO_ENABLED)
             if (pkt.p_is_gro_seq) {
                 gro_cli_build_workq_meta1(&gmeta.memq,
                                           MUID_TO_ISL(dst_subsys),
