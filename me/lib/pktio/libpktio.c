@@ -916,16 +916,12 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                 ret = -1;
                 goto drop;
             } else {
+#ifdef PKTIO_NFD_SEND_BY_REF
+                __gpr struct nfd_out_wq_msg nfd_out_msg;
+                __gpr struct nfd_out_pkt_desc nfd_out_desc;
+#else
                 __gpr struct nfd_out_input noi;
-
-                reg_zero(&noi, sizeof(noi));
-                nfd_out_fill_desc(&noi,
-                                  (void *)&pkt.p_nbi,
-                                  0,
-                                  pktio_ctm_size_get(),
-                                  pkt.p_offset,
-                                  meta_len);
-                nfd_out_check_ctm_only(&noi);
+#endif
 
                 /* populate RX offload flags if present */
                 flags = PCIE_DESC_RX_EOP;
@@ -949,6 +945,51 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                    inner checksum flags */
                 flags |= app_nfd_flags;
 
+#ifdef PKTIO_NFD_SEND_BY_REF
+                reg_zero(&nfd_out_desc, sizeof(nfd_out_desc));
+
+                nfd_out_fill_wq_msg(&nfd_out_msg, (void *)&pkt.p_nbi, dst_q);
+                nfd_out_fill_desc(&nfd_out_desc, (void *)&pkt, meta_len,
+                                  pkt.p_offset);
+#ifdef PKTIO_VLAN_ENABLED
+                if (pkt.p_vlan)
+                    flags |= PCIE_DESC_RX_VLAN;
+                nfd_out_desc.rxd.vlan = pkt.p_vlan;
+#endif
+                nfd_out_desc.rxd.flags = flags;
+                /* Write the descriptor to the CTM buffer */
+                nfd_out_write_desc(&nfd_out_desc);
+#ifdef PKTIO_GRO_ENABLED
+                if (pkt.p_is_gro_seq) {
+                    __critical_path();
+                    gro_cli_nfdk_desc2meta(&gmeta.nfdk, &nfd_out_msg, 0);
+                } else {
+                    nfd_out_send(dst_subsys, &nfd_out_msg);
+                }
+#elif defined(PKTIO_HW_REORDER_ENABLED) /* PKTIO_GRO_ENABLED */
+
+                /* Note: NBI is hard coded to zero for now, future chips
+                 *       will be able to redirect reordered packet to TMs
+                 */
+                pkt_nbi_wq_reorder(pkt.p_isl, pkt.p_pnum, 0,
+                                   nfd_out_msg.__raw,
+                                   NFD_OUT_TM_CFG_START,
+                                   nfd_out_get_wq_num(dst_subsys),
+                                   pkt.p_ro_ctx, pkt.p_seq);
+#else /* defined(PKTIO_HW_REORDER_ENABLED) */
+                nfd_out_send(dst_subsys, &nfd_out_msg);
+#endif /* !defined(PKTIO_HW_REORDER_ENABLED) */
+
+#else /* PKTIO_NFD_SEND_BY_REF */
+                reg_zero(&noi, sizeof(noi));
+                nfd_out_fill_desc(&noi,
+                                  (void *)&pkt.p_nbi,
+                                  0,
+                                  pktio_ctm_size_get(),
+                                  pkt.p_offset,
+                                  meta_len);
+                nfd_out_check_ctm_only(&noi);
+
 #ifdef PKTIO_VLAN_ENABLED
                 if (pkt.p_vlan)
                     flags |= PCIE_DESC_RX_VLAN;
@@ -966,6 +1007,7 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                 {
                    nfd_out_send(dst_subsys, dst_q, &noi);
                 }
+#endif /* !PKTIO_NFD_SEND_BY_REF */
                 PKTIO_CNTR_INC(PKTIO_CNTR_TX_TO_HOST);
             }
         } break;
