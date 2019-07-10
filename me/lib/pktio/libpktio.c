@@ -115,8 +115,11 @@ struct pktio_handle {
     #ifndef PKTIO_NFD_CPY_START
         #define PKTIO_NFD_CPY_START (NFD_IN_DATA_OFFSET & ~0x3F)
     #endif
-#endif
 
+    #if defined(PKTIO_UNIFIED_RX) && defined(NFD_IN_OFFSET)
+        #warning "NFD_IN_OFFSET cannot be used when PKTIO_UNIFIED_RX is enabled"
+    #endif
+#endif
 
 #ifdef PKTIO_NFD_ENABLED
     #if ((NFD_CFG_PF_CAP|NFD_CFG_VF_CAP) & NFP_NET_CFG_CTRL_TXVLAN)
@@ -408,14 +411,7 @@ __intrinsic void drop_packet()
 #endif /* !defined(PKTIO_NBI_DROP_TXQ)) */
 }
 
-#if !defined(PKTIO_UNIFIED_RX)
-__intrinsic void
-pktio_rx_wire_issue(__xread void *nbi_meta, size_t nbi_meta_size, sync_t sync,
-                    SIGNAL *sig)
-{
-    __pkt_nbi_recv_with_hdrs(nbi_meta, nbi_meta_size, PKT_NBI_OFFSET,
-                             sync, sig);
-}
+/* common functions for pktio_rx_wire*() and pktio_rx_pe*() */
 
 static __intrinsic void
 pe_process_common(__xread struct pktio_nbi_meta *nbi_rxd)
@@ -512,6 +508,15 @@ pe_process_wire(__xread struct pktio_nbi_meta *nbi_rxd)
     }
 
     return 0;
+}
+
+#if !defined(PKTIO_UNIFIED_RX)
+__intrinsic void
+pktio_rx_wire_issue(__xread void *nbi_meta, size_t nbi_meta_size, sync_t sync,
+                    SIGNAL *sig)
+{
+    __pkt_nbi_recv_with_hdrs(nbi_meta, nbi_meta_size, PKT_NBI_OFFSET,
+                             sync, sig);
 }
 
 __intrinsic int
@@ -1116,14 +1121,76 @@ __intrinsic void
 pktio_rx_pe_issue(__xread void *nbi_meta, size_t nbi_meta_size, sync_t sync,
                     SIGNAL *sig)
 {
-    cterror("Function not implemented");
+    __pkt_nbi_recv_with_hdrs(nbi_meta, nbi_meta_size, PKT_NBI_OFFSET,
+                             sync, sig);
 }
 
 __intrinsic int
 pktio_rx_pe_process(__xread void *nbi_meta)
 {
-    cterror("Function not implemented");
-    return -1;
+    __xread struct pktio_nbi_meta *nbi_rxd = nbi_meta;
+    unsigned int subsys, mtype;
+    int ret;
+
+    pe_process_common(nbi_rxd);
+
+    /* mtype identifies the packet source */
+    mtype = nbi_rxd->nbi.meta_type;
+
+#ifdef PKTIO_NFD_ENABLED
+    if (mtype >= NFD_IN_MTYPE) { /* host */
+        /* get the pcie island index based on the mtype */
+        subsys = mtype - NFD_IN_MTYPE;
+
+        pkt.p_offset = PKT_NBI_OFFSET;
+        pkt.p_src = PKT_HOST_PORT_FROMQ(subsys, nbi_rxd->nfd.pkt.q_num);
+        pkt.p_ro_ctx = PKTIO_NFD_SEQD_MAP_SEQR(subsys, nbi_rxd->nfd.pkt.seqr);
+#ifdef PKTIO_GRO_ENABLED
+        pkt.p_is_gro_seq = PKTIO_NFD_SEQD_MAP_ISGRO(subsys,
+                                                    nbi_rxd->nfd.pkt.seqr);
+#endif
+
+#ifdef MAC_EGRESS_PREPEND_ENABLE
+        /* Checksum offloads */
+        if (nbi_rxd->nfd.pkt.tx_csum) {
+            if (nbi_rxd->nfd.pkt.tx_csum & PCIE_DESC_TX_ENCAP) {
+                pkt.p_tx_l3_csum = 1;
+                pkt.p_tx_l4_csum = 1;
+            } else {
+                pkt.p_tx_l3_csum = (nbi_rxd->nfd.pkt.tx_csum >>
+                                            __log2(PCIE_DESC_TX_L3_CSUM)) & 0x1;
+                pkt.p_tx_l4_csum = (nbi_rxd->nfd.pkt.tx_csum >>
+                                            __log2(PCIE_DESC_TX_L4_CSUM)) & 0x1;
+            }
+        }
+#endif
+#ifdef PKTIO_LSO_ENABLED
+        /* Setup the LSO flags if requested */
+        if (nbi_rxd->nfd.pkt.is_lso) {
+            pkt.p_tx_lso = 1;
+            pkt.p_tx_lso_end = nbi_rxd->nfd.pkt.lso_end;
+            pkt.p_tx_lso_seq = nfd_in_get_lso_seg(nbi_meta);
+            pkt.p_tx_mss = nbi_rxd->nfd.pkt.lso_mss;
+        }
+#endif
+        /* Check for metadata invalid. */
+        if (nbi_rxd->nbi.meta_valid == 0) {
+            PKTIO_CNTR_INC(PKTIO_CNTR_ERR_FROM_HOST);
+            return -1;
+        }
+
+        PKTIO_CNTR_INC(PKTIO_CNTR_RX_FROM_HOST);
+    } else
+#endif PKTIO_NFD_ENABLED
+    { /* wire */
+        ret = pe_process_wire(nbi_rxd);
+        if (ret < 0)
+            return ret;
+
+        PKTIO_CNTR_INC(PKTIO_CNTR_RX_FROM_WIRE);
+    }
+
+    return 0;
 }
 
 __intrinsic int
