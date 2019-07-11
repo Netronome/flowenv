@@ -938,12 +938,22 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                              len,
                              dst_subsys,
                              dst_q,
+#ifdef PKTIO_NBI_SEQR_ENABLED
                              pkt.p_ro_ctx,
+#else
+                             NBI_RO_CTX_UNSEQUENCED,
+#endif
                              pkt.p_seq,
                              pktio_ctm_size_get());
 #else
                 pkt_nbi_send(pkt.p_isl, pkt.p_pnum, len, offset, dst_subsys,
-                             dst_q, pkt.p_ro_ctx, pkt.p_seq, drop_prec,
+                             dst_q,
+#ifdef PKTIO_NBI_SEQR_ENABLED
+                             pkt.p_ro_ctx,
+#else
+                             NBI_RO_CTX_UNSEQUENCED,
+#endif
+                             pkt.p_seq, drop_prec,
                              pktio_ctm_size_get());
 #endif
             }
@@ -1016,7 +1026,12 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                                    nfd_out_msg.__raw,
                                    NFD_OUT_TM_CFG_START,
                                    nfd_out_get_wq_num(dst_subsys),
-                                   pkt.p_ro_ctx, pkt.p_seq);
+#ifdef PKTIO_NBI_SEQR_ENABLED
+                                   pkt.p_ro_ctx,
+#else
+                                   NBI_RO_CTX_UNSEQUENCED,
+#endif
+                                   pkt.p_seq);
 #else /* defined(PKTIO_HW_REORDER_ENABLED) */
                 nfd_out_send(dst_subsys, &nfd_out_msg);
 #endif /* !defined(PKTIO_HW_REORDER_ENABLED) */
@@ -1070,7 +1085,13 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                 pkt_nbi_wq_reorder(pkt.p_isl, pkt.p_pnum, 0,
                                    *((unsigned int *)&ph),
                                    PKTIO_HW_REORDER_CMDOUT_IDX,
-                                   dst_q, pkt.p_ro_ctx, pkt.p_seq);
+                                   dst_q,
+#ifdef PKTIO_NBI_SEQR_ENABLED
+                                   pkt.p_ro_ctx,
+#else
+                                   NBI_RO_CTX_UNSEQUENCED,
+#endif
+                                   pkt.p_seq);
 
             } else
 #elif defined(PKTIO_GRO_ENABLED)
