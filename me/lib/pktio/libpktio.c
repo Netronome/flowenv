@@ -853,6 +853,7 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
              * do not have to use signal masks.
              * Use a packet modifier script write which returns the signals.*/
 
+#ifndef PKTIO_UNIFIED_RX /* unified rx implies metadata always in CTM */
             /* If the source is not NBI, we need to write MAC packet meta
              * (struct nbi_meta_pkt_info) to front */
             if (PKT_PORT_TYPE_of(pkt.p_src) != PKT_PTYPE_WIRE) {
@@ -865,6 +866,7 @@ pktio_tx_with_meta(unsigned short app_nfd_flags, unsigned short meta_len)
                  * we know this write completes when the modscript write
                  * completes.  Therefore it needs no signalling.  */
             }
+#endif
 
             /* Write MAC egress prepend */
             offset = pkt.p_offset;
