@@ -143,6 +143,7 @@
     /* --------- Link time error checks --------- */
 
 .alloc_mem BLM_/**/BLM_INSTANCE_ID/**/_ISLAND_ID   i0.ctm  global  8
+#if IS_NFPTYPE(__NFP6000)
 /* BLM Instance-0 must run on Island-33: adjacent to NBI-8 */
 #if BLM_INSTANCE_ID == 0
 #ifdef BLM_FORCE_EVENT_ROUTING
@@ -168,6 +169,7 @@
     .assert((__ISLAND == 49)) "BLM Instance-1 should run on Island-49!"
 #endif /* BLM_FORCE_EVENT_ROUTING */
 #endif
+#endif /* IS_NFPTYPE(__NFP6000) */
 #endm /* blm_linker_check */
 
 /*
