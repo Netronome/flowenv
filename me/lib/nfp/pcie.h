@@ -133,7 +133,15 @@ __intrinsic void pcie_write(__xwrite void *data, unsigned int pcie_isl,
 struct pcie_dma_cfg_one {
     union {
         struct {
+#if defined(__NFP_IS_6XXX)
             unsigned int __reserved:3;
+#elif defined(__NFP_IS_38XX)
+            unsigned int __reserved:1;
+            unsigned int frm_pcie_cpp_rnd8b:1;
+            unsigned int free_ctm_packet:1;
+#else
+    #error "Please select valid chip target."
+#endif
             unsigned int signal_only:1;
             unsigned int end_pad:2;
             unsigned int start_pad:2;
