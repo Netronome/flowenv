@@ -380,3 +380,62 @@ pcie_dma_enq_no_sig(unsigned int pcie_isl,
 {
     pcie_dma_ext_enq_no_sig(pcie_isl, cmd, 0, pcie_dma_addr_40, queue);
 }
+
+
+#ifndef __NFP_IS_6XXX
+
+__intrinsic void
+__pcie_dma48_enq(unsigned int pcie_isl, __xwrite struct nfp_pcie_dma_cmd *cmd,
+                 unsigned int pcie_addr_hi, unsigned int queue,
+                 sync_t sync, SIGNAL *sig)
+{
+    __pcie_dma_ext_enq(pcie_isl, cmd, pcie_addr_hi, pcie_dma_addr_48, queue,
+                       sync, sig);
+}
+
+__intrinsic void
+pcie_dma48_enq(unsigned int pcie_isl, __xwrite struct nfp_pcie_dma_cmd *cmd,
+               unsigned int pcie_addr_hi, unsigned int queue)
+{
+    SIGNAL sig;
+
+    __pcie_dma48_enq(pcie_isl, cmd, pcie_addr_hi, queue, ctx_swap, &sig);
+}
+
+__intrinsic void
+pcie_dma48_enq_no_sig(unsigned int pcie_isl,
+                      __xwrite struct nfp_pcie_dma_cmd *cmd,
+                      unsigned int pcie_addr_hi, unsigned int queue)
+{
+    pcie_dma_ext_enq_no_sig(pcie_isl, cmd, pcie_addr_hi, pcie_dma_addr_48,
+                            queue);
+}
+
+__intrinsic void
+__pcie_dma64_enq(unsigned int pcie_isl, __xwrite struct nfp_pcie_dma_cmd *cmd,
+                 unsigned int pcie_addr_hi, unsigned int queue,
+                 sync_t sync, SIGNAL *sig)
+{
+    __pcie_dma_ext_enq(pcie_isl, cmd, pcie_addr_hi, pcie_dma_addr_64, queue,
+                       sync, sig);
+}
+
+__intrinsic void
+pcie_dma64_enq(unsigned int pcie_isl, __xwrite struct nfp_pcie_dma_cmd *cmd,
+               unsigned int pcie_addr_hi, unsigned int queue)
+{
+    SIGNAL sig;
+
+    __pcie_dma64_enq(pcie_isl, cmd, pcie_addr_hi, queue, ctx_swap, &sig);
+}
+
+__intrinsic void
+pcie_dma64_enq_no_sig(unsigned int pcie_isl,
+                      __xwrite struct nfp_pcie_dma_cmd *cmd,
+                      unsigned int pcie_addr_hi, unsigned int queue)
+{
+    pcie_dma_ext_enq_no_sig(pcie_isl, cmd, pcie_addr_hi, pcie_dma_addr_64,
+                            queue);
+}
+
+#endif /* __NFP_IS_6XXX */

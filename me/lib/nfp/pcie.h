@@ -272,4 +272,50 @@ __intrinsic void pcie_dma_enq_no_sig(unsigned int pcie_isl,
                                      __xwrite struct nfp_pcie_dma_cmd *cmd,
                                      unsigned int queue);
 
+#ifndef __NFP_IS_6XXX
+
+/**
+ * Enqueue a DMA descriptor, with 48 bit host address.
+ * @param pcie_isl          PCIe island (0-3) to address
+ * @param cmd               DMA command to send
+ * @param pcie_addr_hi      Bits 47:32 of the PCIe address
+ * @param queue             Queue to use, e.g. NFP_PCIE_DMA_TOPCI_HI
+ */
+__intrinsic void __pcie_dma48_enq(unsigned int pcie_isl,
+                                  __xwrite struct nfp_pcie_dma_cmd *cmd,
+                                  unsigned int pcie_addr_hi, unsigned int queue,
+                                  sync_t sync, SIGNAL *sig);
+
+__intrinsic void pcie_dma48_enq(unsigned int pcie_isl,
+                                __xwrite struct nfp_pcie_dma_cmd *cmd,
+                                unsigned int pcie_addr_hi, unsigned int queue);
+
+__intrinsic void pcie_dma48_enq_no_sig(unsigned int pcie_isl,
+                                       __xwrite struct nfp_pcie_dma_cmd *cmd,
+                                       unsigned int pcie_addr_hi,
+                                       unsigned int queue);
+
+/**
+ * Enqueue a DMA descriptor, with 64 bit host address.
+ * @param pcie_isl          PCIe island (0-3) to address
+ * @param cmd               DMA command to send
+ * @param pcie_addr_hi      Bits 63:32 of the PCIe address
+ * @param queue             Queue to use, e.g. NFP_PCIE_DMA_TOPCI_HI
+ */
+__intrinsic void __pcie_dma64_enq(unsigned int pcie_isl,
+                                  __xwrite struct nfp_pcie_dma_cmd *cmd,
+                                  unsigned int pcie_addr_hi, unsigned int queue,
+                                  sync_t sync, SIGNAL *sig);
+
+__intrinsic void pcie_dma64_enq(unsigned int pcie_isl,
+                                __xwrite struct nfp_pcie_dma_cmd *cmd,
+                                unsigned int pcie_addr_hi, unsigned int queue);
+
+__intrinsic void pcie_dma64_enq_no_sig(unsigned int pcie_isl,
+                                       __xwrite struct nfp_pcie_dma_cmd *cmd,
+                                       unsigned int pcie_addr_hi,
+                                       unsigned int queue);
+
+#endif /* __NFP_IS_6XXX */
+
 #endif /* _NFP__PCIE_H_ */
