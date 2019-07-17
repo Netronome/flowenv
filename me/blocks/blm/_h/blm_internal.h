@@ -29,6 +29,12 @@
 /* Force to use SINGLE_NBI MODE */
 #define SINGLE_NBI              1
 
+#if (IS_NFPTYPE(__NFP6000))
+#define BLQ_BDSRAM_SIZE 4096
+#else /* IS_NFPTYPE(__NFP3800)) */
+#define BLQ_BDSRAM_SIZE 2048
+#endif
+
 /* CLS Autopush constants */
 #define CLS_AP_FILTER_TYPE               5
 #define AUTOPUSH_FILTER_MASK             0xFFC00F

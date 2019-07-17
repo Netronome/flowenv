@@ -771,6 +771,14 @@ end_cache_fill#:
     #if (BLQ_LEN < INIT_COUNT)
         #error "BLQ init count can not be bigger than BLQ length (Length "BLQ_LEN", Init count "INIT_COUNT")"
     #endif
+    /* Check bounds */
+    #if (BLQ_HEAD + BLQ_LEN > BLQ_BDSRAM_SIZE)
+        #error "BLQ extends beyond BDSRAM bounds (Head "BLQ_HEAD", Length "BLQ_LEN", BDSRAM size "BLQ_BDSRAM_SIZE")"
+    #endif
+    /* Check alignment */
+    #if (BLQ_HEAD & (BLQ_LEN - 1))
+        #error "BLQ head is not aligned to "BLQ_LEN" (Head "BLQ_HEAD", Length "BLQ_LEN")"
+    #endif
 
     #define_eval _TAIL_PTR_ (BLQ_HEAD + INIT_COUNT)
     #define_eval _HEAD_PTR_ BLQ_HEAD
@@ -1169,11 +1177,15 @@ ctx0#:
     /* Each BLM instance populates the buffers into the BLQ/BDSram */
     #ifndef BLM_SKIP_DMA_INIT
         #for _blq [0,1,2,3]
+            #define_eval _BLQ_LEN BLM_NBI/**/NBII/**/_BLQ/**/_blq/**/_LEN
+
             #if (_blq == 0)
                 #define _BLQ_HEAD   0
             #else
                 #define_eval _blq_prev   (_blq - 1)
                 #define_eval _BLQ_HEAD  (BLM_NBI/**/NBII/**/_BLQ/**/_blq_prev/**/_LEN + _BLQ_HEAD)
+                /* Align the _BLQ_HEAD to the BLQ length; so length 2k is 2k aligned etc */
+                #define_eval _BLQ_HEAD (_BLQ_HEAD + _BLQ_LEN - 1) & (-_BLQ_LEN)
             #endif
 			#define_eval _BLQ_INIT_COUNT_ 0
             #for _mem_type [BDSRAM_IMEM0,BDSRAM_IMEM1,BDSRAM_EMEM0,BDSRAM_EMEM1,BDSRAM_EMEM2,BDSRAM_EMEM0_CACHE,BDSRAM_EMEM1_CACHE,BDSRAM_EMEM2_CACHE]
@@ -1185,6 +1197,7 @@ ctx0#:
         #endloop
         #undef _BLQ_INIT_COUNT_
         #undef _BLQ_HEAD
+        #undef _BLQ_LEN
         #undef _blq_prev
         #undef _blq
         #undef _mem_type
