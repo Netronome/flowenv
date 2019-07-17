@@ -310,7 +310,20 @@ pcie_dma_set_event(void *cmd, unsigned int type, unsigned int source)
     cmd_ptr->dma_mode = (((type & 0xF) << 12) | (source & 0xFFF));
 }
 
+#ifdef __NFP_IS_6XXX
 #define _PCIE_DMA_ADDR_HI(isl, addr, width) ((isl) << 30)
+#else
+#define _PCIE_DMA_ADDR_40(addr) 0
+#define _PCIE_DMA_ADDR_48(addr)                 \
+    ((((addr) >> 8) & 0xff) << 5)
+#define _PCIE_DMA_ADDR_64(addr)                                         \
+    (((((addr) >> 8) & 0x3ff) << 5) | ((((addr) >> 18) & 0x3fff) << 16))
+#define _PCIE_DMA_ADDR_HI(isl, addr, width)                             \
+    (((isl) << 30) |                                                    \
+     ((width) == pcie_dma_addr_64) ? _PCIE_DMA_ADDR_64(addr) :          \
+     ((width) == pcie_dma_addr_48) ? _PCIE_DMA_ADDR_48(addr) :          \
+     _PCIE_DMA_ADDR_40(addr))
+#endif
 
 __intrinsic void
 __pcie_dma_ext_enq(unsigned int pcie_isl, __xwrite struct nfp_pcie_dma_cmd *cmd,

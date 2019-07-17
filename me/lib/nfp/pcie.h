@@ -130,6 +130,10 @@ __intrinsic void pcie_write(__xwrite void *data, unsigned int pcie_isl,
  */
 typedef enum
 {
+#ifndef __NFP_IS_6XXX
+    pcie_dma_addr_64,   /**< 64 bit host address, 24 bits in CPP command */
+    pcie_dma_addr_48,   /**< 48 bit host address, 8 bits in CPP command */
+#endif
     pcie_dma_addr_40    /**< Standard 40 bit host address */
 } pcie_dma_addr_t;
 
