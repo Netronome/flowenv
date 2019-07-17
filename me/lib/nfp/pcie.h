@@ -126,6 +126,14 @@ __intrinsic void pcie_write(__xwrite void *data, unsigned int pcie_isl,
 #define PCIE_DMA_MAX_SZ     4096
 
 /**
+ * DMA PCIe address width specifier
+ */
+typedef enum
+{
+    pcie_dma_addr_40    /**< Standard 40 bit host address */
+} pcie_dma_addr_t;
+
+/**
  * Structure of a DMADescrConfig register
  *
  *  Refer to the data book for a description of the fields.
@@ -217,6 +225,30 @@ __intrinsic void pcie_dma_set_sig(void *cmd,
  */
 __intrinsic void pcie_dma_set_event(void *cmd, unsigned int type,
                                     unsigned int source);
+
+
+/**
+ * Enqueue a DMA descriptor, supporting multiple host address widths
+ * @param pcie_isl          PCIe island (0-3) to address
+ * @param cmd               DMA command to send
+ * @param pcie_addr_hi      Bits 63:32 of the PCIe address
+ * @param width             Enum specifying which high address bits to use
+ * @param queue             Queue to use, e.g. NFP_PCIE_DMA_TOPCI_HI
+ * @param sync              Sync type for enqueue
+ * @param sig               Signal to use for enqueue
+ */
+__intrinsic void __pcie_dma_ext_enq(unsigned int pcie_isl,
+                                    __xwrite struct nfp_pcie_dma_cmd *cmd,
+                                    unsigned int pcie_addr_hi,
+                                    pcie_dma_addr_t width,
+                                    unsigned int queue,
+                                    sync_t sync, SIGNAL *sig);
+
+__intrinsic void pcie_dma_ext_enq_no_sig(unsigned int pcie_isl,
+                                         __xwrite struct nfp_pcie_dma_cmd *cmd,
+                                         unsigned int pcie_addr_hi,
+                                         pcie_dma_addr_t width,
+                                         unsigned int queue);
 
 /**
  * Enqueue a DMA descriptor.

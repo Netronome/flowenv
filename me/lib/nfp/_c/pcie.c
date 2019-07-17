@@ -310,12 +310,15 @@ pcie_dma_set_event(void *cmd, unsigned int type, unsigned int source)
     cmd_ptr->dma_mode = (((type & 0xF) << 12) | (source & 0xFFF));
 }
 
+#define _PCIE_DMA_ADDR_HI(isl, addr, width) ((isl) << 30)
+
 __intrinsic void
-__pcie_dma_enq(unsigned int pcie_isl, __xwrite struct nfp_pcie_dma_cmd *cmd,
-               unsigned int queue, sync_t sync, SIGNAL *sig)
+__pcie_dma_ext_enq(unsigned int pcie_isl, __xwrite struct nfp_pcie_dma_cmd *cmd,
+                   unsigned int pcie_addr_hi, pcie_dma_addr_t width,
+                   unsigned int queue, sync_t sync, SIGNAL *sig)
 {
     unsigned int count = (sizeof(struct nfp_pcie_dma_cmd) >> 2);
-    unsigned int addr_hi = pcie_isl << 30;
+    unsigned int addr_hi = _PCIE_DMA_ADDR_HI(pcie_isl, pcie_addr_hi, width);
 
     ctassert(__is_write_reg(cmd));
     ctassert(__is_ct_const(sync));
@@ -327,6 +330,26 @@ __pcie_dma_enq(unsigned int pcie_isl, __xwrite struct nfp_pcie_dma_cmd *cmd,
     else
         __asm pcie[write_pci, *cmd, addr_hi, <<8, queue, \
                    __ct_const_val(count)], sig_done[*sig];
+}
+
+__intrinsic void
+pcie_dma_ext_enq_no_sig(unsigned int pcie_isl,
+                        __xwrite struct nfp_pcie_dma_cmd *cmd,
+                        unsigned int pcie_addr_hi, pcie_dma_addr_t width,
+                        unsigned int queue)
+{
+    unsigned int count = (sizeof(struct nfp_pcie_dma_cmd) >> 2);
+    unsigned int addr_hi = _PCIE_DMA_ADDR_HI(pcie_isl, pcie_addr_hi, width);
+
+    __asm pcie[write_pci, *cmd, addr_hi, <<8, queue, __ct_const_val(count)];
+
+}
+
+__intrinsic void
+__pcie_dma_enq(unsigned int pcie_isl, __xwrite struct nfp_pcie_dma_cmd *cmd,
+               unsigned int queue, sync_t sync, SIGNAL *sig)
+{
+    __pcie_dma_ext_enq(pcie_isl, cmd, 0, pcie_dma_addr_40, queue, sync, sig);
 }
 
 __intrinsic void
@@ -342,10 +365,5 @@ __intrinsic void
 pcie_dma_enq_no_sig(unsigned int pcie_isl,
                     __xwrite struct nfp_pcie_dma_cmd *cmd, unsigned int queue)
 {
-    unsigned int count = (sizeof(struct nfp_pcie_dma_cmd) >> 2);
-    unsigned int addr_hi = pcie_isl << 30;
-
-    ctassert(__is_write_reg(cmd));
-
-    __asm pcie[write_pci, *cmd, addr_hi, <<8, queue, __ct_const_val(count)];
+    pcie_dma_ext_enq_no_sig(pcie_isl, cmd, 0, pcie_dma_addr_40, queue);
 }
