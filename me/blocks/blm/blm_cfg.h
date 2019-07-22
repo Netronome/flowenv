@@ -1252,7 +1252,11 @@
     #if ((BLM_NBI_BLQ0_CACHE_SIZE & (BLM_NBI_BLQ0_CACHE_SIZE - 1)) != 0)
         #error "BLM_NBI_BLQ0_CACHE_SIZE is not power of 2."
     #endif
-    #if (BLM_NBI_BLQ0_CACHE_SIZE < 64)
+    #if BLM_NBI_BLQ0_CACHE_SIZE == 0
+        #if BLM_BLQ_ENABLE_MASK & (1 << 0)
+            #error "BLM_NBI_BLQ0_CACHE_SIZE cannot be 0 when BLQ0 ingress thread is enabled"
+        #endif
+    #elif (BLM_NBI_BLQ0_CACHE_SIZE < 64)
         #error "BLM_NBI_BLQ0_CACHE_SIZE shoud be at least 64."
     #endif
 #endif
@@ -1262,7 +1266,11 @@
     #if ((BLM_NBI_BLQ1_CACHE_SIZE & (BLM_NBI_BLQ1_CACHE_SIZE - 1)) != 0)
         #error "BLM_NBI_BLQ1_CACHE_SIZE is not power of 2."
     #endif
-    #if (BLM_NBI_BLQ1_CACHE_SIZE < 64)
+    #if BLM_NBI_BLQ1_CACHE_SIZE == 0
+        #if BLM_BLQ_ENABLE_MASK & (1 << 2)
+            #error "BLM_NBI_BLQ1_CACHE_SIZE cannot be 0 when BLQ1 ingress thread is enabled"
+        #endif
+    #elif (BLM_NBI_BLQ1_CACHE_SIZE < 64)
         #error "BLM_NBI_BLQ1_CACHE_SIZE shoud be at least 64."
     #endif
 #endif
@@ -1272,7 +1280,11 @@
     #if ((BLM_NBI_BLQ2_CACHE_SIZE & (BLM_NBI_BLQ2_CACHE_SIZE - 1)) != 0)
         #error "BLM_NBI_BLQ2_CACHE_SIZE is not power of 2."
     #endif
-    #if (BLM_NBI_BLQ2_CACHE_SIZE < 64)
+    #if BLM_NBI_BLQ2_CACHE_SIZE == 0
+        #if BLM_BLQ_ENABLE_MASK & (1 << 4)
+            #error "BLM_NBI_BLQ2_CACHE_SIZE cannot be 0 when BLQ2 ingress thread is enabled"
+        #endif
+    #elif (BLM_NBI_BLQ2_CACHE_SIZE < 64)
         #error "BLM_NBI_BLQ2_CACHE_SIZE shoud be at least 64."
     #endif
 #endif
@@ -1282,7 +1294,11 @@
     #if ((BLM_NBI_BLQ3_CACHE_SIZE & (BLM_NBI_BLQ3_CACHE_SIZE - 1)) != 0)
         #error "BLM_NBI_BLQ3_CACHE_SIZE is not power of 2."
     #endif
-    #if (BLM_NBI_BLQ3_CACHE_SIZE < 64)
+    #if BLM_NBI_BLQ3_CACHE_SIZE == 0
+        #if BLM_BLQ_ENABLE_MASK & (1 << 6)
+            #error "BLM_NBI_BLQ3_CACHE_SIZE cannot be 0 when BLQ3 ingress thread is enabled"
+        #endif
+    #elif (BLM_NBI_BLQ3_CACHE_SIZE < 64)
         #error "BLM_NBI_BLQ3_CACHE_SIZE shoud be at least 64."
     #endif
 #endif

@@ -121,11 +121,13 @@
         #define BLM_BLQ_OP_MODE     BLM_BLQ_SPLIT_MODE
 
         /* Allocate CTM Cache memory for 2 BLQ's in each BLM instance Island. */
-		#for id [0,1]
-			#define_eval __CACHE_ID     BLM_NBI_BLQ/**/id/**/_CACHE_BASE
-			#define_eval __CACHE_SIZE   (BLM_NBI_BLQ/**/id/**/_CACHE_SIZE * 4)
-			.alloc_mem __CACHE_ID        i0.ctm                 island  __CACHE_SIZE 8
-		#endloop
+        #for id [0,1]
+            #define_eval __CACHE_ID     BLM_NBI_BLQ/**/id/**/_CACHE_BASE
+            #define_eval __CACHE_SIZE   (BLM_NBI_BLQ/**/id/**/_CACHE_SIZE * 4)
+            #if __CACHE_SIZE != 0
+                .alloc_mem __CACHE_ID        i0.ctm                 island  __CACHE_SIZE 8
+            #endif
+        #endloop
 
         #define BLQ_OFFSET          (BLM_INSTANCE_ID * 2)
         // Ingress Filter
@@ -143,11 +145,14 @@
     #else /* BLM_SPLIT_BLQ_MODE */
         #define BLM_BLQ_OP_MODE     BLM_BLQ_NON_SPLIT_MODE
         /* Allocate CTM Cache memory for all BLQ's */
-		#for id [0,1,2,3]
-			#define_eval __CACHE_ID     BLM_NBI_BLQ/**/id/**/_CACHE_BASE
-			#define_eval __CACHE_SIZE   (BLM_NBI_BLQ/**/id/**/_CACHE_SIZE * 4)
-			.alloc_mem __CACHE_ID        i0.ctm                 island  __CACHE_SIZE 8
-		#endloop
+        #for id [0,1,2,3]
+            #define_eval __CACHE_ID     BLM_NBI_BLQ/**/id/**/_CACHE_BASE
+            #define_eval __CACHE_SIZE   (BLM_NBI_BLQ/**/id/**/_CACHE_SIZE * 4)
+
+            #if __CACHE_SIZE != 0
+                .alloc_mem __CACHE_ID        i0.ctm                 island  __CACHE_SIZE 8
+            #endif
+        #endloop
 
         // Ingress Filter
         #define CTX0_FILTER_MATCH   (0x5 | 0x0 <<14 | NBII <<18)
@@ -168,7 +173,9 @@
     #for id [0,1,2,3]
         #define_eval __CACHE_ID     BLM_NBI_BLQ/**/id/**/_CACHE_BASE
         #define_eval __CACHE_SIZE   (BLM_NBI_BLQ/**/id/**/_CACHE_SIZE * 4)
-        .alloc_mem __CACHE_ID        i0.ctm                 island  __CACHE_SIZE 8
+        #if __CACHE_SIZE != 0
+            .alloc_mem __CACHE_ID        i0.ctm                 island  __CACHE_SIZE 8
+        #endif
     #endloop
 
     /* CLS Autopush filter match per context */
@@ -268,7 +275,9 @@
         .init_csr mecsr:ctx7.IndLMAddr0 BLQ3_DESC_LMEM_BASE volatile
 
         #for id [0,1,2,3]
-            .init BLQ/**/id/**/_DESC_LMEM_BASE+BLM_LM_BLQ_CACHE_ADDR_OFFSET BLM_NBI_BLQ/**/id/**/_CACHE_BASE
+            #if BLM_NBI_BLQ/**/id/**/_CACHE_SIZE > 0
+                .init BLQ/**/id/**/_DESC_LMEM_BASE+BLM_LM_BLQ_CACHE_ADDR_OFFSET BLM_NBI_BLQ/**/id/**/_CACHE_BASE
+            #endif
             .init BLQ/**/id/**/_DESC_LMEM_BASE+BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET 0
             .init BLQ/**/id/**/_DESC_LMEM_BASE+BLM_LM_BLQ_DMA_EVNT_PEND_CNT_OFFSET 0
         #endloop
@@ -289,7 +298,9 @@
  */
 #macro blm_init_lm(lmaddr, blq, blq_cache_base)
     #ifndef THSDK_558_FIX
-        move(lmaddr[BLM_LM_BLQ_CACHE_ADDR_OFFSET], (blq_cache_base & 0xFFFFFFFF))
+        #if (is_rt_const(blq_cache_base) || (is_ct_const(blq_cache_base)))
+            move(lmaddr[BLM_LM_BLQ_CACHE_ADDR_OFFSET], (blq_cache_base & 0xFFFFFFFF))
+        #endif
         immed[lmaddr[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET], 0]
         immed[lmaddr[BLM_LM_BLQ_DMA_EVNT_PEND_CNT_OFFSET], 0]
         immed[lmaddr[BLM_LM_BLQ_CACHE_RDWR_BUSY_OFFSET], 0]
@@ -1187,7 +1198,7 @@ ctx0#:
                 /* Align the _BLQ_HEAD to the BLQ length; so length 2k is 2k aligned etc */
                 #define_eval _BLQ_HEAD (_BLQ_HEAD + _BLQ_LEN - 1) & (-_BLQ_LEN)
             #endif
-			#define_eval _BLQ_INIT_COUNT_ 0
+            #define_eval _BLQ_INIT_COUNT_ 0
             #for _mem_type [BDSRAM_IMEM0,BDSRAM_IMEM1,BDSRAM_EMEM0,BDSRAM_EMEM1,BDSRAM_EMEM2,BDSRAM_EMEM0_CACHE,BDSRAM_EMEM1_CACHE,BDSRAM_EMEM2_CACHE]
                 #define_eval _BLQ_INIT_COUNT_   (_BLQ_INIT_COUNT_ + \
                                             BLM_NBI/**/NBII/**/_BLQ/**/_blq/**/_/**/_mem_type/**/_NUM_BUFS)
@@ -1246,7 +1257,11 @@ ctx0#:
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, ((_BLM_NBI/**/_NBIX/**/_BLQ0_EMU_Q_BASE >>8)&0xFF000000))
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ0_EMU_QID)
+#if BLM_NBI_BLQ0_CACHE_SIZE > 0
     move(cache_hwm, (BLM_NBI_BLQ0_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#else
+    move(cache_hwm, 0)
+#endif
     move(cache_size, BLM_NBI_BLQ0_CACHE_SIZE)
     #undef _NBIX
     blm_init_stats()
@@ -1266,7 +1281,11 @@ ctx1#:
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ0_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ0_EMU_QID)
+#if BLM_NBI_BLQ0_CACHE_SIZE > 0
     move(cache_hwm, (BLM_NBI_BLQ0_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#else
+    move(cache_hwm, 0)
+#endif
     move(cache_size, BLM_NBI_BLQ0_CACHE_SIZE)
     #undef _NBIX
     blm_init_filter_match(cls_ap_filter_match, CTX1_FILTER_MATCH)
@@ -1279,7 +1298,11 @@ ctx2#:
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ1_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ1_EMU_QID)
+#if BLM_NBI_BLQ1_CACHE_SIZE > 0
     move(cache_hwm, (BLM_NBI_BLQ1_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#else
+    move(cache_hwm, 0)
+#endif
     move(cache_size, BLM_NBI_BLQ1_CACHE_SIZE)
     #undef _NBIX
     blm_init_stats()
@@ -1295,7 +1318,11 @@ ctx3#:
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ1_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ1_EMU_QID)
+#if BLM_NBI_BLQ1_CACHE_SIZE > 0
     move(cache_hwm, (BLM_NBI_BLQ1_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#else
+    move(cache_hwm, 0)
+#endif
     move(cache_size, BLM_NBI_BLQ1_CACHE_SIZE)
     #undef _NBIX
     blm_init_filter_match(cls_ap_filter_match, CTX3_FILTER_MATCH)
@@ -1308,7 +1335,11 @@ ctx4#:
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ2_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ2_EMU_QID)
+#if BLM_NBI_BLQ2_CACHE_SIZE > 0
     move(cache_hwm, (BLM_NBI_BLQ2_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#else
+    move(cache_hwm, 0)
+#endif
     move(cache_size, BLM_NBI_BLQ2_CACHE_SIZE)
     #undef _NBIX
     blm_init_stats()
@@ -1324,7 +1355,11 @@ ctx5#:
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ2_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ2_EMU_QID)
+#if BLM_NBI_BLQ2_CACHE_SIZE > 0
     move(cache_hwm, (BLM_NBI_BLQ2_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#else
+    move(cache_hwm, 0)
+#endif
     move(cache_size, BLM_NBI_BLQ2_CACHE_SIZE)
     #undef _NBIX
     blm_init_filter_match(cls_ap_filter_match, CTX5_FILTER_MATCH)
@@ -1337,7 +1372,11 @@ ctx6#:
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ3_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ3_EMU_QID)
+#if BLM_NBI_BLQ3_CACHE_SIZE > 0
     move(cache_hwm, (BLM_NBI_BLQ3_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#else
+    move(cache_hwm, 0)
+#endif
     move(cache_size, BLM_NBI_BLQ3_CACHE_SIZE)
     #undef _NBIX
     blm_init_stats()
@@ -1353,7 +1392,11 @@ ctx7#:
     #define_eval _NBIX   (8 + BLM_INSTANCE_ID)
     move(addr, (_BLM_NBI/**/_NBIX/**/_BLQ3_EMU_Q_BASE >>8)&0xFF000000)
     move(ringid, BLM_NBI/**/_NBIX/**/_BLQ3_EMU_QID)
+#if BLM_NBI_BLQ3_CACHE_SIZE > 0
     move(cache_hwm, (BLM_NBI_BLQ3_CACHE_SIZE - BLM_NBI_BLQ_CACHE_DEFICIT))
+#else
+    move(cache_hwm, 0)
+#endif
     move(cache_size, BLM_NBI_BLQ3_CACHE_SIZE)
     #undef _NBIX
     blm_init_filter_match(cls_ap_filter_match, CTX7_FILTER_MATCH)
