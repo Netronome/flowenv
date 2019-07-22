@@ -74,9 +74,9 @@
   The subject, minus the "[PATCH <n>/<m>]" prefix, should become the
   summary/first line of the commit's change log message.
 
-  If you create temporary commits in you copy of the mercurial
-  repository you can also use "hg export" or use the PatchBomb
-  extension.
+  The git command "format-patch" with the options --subject-prefix
+  and --cover-letter are recommended for generating patches in the
+  required format.
 
 
 == Description
@@ -160,7 +160,7 @@
   description, separated by a blank line.
 
   Patches should be in "diff -up" format.  We recommend that you use
-  HG to produce your patches: "hg diff -p".
+  "git format-patch" to produce your patches.
 
   Patches should be inline in the email message. Some email clients
   corrupt white space or wrap lines in patches.  If you cannot
