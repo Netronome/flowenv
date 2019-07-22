@@ -6,7 +6,7 @@
   The preferred method of discussing and reviewing FlowEnv
   contribution is the flowenv-dev mailing list.  You can
   subscribe/view archives etc at:
-  http://lists.netronome.com/mailman/listinfo/flowenv-dev
+  https://groups.google.com/a/netronome.com/forum/#!forum/flowenv
 
 
 = Submitting Patches
@@ -17,9 +17,9 @@
   be reviewed prior to being checked in.  The intention is for this
   process to be light-weight and quick.
 
-  All changes should be sent as patches to
-  flowenv-dev@lists.netronome.com, in the form of *one patch per
-  email*. Here are a few guidelines for submitting patches:
+  All changes should be sent as patches to flowenv@netronome.com,
+  in the form of *one patch per email*. Here are a few guidelines
+  for submitting patches:
 
   Note: Initially the process may be a bit contrived for a smallish
   internal project, but it is important to use an approach which has
