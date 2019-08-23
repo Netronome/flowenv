@@ -1829,7 +1829,10 @@ ctx7#:
     .reg alarm_cnt
     .reg deficit
     .reg island
-    .reg NbiNum
+    .reg EvtIsl
+#if BLM_PCI_BLQ_ENABLE_MASK != 0
+    .reg is_pci
+#endif
     .reg sub_id
     .reg count
     .reg addr
@@ -1856,6 +1859,9 @@ ctx7#:
     .sig alarm_sig
     .set_sig alarm_sig
 
+#if BLM_PCI_BLQ_ENABLE_MASK != 0
+    blm_pci_ctx_init()
+#endif
     blm_ctx_init()
 
 /* -------------------------------- NBI EGRESS EVENT PROCESSING - TM BLQ EVENTS -----------------------------*/
@@ -1893,7 +1899,7 @@ blm_egress_blq_processing#:
         //alu[sub_id, 0x3, AND, $event_data[0], >>16]
         alu[blq, 0x3, AND, $event_data[0], >>14]
         alu[blq_cnt_cur, blq_cnt_mask, AND, $event_data[0], >>4]
-        alu[NbiNum, 0x3, AND, $event_data[0], >>18]
+        alu[EvtIsl, 0x3, AND, $event_data[0], >>18]
         alu[deficit, blq_cnt_cur, -, blq_cnt_prev]
         alu[deficit, deficit, AND, blq_cnt_mask]
         alu[blq_evnt_cnt, blq_evnt_cnt, +, 1]
@@ -1901,7 +1907,7 @@ blm_egress_blq_processing#:
         blm_stats(BLM_STATS_NUM_TM_EVNTS_RCVD)
         .if (BLM_BLQ_LM_REF[BLM_LM_BLQ_NULL_RECYCLE_OFFSET] & 2)
             .while (deficit >= BLQ_EVENT_THRESHOLD)
-                blm_egress_null_buffer_recycle(NbiNum, blq, BLQ_EVENT_THRESHOLD)
+                blm_egress_null_buffer_recycle(EvtIsl, blq, BLQ_EVENT_THRESHOLD)
                 alu[deficit, deficit, -, BLQ_EVENT_THRESHOLD]
                 blm_stats(BLM_STATS_TM_NULL_RECYCLE)
             .endw
@@ -1909,7 +1915,15 @@ blm_egress_blq_processing#:
             .while ( deficit >= BLQ_EVENT_THRESHOLD)
                 /* If there is any pending DMA Evnt, push egress to ingress directly */
                 .if (BLM_BLQ_LM_REF[BLM_LM_BLQ_DMA_EVNT_PEND_CNT_OFFSET] != 0)
-                    blm_recycle(NbiNum, blq, NbiNum, blq, BLM_RECYCLE_LEN)
+#if BLM_PCI_BLQ_ENABLE_MASK == 0
+                    blm_recycle(EvtIsl, blq, EvtIsl, blq, BLM_RECYCLE_LEN)
+#else
+                    .if (is_pci)
+                        blm_pci_recycle(EvtIsl, blq, 0, blq, BLM_RECYCLE_LEN)
+                    .else
+                        blm_recycle(EvtIsl, blq, EvtIsl, blq, BLM_RECYCLE_LEN)
+                    .endif
+#endif
                     blm_decr_dma_evnt_pend_cnt()
                     blm_stats(BLM_STATS_RECYCLE_DIRECT)
                 .else
@@ -1917,10 +1931,10 @@ blm_egress_blq_processing#:
                     alu[cache_cnt, --, b, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET]]
                     blm_cache_release_lock()
                     .if (cache_cnt >= cache_hwm)
-                        blm_egress_pull_buffers_to_emu_ring(NbiNum, blq, addr, ringid)
+                        blm_egress_pull_buffers_to_emu_ring(EvtIsl, blq, addr, ringid)
                         blm_stats(BLM_STATS_RECYCLE_TM_TO_EMU)
                     .else
-                        blm_egress_pull_buffers_to_cache(NbiNum, blq, BLQ_EVENT_THRESHOLD)
+                        blm_egress_pull_buffers_to_cache(EvtIsl, blq, BLQ_EVENT_THRESHOLD)
                         blm_stats(BLM_STATS_RECYCLE_TM_TO_CACHE)
                     .endif
                 .endif
@@ -1955,7 +1969,6 @@ blm_egress_blq_processing#:
 /* -------------------------------- NBI INGRESS EVENT PROCESSING - DMA BLQ EVENTS (EVEN Contexts) -----------------------------*/
 
 blm_ingress_blq_processing#:
-
     /* Setup DMA Evnt Auto push */
     evntm_cls_event_filter_config(cls_ap_filter_number, AUTOPUSH_FILTER_MASK, \
                                   cls_ap_filter_match, CLS_AP_FILTER_TYPE) /* Match NBI-x/DMA, Evnt Type 5 */
@@ -1992,8 +2005,9 @@ process_dma_evnet#:
 service_check#:
         //alu[sub_id, 0x3, AND, event_data, >>16]
         alu[blq, 0x3, AND, event_data, >>14]
-        alu[NbiNum, 0x3, AND, event_data, >>18]
+        alu[EvtIsl, 0x3, AND, event_data, >>18]
         alu[blq_cnt_cur, blq_cnt_mask, AND, event_data, >>4]
+
         alu[deficit, blq_cnt_cur, -, blq_cnt_prev]
         alu[deficit, deficit, AND, blq_cnt_mask]
 
@@ -2007,7 +2021,15 @@ service_check#:
         .if (BLM_BLQ_LM_REF[BLM_LM_BLQ_NULL_RECYCLE_OFFSET] & 1)
             D(MAILBOX2, 0x2222)
             .while (deficit >= BLQ_EVENT_THRESHOLD)
-                blm_ingress_null_buffer_recycle(NbiNum, blq, BLQ_EVENT_THRESHOLD)
+#if BLM_PCI_BLQ_ENABLE_MASK == 0
+                blm_ingress_null_buffer_recycle(EvtIsl, blq, BLQ_EVENT_THRESHOLD)
+#else
+                .if (is_pci)
+                    blm_pci_ingress_null_buffer_recycle(EvtIsl, blq, BLQ_EVENT_THRESHOLD)
+                .else
+                    blm_ingress_null_buffer_recycle(EvtIsl, blq, BLQ_EVENT_THRESHOLD)
+                .endif
+#endif
                 alu[deficit, deficit, -, BLQ_EVENT_THRESHOLD]
                 blm_stats(BLM_STATS_DMA_NULL_RECYCLE)
             .endw
@@ -2024,7 +2046,15 @@ service_check#:
                 blm_cache_release_lock()
                 .if (cache_cnt >= BLQ_EVENT_THRESHOLD)
                     D(MAILBOX3, 0x1111)
-                    blm_ingress_push_buffers_from_cache(NbiNum, blq, BLQ_EVENT_THRESHOLD)
+#if BLM_PCI_BLQ_ENABLE_MASK == 0
+                    blm_ingress_push_buffers_from_cache(EvtIsl, blq, BLQ_EVENT_THRESHOLD)
+#else
+                    .if (is_pci)
+                        blm_pci_ingress_push_buffers_from_cache(EvtIsl, blq, BLQ_EVENT_THRESHOLD)
+                    .else
+                        blm_ingress_push_buffers_from_cache(EvtIsl, blq, BLQ_EVENT_THRESHOLD)
+                    .endif
+#endif
                     blm_decr_dma_evnt_pend_cnt()
                     blm_stats(BLM_STATS_RECYCLE_CACHE_TO_DMA)
                 .else
