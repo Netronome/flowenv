@@ -29,7 +29,9 @@
 #include "_h/blm_uc.h"
 #include "_h/blm_internal.h"
 
+#include "_uc/blm_common.uc"
 #include "_uc/blm_nbi.uc"
+#include "_uc/blm_pci.uc"
 #include "blm_api.uc"
 
 
@@ -180,11 +182,30 @@
         #endif
     #endloop
 
-    /* CLS Autopush filter match per context */
-    #define CTX0_FILTER_MATCH   (0x5 | 0x0 <<14 | NBII <<18)
-    #define CTX2_FILTER_MATCH   (0x5 | 0x1 <<14 | NBII <<18)
-    #define CTX4_FILTER_MATCH   (0x5 | 0x2 <<14 | NBII <<18)
-    #define CTX6_FILTER_MATCH   (0x5 | 0x3 <<14 | NBII <<18)
+    /* We set up the ingress filters for either NBI or PCIe DMA */
+    #if BLM_PCI_BLQ_ENABLE_MASK & (1 << 0)
+        #define CTX0_FILTER_MATCH   (0x5 | 0x0 << 14 | PCII << 18 | 2 << 16)
+    #else
+        #define CTX0_FILTER_MATCH   (0x5 | 0x0 << 14 | NBII << 18)
+    #endif
+
+    #if BLM_PCI_BLQ_ENABLE_MASK & (1 << 1)
+        #define CTX2_FILTER_MATCH   (0x5 | 0x1 << 14 | PCII << 18 | 2 << 16)
+    #else
+        #define CTX2_FILTER_MATCH   (0x5 | 0x1 << 14 | NBII << 18)
+    #endif
+
+    #if BLM_PCI_BLQ_ENABLE_MASK & (1 << 2)
+        #define CTX4_FILTER_MATCH   (0x5 | 0x2 <<14 | PCII << 18 | 2 << 16)
+    #else
+        #define CTX4_FILTER_MATCH   (0x5 | 0x2 <<14 | NBII << 18)
+    #endif
+
+    #if BLM_PCI_BLQ_ENABLE_MASK & (1 << 3)
+        #define CTX6_FILTER_MATCH   (0x5 | 0x3 <<14 | PCII << 18 | 2 << 16)
+    #else
+        #define CTX6_FILTER_MATCH   (0x5 | 0x3 <<14 | NBII << 18)
+    #endif
 
     /* bit[17:16] = Sub-Id. For TM sub_id = 0x1 */
     #define CTX1_FILTER_MATCH   (0x5 | 0x4 <<14 | NBII <<18)
@@ -257,6 +278,13 @@
     #undef _BLM_INFO_TH12713
     .init BLM_INFO_SECTION_BASE+16      (NBI/**/NBII/**/_BLQ_EMU_0_PKTBUF_SIZE | (NBI/**/NBII/**/_BLQ_EMU_1_PKTBUF_SIZE << 16))
     .init BLM_INFO_SECTION_BASE+20      (NBI/**/NBII/**/_BLQ_EMU_2_PKTBUF_SIZE | (NBI/**/NBII/**/_BLQ_EMU_3_PKTBUF_SIZE << 16))
+
+    /* Additional PCIe information */
+    #if BLM_PCI_BLQ_ENABLE_MASK != 0
+        .init BLM_INFO_SECTION_BASE+24  (BLM_PCI_BLQ_ENABLE_MASK)
+        .init BLM_INFO_SECTION_BASE+28  (PCI/**/PCII/**/_BLQ_EMU_0_PKTBUF_SIZE | (PCI/**/PCII/**/_BLQ_EMU_1_PKTBUF_SIZE << 16))
+        .init BLM_INFO_SECTION_BASE+32  (PCI/**/PCII/**/_BLQ_EMU_2_PKTBUF_SIZE | (PCI/**/PCII/**/_BLQ_EMU_3_PKTBUF_SIZE << 16))
+    #endif
 #endm /* blm_info_section */
 
 /*
@@ -520,6 +548,26 @@
 /*
  *
  */
+#macro blm_pci_ingress_push_buffers_from_cache(PcieNum, blq, n)
+.begin
+    .reg _addr
+    .reg _offset
+    .reg $dummy[2]
+    .sig rd_complete_sig
+    .xfer_order $dummy
+    blm_cache_acquire_lock()
+    blm_decr_cache_cnt(n)
+    move(_addr, (__ADDR_I0_CTM >>8) & 0xFF000000)
+    alu[_offset, --, b, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ENTRY_CNT_OFFSET], <<2]
+    alu[_offset, _offset, +, BLM_BLQ_LM_REF[BLM_LM_BLQ_CACHE_ADDR_OFFSET]]
+    blm_pci_push_mem2dma(PcieNum, blq, _addr, _offset, n, 1)
+    blm_cache_release_lock()
+.end
+#endm /* blm_pci_ingress_push_buffers_from_cache */
+
+/*
+ *
+ */
 #macro blm_egress_null_buffer_recycle(NbiNum, blq, n)
 .begin
     .reg _addr
@@ -555,6 +603,19 @@
     blm_push_mem2dma(NbiNum, blq, _addr, _offset, n, 1)
 .end
 #endm /* blm_ingress_null_buffer_recycle */
+
+/*
+ *
+ */
+#macro blm_pci_ingress_null_buffer_recycle(PcieNum, blq, n)
+.begin
+    .reg _addr
+    .reg _offset
+    move(_addr, ((BLM_INGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID >>8) & 0xFF000000))
+    move(_offset, ((BLM_INGRESS_NULL_BUF_RECYCLE_BASE_/**/BLM_INSTANCE_ID) & 0xFFFFFFFF))
+    blm_pci_push_mem2dma(PcieNum, blq, _addr, _offset, n, 1)
+.end
+#endm /* blm_pci_ingress_null_buffer_recycle */
 
 /*
  *
@@ -762,9 +823,14 @@ end_cache_fill#:
  *
  * @param NBI_NUM       - The NBI number (8/9)
  * @param BLQ_NUM       - The BLQ ring number (0-3)
- * @param BLQ_LEN       - The BLQ length (512,1024,2048,4096)
- * @param BLQ_HEAD      - The BLQ head pointer (0-4095)
+ * @param BLQ_LEN       - The BLQ length
+ * @param BLQ_HEAD      - The BLQ head pointer
  * @param INIT_COUNT    - The initial number of entries the ring is populated with
+ *
+ * @note For NFP-6xxx, BLQ_LEN must be 512, 1024, 2048 or 4096.
+ * @note For NFP-38xx, BLQ_LEN must be 256, 512, 1024 or 2048.
+ * @note For NFP-6xxx, BLQ_HEAD must be from 0 to 4095.
+ * @note For NFP-38xx, BLQ_HEAD must be from 0 to 2047.
  */
 #macro blm_blq_ring_init(NBI_NUM, BLQ_NUM, BLQ_LEN, BLQ_HEAD, INIT_COUNT)
 .begin
@@ -777,8 +843,14 @@ end_cache_fill#:
         #error "BLQ number must be 0-3 (Given number " BLQ_NUM")"
     #endif
     /* Check blq length */
-    #if ((BLQ_LEN != 512) && (BLQ_LEN != 1024) && (BLQ_LEN != 2048) && (BLQ_LEN != 4096))
-        #error "BLQ length must be 512/1024/2048/4096 (Given length " BLQ_LEN")"
+    #if IS_NFPTYPE(__NFP6000)
+        #if ((BLQ_LEN != 512) && (BLQ_LEN != 1024) && (BLQ_LEN != 2048) && (BLQ_LEN != 4096))
+            #error "BLQ length must be 512/1024/2048/4096 (Given length " BLQ_LEN")"
+        #endif
+    #else
+        #if ((BLQ_LEN != 256) && (BLQ_LEN != 512) && (BLQ_LEN != 1024) && (BLQ_LEN != 2048))
+            #error "BLQ length must be 256/512/1024/2048 (Given length " BLQ_LEN")"
+        #endif
     #endif
     /* Init count can not be > blq length */
     #if (BLQ_LEN < INIT_COUNT)
@@ -795,7 +867,11 @@ end_cache_fill#:
 
     #define_eval _TAIL_PTR_ (BLQ_HEAD + INIT_COUNT)
     #define_eval _HEAD_PTR_ BLQ_HEAD
-    #define_eval _SIZE_     (LOG2(BLQ_LEN) - 9)
+    #if IS_NFPTYPE(__NFP6000)
+        #define_eval _SIZE_     (LOG2(BLQ_LEN) - 9)
+    #else
+        #define_eval _SIZE_     (LOG2(BLQ_LEN) - 8)
+    #endif
 
     #if (_TAIL_PTR_ > _HEAD_PTR_)
         #define_eval _TAIL_PTR_ (_TAIL_PTR_ - 1)
@@ -815,10 +891,59 @@ end_cache_fill#:
 #endm
 
 /**
+ * Initialize a BLQ ring (Writes BLQueCtrl Register) at LOAD time
+ *
+ * @param PCI_NUM       - The PCIE number (4)
+ * @param BLQ_NUM       - The BLQ ring number (0-3)
+ * @param BLQ_LEN       - The BLQ length
+ * @param BLQ_HEAD      - The BLQ head pointer
+ * @param INIT_COUNT    - The initial number of entries the ring is populated with
+ *
+ * @note For NFP-38xx, BLQ_LEN must be 256, 512, 1024 or 2048.
+ * @note For NFP-38xx, BLQ_HEAD must be from 0 to 2047.
+ */
+#macro blm_pci_blq_ring_init(PCI_NUM, BLQ_NUM, BLQ_LEN, BLQ_HEAD, INIT_COUNT)
+.begin
+    /* Check PCIe number */
+    #if (PCI_NUM != 4)
+        #error "Pci number must be 4"
+    #endif
+    /* Check blq number */
+    #if ((BLQ_NUM < 0) || (BLQ_NUM > 3))
+        #error "BLQ number must be 0-3 (Given number " BLQ_NUM")"
+    #endif
+    /* Check blq length */
+    #if ((BLQ_LEN != 256) && (BLQ_LEN != 512) && (BLQ_LEN != 1024) && (BLQ_LEN != 2048))
+        #error "BLQ length must be 256/512/1024/2048 (Given length " BLQ_LEN")"
+    #endif
+    /* Init count can not be > blq length */
+    #if (BLQ_LEN < INIT_COUNT)
+        #error "BLQ init count can not be bigger than BLQ length (Length "BLQ_LEN", Init count "INIT_COUNT")"
+    #endif
+
+    #define_eval _TAIL_PTR_ (BLQ_HEAD + INIT_COUNT)
+    #define_eval _HEAD_PTR_ BLQ_HEAD
+    #define_eval _SIZE_     (LOG2(BLQ_LEN) - 8)
+
+    #if (_TAIL_PTR_ > _HEAD_PTR_)
+        #define_eval _TAIL_PTR_ (_TAIL_PTR_ - 1)
+    #endif
+
+    #define_eval PCI_IDX (PCI_NUM - 4)
+    blm_pci_cfg_blq(PCI_IDX, BLQ_NUM, _SIZE_, _HEAD_PTR_, _TAIL_PTR_)
+
+    #undef _TAIL_PTR_
+    #undef _HEAD_PTR_
+    #undef _SIZE_
+
+.end
+#endm
+
+/**
  * Fill up a BLQ or EMU ring
  *
- * @param R_TYPE                        - BLQ or EMU
- * @param NBI_NUM                       - The NBI number (8/9)
+ * @param R_TYPE                        - BLQ, PCI_BLQ or EMU
+ * @param ISL_NUM                       - The island number (4, or 8/9)
  * @param R_SIZE                        - The blq/ring size (entry count)
  * @param R_BASE                        - The BDsram start index OR the EMU ring memory base address
  * @param BUF_SIZE                      - The packet EMU buffer size to be used
@@ -827,7 +952,7 @@ end_cache_fill#:
  * @param IMEM0/1 or EMEM0/1/2_DENSITY  - The density of the buffer pointers to be populated into the ring memory
  *
  */
-#macro blm_ring_fill(R_TYPE, NBI_NUM, R_SIZE, R_BASE, BUF_SIZE, \
+#macro blm_ring_fill(R_TYPE, ISL_NUM, R_SIZE, R_BASE, BUF_SIZE, \
                      IMEM0_NUM_BUFS, IMEM0_BASE, IMEM0_DENSITY, \
                      IMEM1_NUM_BUFS, IMEM1_BASE, IMEM1_DENSITY, \
                      EMEM0_CACHE_NUM_BUFS, EMEM0_CACHE_BASE, EMEM0_CACHE_DENSITY, \
@@ -837,11 +962,6 @@ end_cache_fill#:
                      EMEM1_NUM_BUFS, EMEM1_BASE, EMEM1_DENSITY, \
                      EMEM2_NUM_BUFS, EMEM2_BASE, EMEM2_DENSITY)
 .begin
-    /* Check nbi number */
-    #if ((NBI_NUM != 8) && (NBI_NUM != 9))
-        #error "NBI number must be 8 or 9"
-    #endif
-
     #if (streq('R_TYPE', 'EMU'))
         /* Check ring size */
         #if ((R_SIZE < 512) || (R_SIZE > 16*1024*1024))
@@ -852,12 +972,37 @@ end_cache_fill#:
             #error "Ring size must be a power of 2 (Given size " R_SIZE")"
         #endif
     #elif (streq('R_TYPE', 'BLQ'))
+        /* Check nbi number */
+        #if ((ISL_NUM != 8) && (ISL_NUM != 9))
+            #error "NBI number must be 8 or 9"
+        #endif
+
         /* Check blq length */
-        #if ((R_SIZE != 512) && (R_SIZE != 1024) && (R_SIZE != 2048) && (R_SIZE != 4096))
-            #error "BLQ length must be 512/1024/2048/4096 (Given length " R_SIZE")"
+        #if IS_NFPTYPE(__NFP6000)
+            #if ((R_SIZE != 512) && (R_SIZE != 1024) && (R_SIZE != 2048) && (R_SIZE != 4096))
+                #error "BLQ length must be 512/1024/2048/4096 (Given length " R_SIZE")"
+            #endif
+        #else
+            #if ((R_SIZE != 256) && (R_SIZE != 512) && (R_SIZE != 1024) && (R_SIZE != 2048))
+                #error "BLQ length must be 256/512/1024/2048 (Given length " R_SIZE")"
+            #endif
+        #endif
+    #elif (streq('R_TYPE', 'PCI_BLQ'))
+        #if (BLM_PCI_SUPPORT != 0)
+            /* Check PCIe number */
+            #if (ISL_NUM != 4)
+                #error "PCIe number must be 4"
+            #endif
+
+            /* Check blq length */
+            #if ((R_SIZE != 256) && (R_SIZE != 512) && (R_SIZE != 1024) && (R_SIZE != 2048))
+                #error "BLQ length must be 256/512/1024/2048 (Given length " R_SIZE")"
+            #endif
+        #else
+            #error "R_TYPE is PCI_BLQ, but BLM_PCI_SUPPORT is not defined"
         #endif
     #else
-        #error "R_TYPE must be BLQ or EMU only"
+        #error "R_TYPE must be BLQ, PCI_BLQ or EMU only"
     #endif
 
     /* Init count can not be > (blq length + emu ring size) */
@@ -1010,25 +1155,48 @@ end_cache_fill#:
                         #endif
 
                         #define_eval R_OFF (R_OFF + 4)
-                    #else
+                    #elif (streq('R_TYPE', 'BLQ'))
                         #if (streq('_MEM_REGION_', 'IMEM0'))
-                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr (((IMEM0_BASE + IMEM0_BUFS_OFF) | (1 <<23)) >> 11) const
+                            .init_csr nbi:i/**/ISL_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr (((IMEM0_BASE + IMEM0_BUFS_OFF) | (1 <<23)) >> 11) const
                         #elif (streq('_MEM_REGION_', 'IMEM1'))
-                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr (((IMEM1_BASE + IMEM1_BUFS_OFF) | (1 <<23)) >> 11) const
+                            .init_csr nbi:i/**/ISL_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr (((IMEM1_BASE + IMEM1_BUFS_OFF) | (1 <<23)) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM0_CACHE'))
-                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM0_CACHE_BASE + EMEM0_CACHE_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/ISL_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM0_CACHE_BASE + EMEM0_CACHE_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM1_CACHE'))
-                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM1_CACHE_BASE + EMEM1_CACHE_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/ISL_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM1_CACHE_BASE + EMEM1_CACHE_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM2_CACHE'))
-                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM2_CACHE_BASE + EMEM2_CACHE_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/ISL_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM2_CACHE_BASE + EMEM2_CACHE_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM0'))
-                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM0_BASE + EMEM0_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/ISL_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM0_BASE + EMEM0_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM1'))
-                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM1_BASE + EMEM1_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/ISL_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM1_BASE + EMEM1_BUFS_OFF) >> 11) const
                         #elif (streq('_MEM_REGION_', 'EMEM2'))
-                            .init_csr nbi:i/**/NBI_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM2_BASE + EMEM2_BUFS_OFF) >> 11) const
+                            .init_csr nbi:i/**/ISL_NUM.NbiDmaCpp.NbiDmaBDSRAM.NbiDmaBDSramEntry/**/R_OFF.MuAddr ((EMEM2_BASE + EMEM2_BUFS_OFF) >> 11) const
                         #endif
 
+                        #define_eval R_OFF (R_OFF + 1)
+                    #else /* (streq('R_TYPE', 'PCI_BLQ')) */
+                        /* NOTE: we stash them into memory to be populated at load time
+                         *       that is then copied into BDSRAM druring ME init
+                         */
+                        #define_eval SR_OFF (R_OFF * 4)
+                        #if (streq('_MEM_REGION_', 'IMEM0'))
+                            .init blm_pci/**/ISL_NUM/**/_blq_stash+SR_OFF (((IMEM0_BASE + IMEM0_BUFS_OFF) | (1 <<23)) >> 11)
+                        #elif (streq('_MEM_REGION_', 'IMEM1'))
+                            .init blm_pci/**/ISL_NUM/**/_blq_stash+SR_OFF (((IMEM1_BASE + IMEM1_BUFS_OFF) | (1 <<23)) >> 11)
+                        #elif (streq('_MEM_REGION_', 'EMEM0_CACHE'))
+                            .init blm_pci/**/ISL_NUM/**/_blq_stash+SR_OFF ((EMEM0_CACHE_BASE + EMEM0_CACHE_BUFS_OFF) >> 11)
+                        #elif (streq('_MEM_REGION_', 'EMEM1_CACHE'))
+                            .init blm_pci/**/ISL_NUM/**/_blq_stash+SR_OFF ((EMEM1_CACHE_BASE + EMEM1_CACHE_BUFS_OFF) >> 11)
+                        #elif (streq('_MEM_REGION_', 'EMEM2_CACHE'))
+                            .init blm_pci/**/ISL_NUM/**/_blq_stash+SR_OFF ((EMEM2_CACHE_BASE + EMEM2_CACHE_BUFS_OFF) >> 11)
+                        #elif (streq('_MEM_REGION_', 'EMEM0'))
+                            .init blm_pci/**/ISL_NUM/**/_blq_stash+SR_OFF ((EMEM0_BASE + EMEM0_BUFS_OFF) >> 11)
+                        #elif (streq('_MEM_REGION_', 'EMEM1'))
+                            .init blm_pci/**/ISL_NUM/**/_blq_stash+SR_OFF ((EMEM1_BASE + EMEM1_BUFS_OFF) >> 11)
+                        #elif (streq('_MEM_REGION_', 'EMEM2'))
+                            .init blm_pci/**/ISL_NUM/**/_blq_stash+SR_OFF ((EMEM2_BASE + EMEM2_BUFS_OFF) >> 11)
+                        #endif
                         #define_eval R_OFF (R_OFF + 1)
                     #endif
 
@@ -1094,16 +1262,18 @@ end_cache_fill#:
 #endm
 
 /**
- * Fill up the DMA's BLQ
+ * Fill up the NBI DMA's BLQ
  *
  * @param NBI_NUM                       - The NBI number (8/9)
- * @param BLQ_LEN                       - The length of the blq (512/1024/2048/4096)
+ * @param BLQ_LEN                       - The length of the blq
  * @param BDSRAM_OFF                    - The first index of the BDSram this BLQ is using
  * @param BUF_SIZE                      - The packet EMU buffer size to be used
  * @param IMEM0/1 or EMEM0/1/2_NUM_BUFS - The number of buffers to be populated into the BDSram (BLQ)
  * @param IMEM0/1 or EMEM0/1/2_BASE     - The symbol name to be used for the buffers memory allocation
  * @param IMEM0/1 or EMEM0/1/2_DENSITY  - The density of the buffer pointers to be populated into the ring memory
  *
+ * @note For NFP-6xxx, BLQ_LEN must be 512, 1024, 2048 or 4096.
+ * @note For NFP-38xx, BLQ_LEN must be 256, 512, 1024 or 2048.
  */
 #macro blm_blq_fill(NBI_NUM, BLQ_LEN, BDSRAM_OFF, BUF_SIZE, \
                     IMEM0_NUM_BUFS, IMEM0_BASE, IMEM0_DENSITY, \
@@ -1116,6 +1286,40 @@ end_cache_fill#:
                     EMEM2_NUM_BUFS, EMEM2_BASE, EMEM2_DENSITY)
 
     blm_ring_fill(BLQ, NBI_NUM, BLQ_LEN, BDSRAM_OFF, BUF_SIZE,
+                  IMEM0_NUM_BUFS, IMEM0_BASE, IMEM0_DENSITY,
+                  IMEM1_NUM_BUFS, IMEM1_BASE, IMEM1_DENSITY,
+                  EMEM0_CACHE_NUM_BUFS, EMEM0_CACHE_BASE, EMEM0_CACHE_DENSITY,
+                  EMEM1_CACHE_NUM_BUFS, EMEM1_CACHE_BASE, EMEM1_CACHE_DENSITY,
+                  EMEM2_CACHE_NUM_BUFS, EMEM2_CACHE_BASE, EMEM2_CACHE_DENSITY,
+                  EMEM0_NUM_BUFS, EMEM0_BASE, EMEM0_DENSITY,
+                  EMEM1_NUM_BUFS, EMEM1_BASE, EMEM1_DENSITY,
+                  EMEM2_NUM_BUFS, EMEM2_BASE, EMEM2_DENSITY)
+#endm
+
+/**
+ * Fill up the PCIe DMA's BLQ
+ *
+ * @param PCI_NUM                       - The PCIe number (4)
+ * @param BLQ_LEN                       - The length of the blq
+ * @param BDSRAM_OFF                    - The first index of the BDSram this BLQ is using
+ * @param BUF_SIZE                      - The packet EMU buffer size to be used
+ * @param IMEM0/1 or EMEM0/1/2_NUM_BUFS - The number of buffers to be populated into the BDSram (BLQ)
+ * @param IMEM0/1 or EMEM0/1/2_BASE     - The symbol name to be used for the buffers memory allocation
+ * @param IMEM0/1 or EMEM0/1/2_DENSITY  - The density of the buffer pointers to be populated into the ring memory
+ *
+ * @note For NFP-38xx, BLQ_LEN must be 256, 512, 1024 or 2048.
+ */
+#macro blm_pci_blq_fill(PCI_NUM, BLQ_LEN, BDSRAM_OFF, BUF_SIZE, \
+                        IMEM0_NUM_BUFS, IMEM0_BASE, IMEM0_DENSITY, \
+                        IMEM1_NUM_BUFS, IMEM1_BASE, IMEM1_DENSITY, \
+                        EMEM0_CACHE_NUM_BUFS, EMEM0_CACHE_BASE, EMEM0_CACHE_DENSITY, \
+                        EMEM1_CACHE_NUM_BUFS, EMEM1_CACHE_BASE, EMEM1_CACHE_DENSITY, \
+                        EMEM2_CACHE_NUM_BUFS, EMEM2_CACHE_BASE, EMEM2_CACHE_DENSITY, \
+                        EMEM0_NUM_BUFS, EMEM0_BASE, EMEM0_DENSITY, \
+                        EMEM1_NUM_BUFS, EMEM1_BASE, EMEM1_DENSITY, \
+                        EMEM2_NUM_BUFS, EMEM2_BASE, EMEM2_DENSITY)
+
+    blm_ring_fill(PCI_BLQ, PCI_NUM, BLQ_LEN, BDSRAM_OFF, BUF_SIZE,
                   IMEM0_NUM_BUFS, IMEM0_BASE, IMEM0_DENSITY,
                   IMEM1_NUM_BUFS, IMEM1_BASE, IMEM1_DENSITY,
                   EMEM0_CACHE_NUM_BUFS, EMEM0_CACHE_BASE, EMEM0_CACHE_DENSITY,
@@ -1230,14 +1434,16 @@ ctx0#:
                     #define_eval _EMU_INIT_COUNT_   (_EMU_INIT_COUNT_ + \
                                                 BLM_NBI/**/NBII/**/_BLQ/**/_blq/**/_/**/_mem_type/**/_NUM_BUFS)
                 #endloop
-                blm_emu_ring_fill(NBI/**/NBII/**/_BLQ/**/_blq/**/_EMU_RING_FILL_PARAMS)
-                blm_emu_ring_init(BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_Q_ISLAND, \
-                                  BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_QID, \
-                                 (BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_Q_SIZE/4), \
-                                 _BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_Q_BASE, \
-                                  BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_Q_LOCALITY, \
-                                  NBI/**/_nbi/**/_BLQ_EMU_/**/_blq/**/_PKTBUF_SIZE, \
-                                  _EMU_INIT_COUNT_)
+                #if !(BLM_PCI_BLQ_ENABLE_MASK & (1 << _blq))
+                    blm_emu_ring_fill(NBI/**/NBII/**/_BLQ/**/_blq/**/_EMU_RING_FILL_PARAMS)
+                    blm_emu_ring_init(BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_Q_ISLAND, \
+                                      BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_QID, \
+                                     (BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_Q_SIZE/4), \
+                                     _BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_Q_BASE, \
+                                      BLM_NBI/**/_nbi/**/_BLQ/**/_blq/**/_EMU_Q_LOCALITY, \
+                                      NBI/**/_nbi/**/_BLQ_EMU_/**/_blq/**/_PKTBUF_SIZE, \
+                                      _EMU_INIT_COUNT_)
+                #endif
             #endloop
         #endloop
         #undef _EMU_INIT_COUNT_
@@ -1410,6 +1616,143 @@ ctx7#:
 blm_ctx_init_end#:
 .end
 #endm /* blm_ctx_init */
+
+#macro blm_pci_ctx_init()
+.begin
+    immed[is_pci, 0]
+    #define_eval _PCIX  (4 + BLM_INSTANCE_ID)
+    br=ctx[0, ctx0#]
+    br=ctx[1, ctx1#]
+    br=ctx[2, ctx2#]
+    br=ctx[3, ctx3#]
+    br=ctx[4, ctx4#]
+    br=ctx[5, ctx5#]
+    br=ctx[6, ctx6#]
+    br=ctx[7, ctx7#]
+
+ctx0#:
+    /* Each BLM instance populates the buffers into the BLQ/BDSram */
+    #ifndef BLM_SKIP_DMA_INIT
+        /* NOTE: PCIe init requires us to first set up blq memory and then rings.
+         *       This is done because 'init_csr' cannot be used to set up PCIe BLQ
+         *       due to there being no direct BDSRAM interface and BLQ ring csrs having
+         *       two halves. Initcsrs CANNOT be a sequence set of operations.
+         */
+        #for _blq [0,1,2,3]
+            #if (1 << _blq) & BLM_PCI_BLQ_ENABLE_MASK
+                #define_eval _EMU_INIT_COUNT_   0
+                #for _mem_type [EMU_IMEM0,EMU_IMEM1,EMU_EMEM0,EMU_EMEM1,EMU_EMEM2,EMU_EMEM0_CACHE,EMU_EMEM1_CACHE,EMU_EMEM2_CACHE]
+                    #define_eval _EMU_INIT_COUNT_   (_EMU_INIT_COUNT_ + \
+                                                BLM_PCI/**/PCII/**/_BLQ/**/_blq/**/_/**/_mem_type/**/_NUM_BUFS)
+                #endloop
+                blm_pci_blq_fill(PCI/**/PCII/**/_BLQ/**/_blq/**/_FILL_PARAMS)
+            #endif
+        #endloop
+
+        /* Here we commit memory initialized with initcsrs in blm_pci_blq_fill into
+         * the pcie BLQ memory
+         */
+        blm_pci_blq_commit(BLM_INSTANCE_ID, blm_pci/**/PCII/**/_blq_stash)
+
+        #for _blq [0,1,2,3]
+            #if (_blq == 0)
+                #define _BLQ_HEAD   0
+            #else
+                #define_eval _blq_prev   (_blq - 1)
+                #define_eval _BLQ_HEAD  (BLM_PCI/**/PCII/**/_BLQ/**/_blq_prev/**/_LEN + _BLQ_HEAD)
+            #endif
+			#define_eval _BLQ_INIT_COUNT_ 0
+            #for _mem_type [BDSRAM_IMEM0,BDSRAM_IMEM1,BDSRAM_EMEM0,BDSRAM_EMEM1,BDSRAM_EMEM2,BDSRAM_EMEM0_CACHE,BDSRAM_EMEM1_CACHE,BDSRAM_EMEM2_CACHE]
+                #define_eval _BLQ_INIT_COUNT_   (_BLQ_INIT_COUNT_ + \
+                                            BLM_PCI/**/PCII/**/_BLQ/**/_blq/**/_/**/_mem_type/**/_NUM_BUFS)
+            #endloop
+            #if (1 << _blq) & BLM_PCI_BLQ_ENABLE_MASK
+                blm_pci_blq_ring_init(PCII, _blq, BLM_PCI/**/PCII/**/_BLQ/**/_blq/**/_LEN, _BLQ_HEAD, _BLQ_INIT_COUNT_)
+            #endif
+        #endloop
+
+        #undef _BLQ_INIT_COUNT_
+        #undef _BLQ_HEAD
+        #undef _blq_prev
+        #undef _blq
+        #undef _mem_type
+
+    #endif /* BLM_SKIP_DMA_INIT */
+
+    #ifdef BLM_INIT_EMU_RINGS
+        #for _pci [4]
+            #for _blq [0,1,2,3]
+                #define_eval _EMU_INIT_COUNT_   0
+                #for _mem_type [EMU_IMEM0,EMU_IMEM1,EMU_EMEM0,EMU_EMEM1,EMU_EMEM2,EMU_EMEM0_CACHE,EMU_EMEM1_CACHE,EMU_EMEM2_CACHE]
+                    #define_eval _EMU_INIT_COUNT_   (_EMU_INIT_COUNT_ + \
+                                                BLM_PCI/**/_pci/**/_BLQ/**/_blq/**/_/**/_mem_type/**/_NUM_BUFS)
+                #endloop
+                #if BLM_PCI_BLQ_ENABLE_MASK & (1 << _blq)
+                    blm_emu_ring_fill(PCI/**/_pci/**/_BLQ/**/_blq/**/_EMU_RING_FILL_PARAMS)
+                    blm_emu_ring_init(BLM_PCI/**/_pci/**/_BLQ/**/_blq/**/_EMU_Q_ISLAND, \
+                                      BLM_PCI/**/_pci/**/_BLQ/**/_blq/**/_EMU_QID, \
+                                     (BLM_PCI/**/_pci/**/_BLQ/**/_blq/**/_Q_SIZE/4), \
+                                     _BLM_PCI/**/_pci/**/_BLQ/**/_blq/**/_EMU_Q_BASE, \
+                                      BLM_PCI/**/_pci/**/_BLQ/**/_blq/**/_EMU_Q_LOCALITY, \
+                                      PCI/**/_pci/**/_BLQ_EMU_/**/_blq/**/_PKTBUF_SIZE, \
+                                      _EMU_INIT_COUNT_)
+                #endif
+            #endloop
+        #endloop
+        #undef _EMU_INIT_COUNT_
+        #undef _pci
+        #undef _blq
+        #undef _mem_type
+    #endif /* BLM_INIT_EMU_RINGS */
+
+
+    blm_pci_cfg_blq_evnts(PCII_lsb, 0, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+    blm_pci_cfg_blq_evnts(PCII_lsb, 1, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+    blm_pci_cfg_blq_evnts(PCII_lsb, 2, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+    blm_pci_cfg_blq_evnts(PCII_lsb, 3, BLQ_EVENT_THRESHOLD_ENCODING, 1, 0)
+
+#if BLM_PCI_BLQ_ENABLE_MASK & (1 << 0)
+        immed[is_pci, 1]
+#endif
+    br[pci_init_done#]
+ctx1#:
+#if BLM_PCI_BLQ_ENABLE_MASK & (1 << 0)
+        immed[is_pci, 1]
+#endif
+    br[pci_init_done#]
+ctx2#:
+#if BLM_PCI_BLQ_ENABLE_MASK & (1 << 1)
+        immed[is_pci, 1]
+#endif
+    br[pci_init_done#]
+ctx3#:
+#if BLM_PCI_BLQ_ENABLE_MASK & (1 << 1)
+        immed[is_pci, 1]
+#endif
+    br[pci_init_done#]
+ctx4#:
+#if BLM_PCI_BLQ_ENABLE_MASK & (1 << 2)
+        immed[is_pci, 1]
+#endif
+    br[pci_init_done#]
+ctx5#:
+#if BLM_PCI_BLQ_ENABLE_MASK & (1 << 2)
+        immed[is_pci, 1]
+#endif
+    br[pci_init_done#]
+ctx6#:
+#if BLM_PCI_BLQ_ENABLE_MASK & (1 << 3)
+        immed[is_pci, 1]
+#endif
+    br[pci_init_done#]
+ctx7#:
+#if BLM_PCI_BLQ_ENABLE_MASK & (1 << 3)
+        immed[is_pci, 1]
+#endif
+    pci_init_done#:
+    #undef _PCIX
+.end
+#endm /* blm_pci_ctx_init */
 
 /* Global Relative GPR's - .init_ctx only works for global scope GPR's. These should not be in .begin/.end code block */
 .reg cls_ap_filter_match
