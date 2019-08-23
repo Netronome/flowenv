@@ -45,6 +45,9 @@
 #define_eval BLM_RECYCLE_LEN_PLUS_ONE       (BLQ_EVENT_THRESHOLD / 2)
 #define MASK_10b        0x3ff
 #define_eval NBII_lsb   (NBII & 1)
+#ifdef PCII
+#define_eval PCII_lsb   (PCII & 1)
+#endif
 
 /* Local memory constants */
 #define BLM_BLQ_LM_INDEX        0
@@ -90,6 +93,7 @@
 .alloc_resource BLM_STATS_OFFSET_RFU2                 BLQ_STATS_OFFSETS           island 8 /* Offset-13 */
 .alloc_resource BLM_STATS_OFFSET_RFU3                 BLQ_STATS_OFFSETS           island 8 /* Offset-14 */
 .alloc_resource BLM_STATS_OFFSET_RFU4                 BLQ_STATS_OFFSETS           island 8 /* Offset-15 */
+
 
 /* BLM CLS Autopush filters */
 .declare_resource BLM_AP_FILTERS island 8 cls_apfilters
@@ -139,6 +143,18 @@
 
     #if (((BLM_INSTANCE_ID) ^ (NBII & 1)) != 0)
         #error 4 "NBII should be 8 for BLM_INSTACE-ID=0 AND NBII should be 9 for BLM_INSTANCE_ID=1."
+    #endif
+
+    #if BLM_PCI_BLQ_ENABLE_MASK != 0
+        #if (IS_NFPTYPE(__NFP6000))
+            #error 4 "BLM_PCI_BLQ_ENABLE_MASK cannot be used with 6xxx chips"
+        #endif
+        #if !defined(PCII)
+            #error 4 "PCII not defined. Valid values = [4]."
+        #endif
+        #if (PCII != 4)
+            #error 4 "Invalid PCII. Valid values = [4]."
+        #endif
     #endif
 #endm /* blm_preproc_check */
 
