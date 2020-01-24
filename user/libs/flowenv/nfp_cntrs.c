@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2012-2020,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,14 +38,14 @@ nfp_cntrs_64b_read(struct nfp_device *dev, const char *base_name,
 
     /* count = 0 indicates read all counters starting at start_idx */
     if (count == 0) {
-        if (start_idx * 8 >= sym->size) {
+        if (start_idx * 8 >= nfp_rtsym_size(sym)) {
             errno = EINVAL;
             return -1;
         } else {
-            rlen = sym->size - (start_idx * 8);
+            rlen = nfp_rtsym_size(sym) - (start_idx * 8);
         }
     } else {
-        if ((start_idx + count) * 8 > sym->size) {
+        if ((start_idx + count) * 8 > nfp_rtsym_size(sym)) {
             errno = EINVAL;
             return -1;
         } else {
@@ -87,14 +87,14 @@ nfp_cntrs_64b_clr(struct nfp_device *dev, const char *base_name,
 
     /* count = 0 indicates clear all counters starting at start_idx */
     if (count == 0) {
-        if (start_idx * 8 >= sym->size) {
+        if (start_idx * 8 >= nfp_rtsym_size(sym)) {
             errno = EINVAL;
             return -1;
         } else {
-            wlen = sym->size - (start_idx * 8);
+            wlen = nfp_rtsym_size(sym) - (start_idx * 8);
         }
     } else {
-        if ((start_idx + count) * 8 > sym->size) {
+        if ((start_idx + count) * 8 > nfp_rtsym_size(sym)) {
             errno = EINVAL;
             return -1;
         } else {
@@ -132,14 +132,14 @@ nfp_cntrs_pkts_read(struct nfp_device *dev, const char *base_name,
 
     /* count = 0 indicates read all counters starting at start_idx */
     if (count == 0) {
-        if (start_idx * 8 >= sym->size) {
+        if (start_idx * 8 >= nfp_rtsym_size(sym)) {
             errno = EINVAL;
             return -1;
         } else {
-            rlen = sym->size - (start_idx * 8);
+            rlen = nfp_rtsym_size(sym) - (start_idx * 8);
         }
     } else {
-        if ((start_idx + count) * 8 > sym->size) {
+        if ((start_idx + count) * 8 > nfp_rtsym_size(sym)) {
             errno = EINVAL;
             return -1;
         } else {
