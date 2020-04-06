@@ -924,10 +924,18 @@
     #define BLM_NBI9_BLQ0_EMU_IMEM1_NUM_BUFS    0
 #endif
 #ifndef BLM_NBI9_BLQ0_BDSRAM_IMEM1_NUM_BUFS
-    #define BLM_NBI9_BLQ0_BDSRAM_IMEM1_NUM_BUFS 512
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ0_BDSRAM_IMEM1_NUM_BUFS 0
+    #else
+        #define BLM_NBI9_BLQ0_BDSRAM_IMEM1_NUM_BUFS 512
+    #endif
 #endif
 #ifndef BLM_NBI9_BLQ0_EMU_IMEM1_DENSITY
-    #define BLM_NBI9_BLQ0_EMU_IMEM1_DENSITY     1
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ0_EMU_IMEM1_DENSITY     0
+    #else
+        #define BLM_NBI9_BLQ0_EMU_IMEM1_DENSITY     1
+    #endif
 #endif
 
 #ifndef BLM_NBI9_BLQ0_EMU_EMEM0_NUM_BUFS
@@ -951,13 +959,25 @@
 #endif
 
 #ifndef BLM_NBI9_BLQ0_EMU_EMEM2_NUM_BUFS
-    #define BLM_NBI9_BLQ0_EMU_EMEM2_NUM_BUFS    1024
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ0_EMU_EMEM2_NUM_BUFS    0
+    #else
+        #define BLM_NBI9_BLQ0_EMU_EMEM2_NUM_BUFS    1024
+    #endif
 #endif
 #ifndef BLM_NBI9_BLQ0_BDSRAM_EMEM2_NUM_BUFS
-    #define BLM_NBI9_BLQ0_BDSRAM_EMEM2_NUM_BUFS 512
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ0_BDSRAM_EMEM2_NUM_BUFS 0
+    #else
+        #define BLM_NBI9_BLQ0_BDSRAM_EMEM2_NUM_BUFS 512
+    #endif
 #endif
 #ifndef BLM_NBI9_BLQ0_EMU_EMEM2_DENSITY
-    #define BLM_NBI9_BLQ0_EMU_EMEM2_DENSITY     1
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ0_EMU_EMEM2_DENSITY     0
+    #else
+        #define BLM_NBI9_BLQ0_EMU_EMEM2_DENSITY     1
+    #endif
 #endif
 
 /* Ring 1 */
@@ -983,13 +1003,25 @@
 #endif
 
 #ifndef BLM_NBI9_BLQ1_EMU_EMEM0_NUM_BUFS
-    #define BLM_NBI9_BLQ1_EMU_EMEM0_NUM_BUFS    1536
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ1_EMU_EMEM0_NUM_BUFS    0
+    #else
+        #define BLM_NBI9_BLQ1_EMU_EMEM0_NUM_BUFS    1536
+    #endif
 #endif
 #ifndef BLM_NBI9_BLQ1_BDSRAM_EMEM0_NUM_BUFS
-    #define BLM_NBI9_BLQ1_BDSRAM_EMEM0_NUM_BUFS 512
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ1_BDSRAM_EMEM0_NUM_BUFS 0
+    #else
+        #define BLM_NBI9_BLQ1_BDSRAM_EMEM0_NUM_BUFS 512
+    #endif
 #endif
 #ifndef BLM_NBI9_BLQ1_EMU_EMEM0_DENSITY
-    #define BLM_NBI9_BLQ1_EMU_EMEM0_DENSITY     2
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ1_EMU_EMEM0_DENSITY     0
+    #else
+        #define BLM_NBI9_BLQ1_EMU_EMEM0_DENSITY     2
+    #endif
 #endif
 
 #ifndef BLM_NBI9_BLQ1_EMU_EMEM1_NUM_BUFS
@@ -1015,13 +1047,25 @@
 #endif
 
 #ifndef BLM_NBI9_BLQ1_EMU_EMEM2_NUM_BUFS
-    #define BLM_NBI9_BLQ1_EMU_EMEM2_NUM_BUFS    768
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ1_EMU_EMEM2_NUM_BUFS    0
+    #else
+        #define BLM_NBI9_BLQ1_EMU_EMEM2_NUM_BUFS    768
+    #endif
 #endif
 #ifndef BLM_NBI9_BLQ1_BDSRAM_EMEM2_NUM_BUFS
-    #define BLM_NBI9_BLQ1_BDSRAM_EMEM2_NUM_BUFS 256
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ1_BDSRAM_EMEM2_NUM_BUFS 0
+    #else
+        #define BLM_NBI9_BLQ1_BDSRAM_EMEM2_NUM_BUFS 256
+    #endif
 #endif
 #ifndef BLM_NBI9_BLQ1_EMU_EMEM2_DENSITY
-    #define BLM_NBI9_BLQ1_EMU_EMEM2_DENSITY     1
+    #ifdef BLM_USE_NFP38XX_DEFAULTS
+        #define BLM_NBI9_BLQ1_EMU_EMEM2_DENSITY     0
+    #else
+        #define BLM_NBI9_BLQ1_EMU_EMEM2_DENSITY     1
+    #endif
 #endif
 
 /* Ring 2 */
