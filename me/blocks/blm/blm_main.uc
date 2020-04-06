@@ -346,13 +346,25 @@
  * Check if any BLQ events need to be ignored by BLM.
  */
 #macro blm_is_blq_enable(blq, _label)
-    #define_eval _bit_MASK       (1 << blq)
-    .if ( BLM_BLQ_ENABLE_MASK & _bit_MASK )
+    #ifdef _ENABLE_ALL_MASK
+        #warning "Redefining _ENABLE_ALL_MASK"
+    #endif
+    #define _ENABLE_ALL_MASK (BLM_BLQ_ENABLE_MASK | BLM_PCI_BLQ_ENABLE_MASK)
+    #if (_ENABLE_ALL_MASK == 0xff)
         br[_label]
-    .else
-        ctx_arb[kill]
-    .endif
-    #undef _bit_MASK
+    #else
+    .begin
+        .reg bit_msk
+
+        immed[bit_msk, (1 << blq)]
+        .if (_ENABLE_ALL_MASK & bit_msk)
+            br[_label]
+        .else
+            ctx_arb[kill]
+        .endif
+    .end
+    #endif
+    #undef _ENABLE_ALL_MASK
 #endm /* blm_is_blq_enable */
 
 /*
