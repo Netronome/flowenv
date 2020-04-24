@@ -185,29 +185,72 @@
         #error \
             "ME Island2's CTM Buffer credits are not allocated appropriately"
     #endif
-    #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND3) == 1)
-        #error "ME Island3 not present on NFP-3800"
+
+
+    #ifdef NBI0_DMA_BPE_CONFIG_ME_ISLAND3
+        #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND3) == 1)
+            #error "ME Island3 not present on NFP-3800"
+        #endif
+    #else
+        #define NBI0_DMA_BPE_CONFIG_ME_ISLAND3 0,0,0
     #endif
-    #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND4) == 1)
-        #error "ME Island4 not present on NFP-3800"
+    #ifdef NBI0_DMA_BPE_CONFIG_ME_ISLAND4
+        #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND4) == 1)
+            #error "ME Island4 not present on NFP-3800"
+        #endif
+    #else
+        #define NBI0_DMA_BPE_CONFIG_ME_ISLAND4 0,0,0
     #endif
-    #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND5) == 1)
-        #error "ME Island5 not present on NFP-3800"
+    #ifdef NBI0_DMA_BPE_CONFIG_ME_ISLAND5
+        #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND5) == 1)
+            #error "ME Island5 not present on NFP-3800"
+        #endif
+    #else
+        #define NBI0_DMA_BPE_CONFIG_ME_ISLAND5 0,0,0
     #endif
-    #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND6) == 1)
-        #error "ME Island6 not present on NFP-3800"
+    #ifdef NBI0_DMA_BPE_CONFIG_ME_ISLAND6
+        #if (ENABLE_VAL(NBI0_DMA_BPE_CONFIG_ME_ISLAND6) == 1)
+            #error "ME Island6 not present on NFP-3800"
+        #endif
+    #else
+        #define NBI0_DMA_BPE_CONFIG_ME_ISLAND6 0,0,0
     #endif
 
-    #if ( (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0) == 1) || \
-          (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND1) == 1) || \
-          (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND2) == 1) || \
-          (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND3) == 1) || \
-          (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND4) == 1) || \
-          (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND5) == 1) || \
-          (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND6) == 1) )
-        #error "NBI Island1 not present on NFP-3800"
+    #ifdef NBI1_DMA_BPE_CONFIG_ME_ISLAND0
+        #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND0) == 1)
+            #error "NBI Island1 not present on NFP-3800"
+        #endif
     #endif
-
+    #ifdef NBI1_DMA_BPE_CONFIG_ME_ISLAND1
+        #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND1) == 1)
+            #error "NBI Island1 not present on NFP-3800"
+        #endif
+    #endif
+    #ifdef NBI1_DMA_BPE_CONFIG_ME_ISLAND2
+        #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND2) == 1)
+            #error "NBI Island1 not present on NFP-3800"
+        #endif
+    #endif
+    #ifdef NBI1_DMA_BPE_CONFIG_ME_ISLAND3
+        #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND3) == 1)
+            #error "NBI Island1 not present on NFP-3800"
+        #endif
+    #endif
+    #ifdef NBI1_DMA_BPE_CONFIG_ME_ISLAND4
+        #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND4) == 1)
+            #error "NBI Island1 not present on NFP-3800"
+        #endif
+    #endif
+    #ifdef NBI1_DMA_BPE_CONFIG_ME_ISLAND5
+        #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND5) == 1)
+            #error "NBI Island1 not present on NFP-3800"
+        #endif
+    #endif
+    #ifdef NBI1_DMA_BPE_CONFIG_ME_ISLAND6
+        #if (ENABLE_VAL(NBI1_DMA_BPE_CONFIG_ME_ISLAND6) == 1)
+            #error "NBI Island1 not present on NFP-3800"
+        #endif
+    #endif
 #else
 
     #error "Unsupported chip type selected."
