@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2018,  Netronome Systems, Inc.  All rights reserved.
+ * Copyright (C) 2014-2020,  Netronome Systems, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1267,7 +1267,7 @@
         #error "BLM_NBI_BLQ1_CACHE_SIZE is not power of 2."
     #endif
     #if BLM_NBI_BLQ1_CACHE_SIZE == 0
-        #if BLM_BLQ_ENABLE_MASK & (1 << 2)
+        #if BLM_BLQ_ENABLE_MASK & (1 << 1)
             #error "BLM_NBI_BLQ1_CACHE_SIZE cannot be 0 when BLQ1 ingress thread is enabled"
         #endif
     #elif (BLM_NBI_BLQ1_CACHE_SIZE < 64)
@@ -1281,7 +1281,7 @@
         #error "BLM_NBI_BLQ2_CACHE_SIZE is not power of 2."
     #endif
     #if BLM_NBI_BLQ2_CACHE_SIZE == 0
-        #if BLM_BLQ_ENABLE_MASK & (1 << 4)
+        #if BLM_BLQ_ENABLE_MASK & (1 << 2)
             #error "BLM_NBI_BLQ2_CACHE_SIZE cannot be 0 when BLQ2 ingress thread is enabled"
         #endif
     #elif (BLM_NBI_BLQ2_CACHE_SIZE < 64)
@@ -1295,7 +1295,7 @@
         #error "BLM_NBI_BLQ3_CACHE_SIZE is not power of 2."
     #endif
     #if BLM_NBI_BLQ3_CACHE_SIZE == 0
-        #if BLM_BLQ_ENABLE_MASK & (1 << 6)
+        #if BLM_BLQ_ENABLE_MASK & (1 << 3)
             #error "BLM_NBI_BLQ3_CACHE_SIZE cannot be 0 when BLQ3 ingress thread is enabled"
         #endif
     #elif (BLM_NBI_BLQ3_CACHE_SIZE < 64)
