@@ -129,6 +129,15 @@
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.NbiDmaXpb.NbiDmaCsr.NbiDmaBpe/**/BPE_NUM/**/Cfg.PktCredit   PKT_CREDIT  const
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.NbiDmaXpb.NbiDmaCsr.NbiDmaBpe/**/BPE_NUM/**/Cfg.Ctm         CTM         const
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.NbiDmaXpb.NbiDmaCsr.NbiDmaBpe/**/BPE_NUM/**/Cfg.BpeNum      BPE_NUM     const
+
+    #if (!IS_NFPTYPE(__NFP6000) && (CTM != 0))
+        /* The CTM on newer chips tracks packet requests per owner */
+        /* Configure credits matching the NBI */
+        #define_eval _NBI (NBI_ID + 1)
+        .init_csr xpb:i/**/CTM.CTMXpbMap.MuPacketReg.MUPEConfiguredCredits/**/_NBI/**/.MUPEBufferCredits BUF_CREDIT
+        .init_csr xpb:i/**/CTM.CTMXpbMap.MuPacketReg.MUPEConfiguredCredits/**/_NBI/**/.MUPEPacketCredits PKT_CREDIT
+        #undef _NBI
+    #endif
 #endm
 
 
