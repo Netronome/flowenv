@@ -22,8 +22,14 @@
  *         instruction-less list file.
  *
  */
+#include "_uc/init_ctm.uc"
 #include "_uc/init_nbi.uc"
+#include "_uc/init_pci.uc"
 
 .begin
+    ctm_init()
     nbi_init()
+    #if !IS_NFPTYPE(__NFP6000)
+        pci_init()
+    #endif
 .end

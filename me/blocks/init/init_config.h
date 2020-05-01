@@ -26,6 +26,15 @@
 #ifndef _INIT_CONFIG_H_
 #define _INIT_CONFIG_H_
 
+
+/* Macro to help parse BPE configurations */
+#define ENABLE_VAL(x,y,z) x
+#define PKT_CREDIT_VAL(x,y,z) y
+#define BUF_CREDIT_VAL(x,y,z) z
+#define BLQ_PRIMARY(x,y) x
+#define BLQ_SECONDARY(x,y) y
+
+
 /*************************************************************************
  * General NFP Configuration
  *
@@ -108,6 +117,34 @@
 #ifndef SPLIT_LENGTH
 	/* TODO: Add support for 4K-16K Split length in NFP3800 */
     #define SPLIT_LENGTH 3
+#endif
+
+/* Shared buffer size in CTM */
+#ifndef PKT_CTM_SHARED_SIZE
+    #define PKT_CTM_SHARED_SIZE 2048
+#else
+    #if IS_NFPTYPE(__NFP6000)
+        #if PKT_CTM_SHARED_SIZE != 2048
+            #error "Unsupported CTM shared buffer size."
+        #endif
+    #elif IS_NFPTYPE(__NFP3800)
+        #if (PKT_CTM_SHARED_SIZE != 2048 && \
+             PKT_CTM_SHARED_SIZE != 4096 && \
+             PKT_CTM_SHARED_SIZE != 8192 && \
+             PKT_CTM_SHARED_SIZE != 16384)
+            #error "Unsupported CTM shared buffer size."
+        #endif
+    #else
+        #error "Unsupported chip type selected."
+    #endif
+#endif
+
+/* We ensure that the linker does not place anything into
+ * memory used by the CTM packet engine by allocating a reserved
+ * memory region there.  Provide an option for projects to customise
+ * the name of the region. */
+#ifndef PKT_RSVD_SYM
+    #define PKT_RSVD_SYM PKT_RSVD
 #endif
 
 /* Set this to zero if we want the NBI to back-up and start emitting pause
@@ -217,6 +254,29 @@
         #error "Unexpected NBI_COUNT"
     #endif
 #endif
+
+#if IS_NFPTYPE(__NFP3800)
+    #ifndef MEI_DMA_BPE_CONFIG_ME_ISLAND0
+        #define MEI_DMA_BPE_CONFIG_ME_ISLAND0 0,0,0
+    #endif
+    #ifndef MEI_DMA_BPE_CONFIG_ME_ISLAND1
+        #define MEI_DMA_BPE_CONFIG_ME_ISLAND1 0,0,0
+    #endif
+    #ifndef MEI_DMA_BPE_CONFIG_ME_ISLAND2
+        #define MEI_DMA_BPE_CONFIG_ME_ISLAND2 0,0,0
+    #endif
+
+    #ifndef PCI0_DMA_BPE_CONFIG_ME_ISLAND0
+        #define PCI0_DMA_BPE_CONFIG_ME_ISLAND0 0,0,0
+    #endif
+    #ifndef PCI0_DMA_BPE_CONFIG_ME_ISLAND1
+        #define PCI0_DMA_BPE_CONFIG_ME_ISLAND1 0,0,0
+    #endif
+    #ifndef PCI0_DMA_BPE_CONFIG_ME_ISLAND2
+        #define PCI0_DMA_BPE_CONFIG_ME_ISLAND2 0,0,0
+    #endif
+#endif
+
 
 /*************************************************************************
  * NBI Traffic Manager Configuration

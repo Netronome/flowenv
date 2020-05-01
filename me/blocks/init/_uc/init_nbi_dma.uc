@@ -55,13 +55,6 @@
 #include "../init_config.h"
 #include "init_nbi_dma_csr.uc"
 
-/* Macro to help parse BPE configurations */
-#define ENABLE_VAL(x,y,z) x
-#define PKT_CREDIT_VAL(x,y,z) y
-#define BUF_CREDIT_VAL(x,y,z) z
-#define BLQ_PRIMARY(x,y) x
-#define BLQ_SECONDARY(x,y) y
-
 /* Sanity Checking below */
 #ifndef SPLIT_LENGTH
     #error "SPLIT_LENGTH is not defined"
