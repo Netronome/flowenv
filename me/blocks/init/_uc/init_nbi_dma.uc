@@ -27,12 +27,13 @@
  *              NbiDmaXpb_NbiDmaCsr_NbiDmaCfg
  *              NbiDmaXpb_NbiDmaCsr_NbiDmaRate
  *              NbiDmaXpb_NbiDmaCsr_NbiDmaCredit
- *          Finally, there are 3 sets of registers which are application
- *          dependent which are not configured by the BLM, hence we set these
- *          here based on values specified in init_config.h:
+ *          Finally, there are registers which are application dependent and
+ *          are not configured by the BLM, hence we set these here based on
+ *          values specified in init_config.h:
  *              NbiDmaXpb_NbiDmaCsr_NbiDmaBpeChainEnd
  *              NbiDmaXpb_NbiDmaCsr_NbiDmaBpeCfg
  *              NbiDmaXpb_NbiDmaCsr_NbiDmaBPCfg
+ *              NbiDmaXpb_NbiDmaCsr_BlqNullMuPtr (not present on NFP6xxx)
  *
  * @note This code produces a 'NBI DMA BPE credit symbol'. It's required by
  *       Netronome NIC kernel module to offer safe NFP soft reset functionality
@@ -601,6 +602,11 @@
         CTM_OFFSET,
         NBI_DMA_BP7_DROP_ENABLE
     )
+
+    /* Set the null MU pointer if it is used */
+    #if (defined(PKT_NULL_MU_PTR) && !IS_NFPTYPE(__NFP6000) && (NBI_ID == 0))
+        NbiDmaXpb_NbiDmaCsr_BlqNullMuPtr(NBI_ID, PKT_NULL_MU_PTR)
+    #endif
 
     #undef NBI_DMA_LOOP
 #endm

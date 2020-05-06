@@ -153,4 +153,17 @@
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.NbiDmaXpb.NbiDmaCsr.NbiDmaBpeChainEnd.BpeChainEnd BPECHAINEND const
 #endm
 
+
+/** NbiDmaXpb_NbiDmaCsr_BlqNullMuPtr
+ *
+ * Configures the NBI DMA null MU pointer
+ *
+ * @param NBI_ID            The NBI number, can be 0 or 1
+ * @param NULL_MU_PTR       Programmable Null Memory Buffer Pointer.
+ *
+ */
+#macro NbiDmaXpb_NbiDmaCsr_BlqNullMuPtr(NBI_ID, NULL_MU_PTR)
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.NbiDmaXpb.NbiDmaCsr.BlqNullMuPtr NULL_MU_PTR const
+#endm
+
 #endif /* _INIT_NBI_DMA_CSR_UC_ */

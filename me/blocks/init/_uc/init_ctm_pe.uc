@@ -145,6 +145,11 @@
     #define_eval _TOTAL_BYTES (_TOTAL_BYTES * PKT_CTM_SHARED_SIZE)
     CTMXpbMap_MuPacketReg_MUPEMemConfig(_CTM, _TOTAL_BYTES)
 
+    /* Set the null MU pointer if it is used */
+    #ifdef PKT_NULL_MU_PTR
+        CTMXpbMap_MuPacketReg_MUPENullMUPtr(_CTM, PKT_NULL_MU_PTR)
+    #endif
+
 #else
     #error "Unsupported chip type selected."
 #endif

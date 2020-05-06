@@ -193,6 +193,20 @@
 
 #endm
 
+
+/** Nbi_TrafficManager_TrafficManager_TrafficManagerReg_TMBlqNullMuPtr
+ *
+ * Configures the NBI TM null MU pointer
+ *
+ * @param NBI_ID        The NBI number, can be 0 or 1
+ * @param NULL_MU_PTR   Programmable Null Memory Buffer Pointer.
+ *
+ */
+#macro Nbi_TrafficManager_TrafficManager_TrafficManagerReg_TMBlqNullMuPtr(NBI_ID, NULL_MU_PTR)
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.TMBlqNullMuPtr NULL_MU_PTR const
+#endm
+
+
 /** Nbi_TrafficManager_TMSchedulerReg_L2L1SchedulerEntry
  *
  * Configures L2 and L1 schedulers. See the NFP-6xxx Databook section on the NBI Traffic Manager

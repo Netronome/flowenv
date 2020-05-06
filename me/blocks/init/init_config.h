@@ -119,6 +119,19 @@
     #define SPLIT_LENGTH 3
 #endif
 
+/* Maxmimum split length boundary between a packets CTM buffer and it's backing
+ * IMEM/EMEM buffer for PCIe DMA.
+ * See pkt/pkt.h enum PKT_CTM_SIZE for non-NFP6xxx chips for coding.
+ */
+#ifndef PCI_DMA_SPLIT_LENGTH
+    #define PCI_DMA_SPLIT_LENGTH 3
+#endif
+
+/* libpktio unified RX expects PCI packet data at PKT_NBI_OFFSET */
+/* Offset is coded as "number of 32B blocks minus one" */
+#define PCI_DMA_CTM_OFFSET ((PKT_NBI_OFFSET / 32) - 1)
+
+
 /* Shared buffer size in CTM */
 #ifndef PKT_CTM_SHARED_SIZE
     #define PKT_CTM_SHARED_SIZE 2048

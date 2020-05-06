@@ -753,6 +753,12 @@
         NBI_TM_NUM_SEQUENCERS,      //NumSequencers
         NBI_TM_ENABLE_SEQUENCER0    //Sequencer0Enable
         )
+
+        /* Set the null MU pointer if it is used */
+        #if (defined(PKT_NULL_MU_PTR) && !IS_NFPTYPE(__NFP6000) && (NBI_ID == 0))
+            Nbi_TrafficManager_TrafficManager_TrafficManagerReg_TMBlqNullMuPtr(NBI_ID,
+            PKT_NULL_MU_PTR)
+        #endif
         #define_eval NBI_ID (NBI_ID + 1)
     #endloop
 #endm

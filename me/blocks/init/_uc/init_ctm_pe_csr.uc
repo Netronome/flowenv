@@ -116,4 +116,17 @@
     .init_csr xpb:i/**/CTM.CTMXpbMap.MuPacketReg.MUPEBufferConfig.MUPEBufferConfig _SHARED_SIZE
 #endm
 
+
+/** CTMXpbMap_MuPacketReg_MUPENullMUPtr
+ *
+ * Configures the null MU pointer used by the system
+ *
+ * @param CTM             CTM number to configure
+ * @param NULL_MU_PTR     Programmable Null Memory Buffer Pointer.
+
+ */
+#macro CTMXpbMap_MuPacketReg_MUPENullMUPtr(CTM, NULL_MU_PTR)
+    .init_csr xpb:i/**/CTM.CTMXpbMap.MuPacketReg.MUPENullMUPtr NULL_MU_PTR
+#endm
+
 #endif /* _INIT_CTM_PE_CSR_UC_ */
