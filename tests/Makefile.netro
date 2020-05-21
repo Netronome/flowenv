@@ -17,16 +17,19 @@ flowenv_tests_me_nfcc_compile_NFCCFLAGS_common += \
 	-I$(flowenv-me-include_absdir) \
 	-I$(flowenv-me-include_reldir) \
 	-I$(flowenv-me-lib_absdir) \
+	-I$(flowenv-tests_absdir)/include \
 	-I$(nfp-sdk-stdlib-absdir)/microc/include
 flowenv_tests_me_nfcc_compile_NFCCFLAGS_common += \
 	-Qnctx_mode=8 \
 	-Qnn_mode=1 \
 	-Qspill=7 \
 	-Qperfinfo=32 \
-	-Qno_decl_volatile
+	-Qno_decl_volatile \
+	-DNS_PLATFORM_TYPE=NS_PLATFORM_HYDROGEN
 flowenv_tests_me_nfcc_compile_NFCCSRCS_common += \
 	$(flowenv-me-lib_absdir)/nfp/libnfp.c \
 	$(flowenv-me-lib_absdir)/net/libnet.c \
+	$(flowenv-me-lib_absdir)/npfw/libnpfw.c \
 	$(flowenv-me-lib_absdir)/std/libstd.c \
 	$(flowenv-me-lib_absdir)/pkt/libpkt.c \
 	$(flowenv-me-lib_absdir)/lu/liblu.c \

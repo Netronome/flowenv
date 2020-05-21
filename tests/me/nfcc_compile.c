@@ -64,6 +64,12 @@
 #include <nfp/tmq.h>
 #include <nfp/xpb.h>
 
+/* libnpfw related header files */
+#include <npfw/catamaran_app_utils.h>
+#include <npfw/catamaran_utils.h>
+#include <npfw/nbi_cpp.h>
+#include <npfw/nbi_pc_mem.h>
+
 /* libstd related header files */
 #include <std/cntrs.h>
 #include <std/event.h>
