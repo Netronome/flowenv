@@ -4,6 +4,8 @@
 flowenv-tests-me_reldir := $(flowenv-tests_reldir)/me
 flowenv-tests-me_absdir := $(flowenv-tests_absdir)/me
 
+nfp-sdk-stdlib-absdir ?= /opt/netronome/components/standardlibrary
+
 ######################################################################
 # nfcc compile test
 ######################################################################
@@ -27,7 +29,8 @@ flowenv_tests_me_nfcc_compile_NFCCSRCS_common += \
 	$(flowenv-me-lib_absdir)/net/libnet.c \
 	$(flowenv-me-lib_absdir)/std/libstd.c \
 	$(flowenv-me-lib_absdir)/pkt/libpkt.c \
-	$(flowenv-me-lib_absdir)/lu/liblu.c
+	$(flowenv-me-lib_absdir)/lu/liblu.c \
+	$(nfp-sdk-stdlib-absdir)/microc/src/rtl.c
 flowenv_tests_me_nfcc_compile.fw_DESCRIPTION = "FlowEnv nfcc compile test"
 $(eval $(call mefw_template,flowenv_tests_me_nfcc_compile,$(flowenv-tests-me_reldir)))
 
