@@ -86,7 +86,9 @@
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.QueueEnable           QUEUEENABLE         const
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.DropEnable            DROPENABLE          const
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.REDEnable             REDENABLE           const
+    #if !IS_NFPTYPE(__NFP3800)
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.DMAPacketThreshold    DMAPACKETTHRESHOLD  const
+    #endif
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.QueueSize             QUEUESIZE           const
     .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TMQueueReg.QueueConfig/**/QUEUE_NUM.DropRateRangeSelect   DROPRATERANGESELECT const
 
