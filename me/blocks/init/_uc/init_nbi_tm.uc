@@ -86,8 +86,14 @@
     #if (NBI_ID < 0) || (NBI_ID > 1)
         #error "NBI_ID can only be 0 or 1"
     #endif
+    #if !IS_NFPTYPE(__NFP3800)
     #if (START_HT_ENTRY < 0) || (START_HT_ENTRY > 16383)
         #error "START_HT_ENTRY can only be between 0 and 16383"
+    #endif
+    #else
+    #if (START_HT_ENTRY < 0) || (START_HT_ENTRY > 4095)
+        #error "START_HT_ENTRY can only be between 0 and 4095"
+    #endif
     #endif
     #if (TM_Q_CNT < 0) || (TM_Q_CNT > 1023)
         #error "TM_Q_CNT can only be between 0 and 1023"
