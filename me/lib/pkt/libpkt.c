@@ -761,7 +761,7 @@ pkt_ctm_free(unsigned int isl, unsigned int pnum)
     __asm mem[packet_free, --, addr_hi, <<8, pnum];
 }
 
-#if (defined(__NFP_IS_6XXX) || defined(__NFP_IS_38XX))
+#if defined(__NFP_IS_6XXX)
 
 __intrinsic unsigned int
 pkt_ctm_alloc(__cls struct ctm_pkt_credits *credits,
