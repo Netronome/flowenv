@@ -559,7 +559,7 @@ struct pkt_iref_palu {
 /*
  * Note: The NBI Packet Modifier is supported on the NFP 6xxx family of chips.
  */
-#if defined(__NFP_IS_6XXX)
+#if (defined(__NFP_IS_6XXX) || defined(__NFP_IS_38XX))
 
 /**
  * Holds information pertaining to the addition of a modification script to
@@ -932,7 +932,7 @@ __intrinsic void pkt_mac_egress_cmd_write(__mem40 void *pbuf,
 /*
  * Note: The NBI Packet Modifier is supported on the NFP 6xxx family of chips.
  */
-#if defined(__NFP_IS_6XXX)
+#if (defined(__NFP_IS_6XXX) || defined(__NFP_IS_38XX))
 
 /**
  * Write a direct packet modifier modification script to the beginning of a
