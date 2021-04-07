@@ -135,7 +135,7 @@ mac_stats_commit(__xwrite uint32_t *stats_xw,
 
     xw = stats_xw;
     __asm mem[add64, *xw, dst_hi, <<8, dst_lo, 4], ctx_swap[sig];
-    xw += 8;
+    xw = xw + 8;
     __asm mem[add64, *xw, dst_hi, <<8, dst_lo2, 4], ctx_swap[sig];
 }
 
