@@ -348,6 +348,11 @@
     #define NBI_TM_L1_INPUT_SELECT 1
 #endif
 
+/* Enable/Disable linked list mode for packet descriptor memory */
+#ifndef NBI_TM_PKT_DESC_LINKED_LIST
+    #define NBI_TM_PKT_DESC_LINKED_LIST 0
+#endif
+
 /* Check if specifying number of queues for each half of NBI TM */
 #ifdef NBI_TM_H_0_Q
 
