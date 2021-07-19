@@ -36,6 +36,9 @@
 #ifndef NBI_TM_L1_INPUT_SELECT
     #error "NBI_TM_L1_INPUT_SELECT not defined"
 #endif
+#if !IS_NFPTYPE(__NFP3800) && NBI_TM_PKT_DESC_LINKED_LIST
+    #error "LINKED_LIST_MODE only supported in NFP3800"
+#endif
 #ifndef NBI_TM_ENABLE_SHAPER
     /* By default, leave the shaper disabled. */
     #define NBI_TM_ENABLE_SHAPER 0
@@ -86,6 +89,7 @@
     #if (NBI_ID < 0) || (NBI_ID > 1)
         #error "NBI_ID can only be 0 or 1"
     #endif
+    #if !NBI_TM_PKT_DESC_LINKED_LIST
     #if !IS_NFPTYPE(__NFP3800)
     #if (START_HT_ENTRY < 0) || (START_HT_ENTRY > 16383)
         #error "START_HT_ENTRY can only be between 0 and 16383"
@@ -93,6 +97,7 @@
     #else
     #if (START_HT_ENTRY < 0) || (START_HT_ENTRY > 4095)
         #error "START_HT_ENTRY can only be between 0 and 4095"
+    #endif
     #endif
     #endif
     #if (TM_Q_CNT < 0) || (TM_Q_CNT > 1023)
@@ -132,9 +137,11 @@
                                                   Q_SIZE, // QueueSize
                                                   0)      // DropRateRangeSelect
 
+        #if !NBI_TM_PKT_DESC_LINKED_LIST
         NBITMCPP_TMHeadTailSram_TMHeadTailEntry(NBI_ISLAND, TM_Q,
                                                 HT_FREE_PTR, //TailPointer
                                                 HT_FREE_PTR) //HeadPointer
+        #endif
 
         Nbi_TrafficManager_TMQueueReg_QueueDropCountClear(NBI_ID, TM_Q)
 
@@ -142,8 +149,10 @@
         #define_eval HT_FREE_PTR (HT_FREE_PTR + (1 << Q_SIZE))
     #endloop
 
+    #if !NBI_TM_PKT_DESC_LINKED_LIST
     #if HT_FREE_PTR > 16384
         #error "Ran out of head/tail SRAM during TM queue config"
+    #endif
     #endif
 
     #undef HT_FREE_PTR
@@ -1437,6 +1446,11 @@
 
     #define_eval NBI_ID (0)
     #while (NBI_ID < NBI_COUNT)
+        Nbi_TrafficManager_TMConfig_LinkListInit(NBI_ID,
+        NBI_TM_PKT_DESC_LINKED_LIST,
+        NBI_TM_PKT_DESC_LINKED_LIST
+        )
+
         Nbi_TrafficManager_TrafficManagerReg_MiniPktCreditConfig(NBI_ID,
         128,   //CreditLimit
         0x200, //FPCreditLimit

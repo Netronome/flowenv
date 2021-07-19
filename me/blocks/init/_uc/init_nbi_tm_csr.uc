@@ -53,6 +53,21 @@
 
 #endm
 
+/** Nbi_TrafficManager_TMConfig_LinkListInit
+ *
+ * Configures the linked list mode in NBI Traffic Manager Config Register, only supported in NFP3800
+ *
+ * @param NBI_ID                The NBI number, can be 0 or 1
+ * @param LINKEDLISTENA         Linked list mode enable bit.
+ * @param LINKEDLISTINIT        Start to initialize, will be cleared by HW when finished.
+ */
+#macro Nbi_TrafficManager_TMConfig_LinkListInit(NBI_ID,LINKEDLISTENA,LINKEDLISTINIT)
+#if IS_NFPTYPE(__NFP3800)
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.TrafficManagerConfig.PacketDescriptorLinkedListEna       LINKEDLISTENA   const
+    .init_csr xpb:Nbi/**/NBI_ID/**/IsldXpbMap.NbiTopXpbMap.TrafficManager.TrafficManagerReg.TrafficManagerConfig.StartLinkedListInit       LINKEDLISTINIT   const
+#endif
+#endm
+
 /** Nbi_TrafficManager_TrafficManagerReg_TrafficManagerConfigSeq
  *
  * Configures the NBI Traffic Manager Config Register fields related to reorder
